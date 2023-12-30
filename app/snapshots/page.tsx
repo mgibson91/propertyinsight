@@ -1,34 +1,66 @@
 'use client';
 
-import { useMatchingSnapshot } from "@/app/matching-snapshot-provider";
-import { BacktestChart } from "@/components/BacktestChart";
-import { Card } from "@radix-ui/themes";
-import { useDisplayMode } from "@/app/display-mode-aware-radix-theme-provider";
-import { HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
+import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { BacktestChart } from '@/components/BacktestChart';
+import { Card, IconButton, Slider } from '@radix-ui/themes';
+import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
+import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
+import { PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SnapshotPage() {
   const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
   const [displayMode, setDisplayMode] = useDisplayMode();
+  const router = useRouter();
+
+  const [globalIsPlaying, setGlobalIsPlaying] = useState(false);
+  const [globalCandlesPerSecond, setGlobalCandlesPerSecond] = useState<number>(1);
 
   return (
     <div className="w-full px-4">
       <div className="sticky top-0 z-10 backdrop-blur-lg">
-        <div className="flex flex-row">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-bold underline mb-4">Snapshot Page</h1>
-            <h1 className="text-xl mb-4">Total Snapshots: {matchingSnapshots.length}</h1>
-          </div>
+        <div className="flex flex-row items-center py-3 justify-between">
+            {/*<h1 className="text-3xl font-bold underline mb-4">Snapshot Page</h1>*/}
+            <h1 className="text-xl">Total Snapshots: {matchingSnapshots.length}</h1>
+
+            <div className={'flex flex-row items-center gap-3'}>
+              <IconButton
+                variant={'soft'}
+                onClick={() => setGlobalIsPlaying(!globalIsPlaying)}
+                aria-label={globalIsPlaying ? 'Pause' : 'Play'}
+              >
+                {globalIsPlaying ? <PauseIcon /> : <PlayIcon />}
+              </IconButton>
+
+              <div className={'flex flex-col gap-1 items-center w-[170px]'}>
+                <label>{globalCandlesPerSecond} candles / second</label>
+                <Slider
+                  value={[globalCandlesPerSecond]}
+                  max={10}
+                  min={1}
+                  defaultValue={[1]}
+                  onValueChange={value => setGlobalCandlesPerSecond(value[0])}
+                  className="w-24 cursor-pointer"
+                />
+              </div>
+            </div>
         </div>
       </div>
-
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-5">
         {matchingSnapshots.map((snapshot, index) => (
           <Card className={'h-[300px] !bg-primary-bg-subtle'}>
-            <div className={'h-full'}>
+            <div className={'h-full pt-8 relative'}>
+              <div className={'absolute top-0 right-0 w-full z-10 flex justify-end'}>
+                <IconButton onClick={() => router.push(`/snapshots/replay?position=${index}`)}>
+                  <TimerIcon className={'h-5 w-5'}></TimerIcon>
+                </IconButton>
+              </div>
               <BacktestChart
                 key={index} // Replace 'index' with a unique identifier if available
-                autoplay={false}
+                autoplay={globalIsPlaying}
+                candlesPerSecond={globalCandlesPerSecond}
                 candlestickData={snapshot.candlestickData}
                 userSeriesData={snapshot.userSeriesData}
                 conditionMarker={snapshot.marker}

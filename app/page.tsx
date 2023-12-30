@@ -9,7 +9,7 @@
   import { Button, Card, Checkbox, Dialog, Heading, IconButton, Slider, TextFieldInput, Theme } from "@radix-ui/themes";
   import TickerSelector from "@/components/TickerSelector";
   import { BacktestChart } from "@/components/BacktestChart";
-  import { PauseIcon, Pencil1Icon, PlayIcon, PlusIcon, TrashIcon } from "@radix-ui/react-icons";
+  import { PauseIcon, Pencil1Icon, PlayIcon, PlusIcon, TimerIcon, TrashIcon } from "@radix-ui/react-icons";
   import { LightweightChart } from "@/components/LightweightChart";
   import { UserSeriesDialog } from "@/components/UserSeriesDialog";
   import { UserTriggerDialog } from "@/components/UserTriggerDialog";
@@ -341,7 +341,8 @@
         const { matchingMarkers, conditionMarkers } = calculateTriggers(
           markerFunctionMap,
           consolidatedSeries,
-          newUserSeriesData
+          newUserSeriesData,
+          displayMode.mode === 'dark',
         );
 
         let calculatedOutcomeMarkers: {
@@ -515,143 +516,10 @@
 
             <div className={'flex flex-col gap-2 justify-between'}>
               <Button onClick={handleFetchClick} disabled={loading}>
-                {loading ? 'Loading...' : 'Fetch Data'}
+                {loading ? 'Loading...' : 'Refresh'}
               </Button>
               {error && <div>Error fetching data: {error}</div>}
             </div>
-
-            {markerSnapshots.length > 0 && (
-              <>
-                <Dialog.Root>
-                  <Dialog.Trigger>
-                    <div>
-                      <Button className={'ml-auto'}>Replay snapshots</Button>
-                    </div>
-                  </Dialog.Trigger>
-                  <Dialog.Content className={'min-w-[70vw] h-[90vh]'}>
-                    <div className={'flex flex-col'}>
-                      <div className={'w-[100%] h-[500px]'}>
-                        {/*<LightweightChart*/}
-                        {/*  userSeriesData={*/}
-                        {/*    conditionMarkers[currentMarkerSnapshotIndex]*/}
-                        {/*      .userSeriesData*/}
-                        {/*  }*/}
-                        {/*  candlestickData={*/}
-                        {/*    conditionMarkers[currentMarkerSnapshotIndex]*/}
-                        {/*      .candlestickData*/}
-                        {/*  }*/}
-                        {/*  seriesMarkers={[*/}
-                        {/*    conditionMarkers[currentMarkerSnapshotIndex].marker,*/}
-                        {/*  ]}*/}
-                        {/*  futureValues={50}*/}
-                        {/*  updateIntervalMs={1000}*/}
-                        {/*/>*/}
-
-                        <BacktestChart
-                          autoplay={isPlaying}
-                          candlesPerSecond={candlesPerSecond}
-                          userSeriesData={
-                            markerSnapshots[currentMarkerSnapshotIndex]
-                              .userSeriesData
-                          }
-                          candlestickData={
-                            markerSnapshots[currentMarkerSnapshotIndex]
-                              .candlestickData
-                          }
-                          conditionMarker={
-                            markerSnapshots[currentMarkerSnapshotIndex].marker
-                          }
-                          outcome={
-                            markerSnapshots[currentMarkerSnapshotIndex].outcome
-                              ? {
-                                marker:
-                                markerSnapshots[currentMarkerSnapshotIndex]
-                                  .outcome!.marker,
-                                outcomeDetails:
-                                markerSnapshots[currentMarkerSnapshotIndex]
-                                  .outcome!.outcomeDetails,
-                              }
-                              : undefined
-                          }
-                          futureValueCount={
-                            markerSnapshots[currentMarkerSnapshotIndex]
-                              .historicalCandles
-                          }
-                          minDatapointsRequiredForAllSeries={HISTORICAL_VALUE_COUNT}
-                        />
-                      </div>
-
-                      <div
-                        className={
-                          'flex flex-row gap-2 mt-3 justify-center items-center'
-                        }
-                      >
-                        <div className={'flex-1'}></div>
-                        <Button
-                          onClick={() => {
-                            if (currentMarkerSnapshotIndex > 0) {
-                              setCurrentMarkerSnapshotIndex(
-                                currentMarkerSnapshotIndex - 1
-                              );
-                            }
-                          }}
-                        >
-                          Prev setup
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            if (
-                              currentMarkerSnapshotIndex <
-                              markerSnapshots.length - 1
-                            ) {
-                              setCurrentMarkerSnapshotIndex(
-                                currentMarkerSnapshotIndex + 1
-                              );
-                            }
-                          }}
-                        >
-                          Next setup
-                        </Button>
-                        <div className={'justify-end flex items-center flex-1'}>
-                          <div className={'flex flex-row items-center gap-3'}>
-                            <IconButton
-                              variant={'soft'}
-                              onClick={() => setIsPlaying(!isPlaying)}
-                              aria-label={isPlaying ? 'Pause' : 'Play'}
-                            >
-                              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                            </IconButton>
-
-                            <div
-                              className={
-                                'flex flex-col gap-3 items-center w-[170px]'
-                              }
-                            >
-                              <label>{candlesPerSecond} candles / second</label>
-                              <Slider
-                                value={[candlesPerSecond]}
-                                max={10}
-                                min={1}
-                                defaultValue={[1]}
-                                onValueChange={(value) =>
-                                  setCandlesPerSecond(value[0])
-                                }
-                                className="w-24 cursor-pointer"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Dialog.Content>
-                </Dialog.Root>
-
-                <Link href={'/snapshots'}>
-
-                  <Button>View snapshots</Button>
-                </Link>
-              </>
-            )}
 
             {outcomeSummary && (
               <Card className={'flex-0 ml-auto'}>
@@ -668,7 +536,7 @@
 
                   <div className={'flex flex-row'}>
                     <span className={'font-bold w-16'}>Win %:&nbsp;</span>
-                    <span>{outcomeSummary?.winPerc.toFixed(2)}</span>
+                    <span>{isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(2)}</span>
                   </div>
                 </div>
               </Card>
@@ -898,7 +766,13 @@
                 <LightweightChart
                   userSeriesData={userSeriesData}
                   candlestickData={candlestickData}
-                  seriesMarkers={[...triggerMarkers, ...outcomeMarkers].sort(
+                  seriesMarkers={[
+                    ...triggerMarkers.map(t => ({
+                      ...t,
+                      color: (displayMode.mode ==='dark' ? '#D4FF70' : '#8DB654')
+                    })),
+                    ...outcomeMarkers
+                  ].sort(
                     (a, b) => (a.time as number) - (b.time as number)
                   )}
                   visibleRange={200}

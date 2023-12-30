@@ -16,7 +16,7 @@ export function calculateTriggers(markerFunctionMap: Map<
   data: LineData<UTCTimestamp>[];
   color: string;
   lineWidth: 1 | 2 | 3 | 4;
-}[]) {
+}[], darkMode: boolean) {
 
   const matchingMarkers: SeriesMarker<UTCTimestamp>[] = [];
   const conditionMarkers: {
@@ -43,7 +43,8 @@ export function calculateTriggers(markerFunctionMap: Map<
           time: consolidatedSeries[i - 1].time as UTCTimestamp,
           text: (matchingMarkers.length + 1).toString(),
           position: 'belowBar',
-          color: '#D1FE77E4',
+          color: darkMode ? '#BDE56C' : '#5C7C2F',
+          // color: darkMode ? '#F00' : '#0F0',
           shape: 'arrowUp',
           size: 3,
         };

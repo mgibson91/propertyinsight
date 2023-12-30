@@ -15,7 +15,7 @@ const DisplayModeContext = createContext<[Mode, React.Dispatch<React.SetStateAct
 // Create a provider component
 export const DisplayModeAwareRadixThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [displayMode, setDisplayMode] = useState<Mode>({
-    mode: "light",
+    mode: "dark",
   }); // Initialize with null or any default value
 
   // The value prop of the provider will be our context data
