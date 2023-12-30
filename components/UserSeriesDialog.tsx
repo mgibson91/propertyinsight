@@ -150,6 +150,7 @@ function seriesFunction(
               <Editor
                 height="90vh"
                 defaultLanguage="javascript"
+                value={series.seriesFunctionString}
                 defaultValue={
 `const windowSize = 20;  // Setting the period for SMA
 

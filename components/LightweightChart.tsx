@@ -31,6 +31,9 @@ export const LightweightChart = ({
   visibleRange?: number;
   color?: {
     background?: string;
+    gridLines?: string;
+    text?: string;
+    scale?: string;
   }
 }) => {
   const chartContainerRef = useRef();
@@ -44,24 +47,24 @@ export const LightweightChart = ({
           color: color?.background || '#111210',
         },
         // textColor: 'rgba(33, 56, 77, 1)',
-        textColor: '#F6FEF4B0',
+        textColor: color?.text || '#F6FEF4B0',
       },
       grid: {
         vertLines: {
-          color: '#F2FCED3B',
+          color: color?.gridLines || '#F2FCED3B',
         },
         horzLines: {
-          color: '#F2FCED3B',
+          color: color?.gridLines || '#F2FCED3B',
         },
       },
       crosshair: {
         mode: 1,
       },
       rightPriceScale: {
-        borderColor: '#EDFDEB57',
+        borderColor: color?.scale || '#EDFDEB57',
       },
       timeScale: {
-        borderColor: '#EDFDEB57',
+        borderColor: color?.scale || '#EDFDEB57',
       },
 
       leftPriceScale: {
@@ -77,7 +80,7 @@ export const LightweightChart = ({
       chart.timeScale().scrollToPosition(10, false);
     }
     // if (visibleRange) {
-    //   chart.timeScale().setVisibleLogicalRange({ from: 0, to: visibleRange })
+    //   chart.timeScale().setVisibleLogicalRange({ from: candlestickData.length - visibleRange, to: candlestickData.length })
     // }
 
     // Create the candlestick series

@@ -933,16 +933,20 @@
             </div>
 
             <div className={'w-[100%] h-[500px]'}>
-              <Card className={'w-full h-full !bg-primary-bg'}>
+              <Card className={'w-full h-full !bg-primary-bg-subtle'}>
                 <LightweightChart
                   userSeriesData={userSeriesData}
                   candlestickData={candlestickData}
                   seriesMarkers={[...triggerMarkers, ...outcomeMarkers].sort(
                     (a, b) => a.time - b.time
                   )}
+                  visibleRange={200}
                   // seriesMarkers={triggerMarkers}
                   color={{
-                    background: displayMode.mode === 'dark' ? '#18191B' : '#F0F0F3',
+                    background: displayMode.mode === 'dark' ? '#18191B' : '#F9F9FB',
+                    text: displayMode.mode === 'dark' ? '#B0B4BA' : '#60646C',
+                    gridLines: displayMode.mode === 'dark' ? '#696E77' : '#8B8D98',
+                    scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',
                   }}
                 />
               </Card>
