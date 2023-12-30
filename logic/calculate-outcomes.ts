@@ -1,0 +1,118 @@
+type ConsolidatedLineData = {
+  time: number;
+} & { [keyof: string]: number };
+
+export interface Outcome {
+  type: 'success' | 'failure';
+  text: string;
+  trigger: {
+    time: number;
+    offset: number;
+    value: number;
+  };
+  outcome: {
+    time: number;
+    offset: number;
+    value: number;
+  };
+}
+
+export function calculateOutcomes(input: {
+  consolidatedSeries: ConsolidatedLineData[];
+  triggers: { offset: number; time: number; text: string }[];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
+}): { summary: { successCount: number; failCount: number; uncertainCount: number }; outcomes: Outcome[] } {
+  const outcomes: Outcome[] = [];
+  const summary = {
+    successCount: 0,
+    failCount: 0,
+    uncertainCount: 0,
+  };
+
+  for (const trigger of input.triggers) {
+    const index = input.consolidatedSeries.findIndex(
+      ({ time }) => time === trigger.time
+    );
+    if (index === -1) {
+      continue;
+    }
+
+    const triggerData = input.consolidatedSeries[index];
+
+    const outcome = calculateOutcome({
+      triggerValue: triggerData.close, // TODO: Update this to be stored on each successful trigger
+      triggerOffset: index,
+      triggerTime: triggerData.time,
+      consolidatedSeries: input.consolidatedSeries,
+      outcomeFunc: input.outcomeFunc,
+    });
+
+    if (outcome) {
+      outcomes.push({
+        ...outcome,
+        text: trigger.text,
+      });
+
+      if (outcome.type === 'success') {
+        summary.successCount++;
+      }
+      else if (outcome.type === 'failure') {
+        summary.failCount++;
+      }
+      else {
+        summary.uncertainCount++;
+      }
+    }
+  }
+
+  return { outcomes, summary };
+}
+
+export function calculateOutcome(input: {
+  triggerValue: number;
+  triggerOffset: number;
+  triggerTime: number;
+  consolidatedSeries: ConsolidatedLineData[];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
+}): Outcome | null {
+  const {
+    triggerValue,
+    triggerOffset,
+    triggerTime,
+    consolidatedSeries,
+    outcomeFunc,
+  } = input;
+
+  // TODO: Optimize the heck out of this once verified
+  const dataPostTrigger = consolidatedSeries.slice(triggerOffset);
+
+  // Check the outcome func for each entry and return if 'success' or 'failure'
+  for (let i = 1; i < dataPostTrigger.length; i++) {
+    const dataSlice = dataPostTrigger.slice(0, i);
+    const reversedSeries = [...dataSlice].reverse();
+    const result = outcomeFunc(reversedSeries, { value: triggerValue });
+
+    if (result === 'success' || result === 'failure') {
+      const outcomeTime = dataPostTrigger[i - 1].time;
+      const outcomeValue = dataPostTrigger[i - 1].close;
+
+      return {
+        type: result,
+        trigger: {
+          time: triggerTime,
+          offset: triggerOffset,
+          value: triggerValue,
+        },
+        outcome: {
+          time: outcomeTime,
+          offset: i - 1,
+          value: outcomeValue,
+        },
+      };
+    }
+  }
+
+  return null;
+}
