@@ -94,7 +94,7 @@ export const UserSeriesDialog = ({
                 onChange={(e) =>
                   setSeries({
                     ...series,
-                    lineWidth: parseInt(e.target.value),
+                    lineWidth: parseInt(e.target.value) as 1 | 2 | 3 | 4,
                   })
                 }
               />

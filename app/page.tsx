@@ -1,7 +1,7 @@
   'use client';
 
   import { useEffect, useState } from 'react';
-  import { CandlestickData, LineData, OhlcData, SeriesMarker, Time } from "lightweight-charts";
+  import { CandlestickData, LineData, OhlcData, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
   import { fetchCandlesFromMemory } from "@/requests/get-bitcoin-prices";
   import { calculateTriggers } from '@/logic/calculate-triggers';
   import TimeFrameSelector from "@/components/TimeFrameSelector";
@@ -17,6 +17,8 @@
   import { useMatchingSnapshot } from "@/app/matching-snapshot-provider";
   import Link from "next/link";
   import { useDisplayMode } from "@/app/display-mode-aware-radix-theme-provider";
+  import { getConsolidatedSeries } from "@/app/(logic)/get-consolidated-series";
+  import { HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
 
   // import 'codemirror/keymap/sublime';
   // import 'codemirror/theme/monokai.css';
@@ -25,11 +27,11 @@
 
   export interface UserSeries {
     name: string;
-    // seriesFunction: (data: OhlcData[]) => LineData<Time>[];
+    // seriesFunction: (data: OhlcData[]) => LineData<UTCTimestamp>[];
     seriesFunctionString: string;
     overlay: boolean;
     color: string;
-    lineWidth: number;
+    lineWidth: 1 | 2 | 3 | 4;
   }
 
   export interface UserTrigger {
@@ -51,47 +53,9 @@
   export interface UserSeriesData {
     name: string;
     overlay: boolean;
-    data: LineData<Time>[];
+    data: LineData<UTCTimestamp>[];
     color: string;
-    lineWidth: number;
-  }
-
-  export type ConsolidatedLineData = {
-    time: number;
-  } & { [keyof: string]: number };
-
-  export function getConsolidatedSeries(
-    candleData: OhlcData<Time>[],
-    userSeriesData: UserSeriesData[]
-  ): ConsolidatedLineData[] {
-    const consolidatedSeries: ConsolidatedLineData[] = [];
-
-    for (const candle of candleData) {
-      // Initialize an object with time key
-      const obj = {
-        time: candle.time,
-      } as ConsolidatedLineData;
-
-      // Add the candle data for this time
-      obj.time = candle.time as number;
-      obj.high = candle.high;
-      obj.low = candle.low;
-      obj.open = candle.open;
-      obj.close = candle.close;
-
-      // Add the user series data for this time if available
-      userSeriesData.forEach((series) => {
-        // Find the corresponding data point in user series by time
-        const seriesDataPoint = series.data.find((d) => d.time === candle.time);
-        if (seriesDataPoint) {
-          obj[series.name] = seriesDataPoint.value;
-        }
-      });
-
-      consolidatedSeries.push(obj);
-    }
-
-    return consolidatedSeries;
+    lineWidth: 1 | 2 | 3 | 4;
   }
 
   const INITIAL_USER_SERIES: UserSeries[] = [
@@ -156,9 +120,6 @@
     size: 1,
   };
 
-  export const HISTORICAL_VALUE_COUNT = 100;
-  export const FUTURE_VALUE_COUNT = 100;
-
   const App = () => {
     const [ticker, setTicker] = useState('BTCUSD');
     const [timeframe, setTimeframe] = useState('1h');
@@ -168,14 +129,14 @@
     );
     const [endDate, setEndDate] = useState(new Date());
     const [candlestickData, setCandlestickData] = useState<
-      CandlestickData<Time>[]
+      CandlestickData<UTCTimestamp>[]
     >([]);
     const [userSeriesData, setUserSeriesData] = useState<
       {
         overlay: boolean;
-        data: LineData<Time>[];
+        data: LineData<UTCTimestamp>[];
         color: string;
-        lineWidth: number;
+        lineWidth: 1 | 2 | 3 | 4;
       }[]
     >([]); // [smaData, rsiData
     const [loading, setLoading] = useState(false);
@@ -183,10 +144,10 @@
     const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
     const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
     const [userOutcome, setUserOutcome] = useState<UserOutcome | null>(null);
-    const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<Time>[]>(
+    const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>(
       []
     );
-    const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<Time>[]>(
+    const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>(
       []
     );
 
@@ -196,11 +157,11 @@
 
     // const [markerSnapshots, setMarkerSnapshots] = useState<
     //   {
-    //     marker: SeriesMarker<Time>;
-    //     candlestickData: OhlcData<Time>[];
+    //     marker: SeriesMarker<UTCTimestamp>;
+    //     candlestickData: OhlcData<UTCTimestamp>[];
     //     userSeriesData: UserSeriesData[];
     //     outcome?: {
-    //       marker: SeriesMarker<Time>;
+    //       marker: SeriesMarker<UTCTimestamp>;
     //       outcomeDetails: {
     //         offset: number;
     //         value: number;
@@ -279,7 +240,7 @@
               high: candle.high,
               low: candle.low,
               close: candle.close,
-            }) as OhlcData<Time>
+            }) as OhlcData<UTCTimestamp>
         );
 
         // Calculate indicators
@@ -360,7 +321,7 @@
 
         // const triggerMarkerSeries: {
         //   name: string;
-        //   data: SeriesMarker<Time>[];
+        //   data: SeriesMarker<UTCTimestamp>[];
         // }[] = [
         //   {
         //     name: 'close above ma',
@@ -384,7 +345,7 @@
         );
 
         let calculatedOutcomeMarkers: {
-          marker: SeriesMarker<Time>;
+          marker: SeriesMarker<UTCTimestamp>;
           outcome: { time: number; offset: number; value: number };
         }[] = [];
 
@@ -433,7 +394,7 @@
                 shape: outcome.type === 'success' ? 'arrowUp' : 'arrowDown',
                 size: 2,
                 text: outcome.text,
-              } as SeriesMarker<Time>,
+              } as SeriesMarker<UTCTimestamp>,
               outcome: outcome.outcome,
             };
           });
@@ -455,8 +416,8 @@
         setMarkerSnapshots(
           conditionMarkers.map((marker) => {
             const result: {
-              marker: SeriesMarker<Time>;
-              candlestickData: OhlcData<Time>[];
+              marker: SeriesMarker<UTCTimestamp>;
+              candlestickData: OhlcData<UTCTimestamp>[];
               userSeriesData: UserSeriesData[];
               outcome?: {
                 outcomeDetails: {
@@ -464,7 +425,7 @@
                   value: number;
                   text: string;
                 };
-                marker: SeriesMarker<Time>;
+                marker: SeriesMarker<UTCTimestamp>;
               };
               historicalCandles: number;
             } = marker;
@@ -938,7 +899,7 @@
                   userSeriesData={userSeriesData}
                   candlestickData={candlestickData}
                   seriesMarkers={[...triggerMarkers, ...outcomeMarkers].sort(
-                    (a, b) => a.time - b.time
+                    (a, b) => (a.time as number) - (b.time as number)
                   )}
                   visibleRange={200}
                   // seriesMarkers={triggerMarkers}
@@ -1042,7 +1003,7 @@
 
   export default App;
 
-  const DEFAULT_USER_SERIES = {
+  const DEFAULT_USER_SERIES: UserSeries = {
     name: '',
     seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
   

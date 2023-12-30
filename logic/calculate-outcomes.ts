@@ -1,5 +1,7 @@
-type ConsolidatedLineData = {
-  time: number;
+import { UTCTimestamp } from "lightweight-charts";
+
+export type ConsolidatedLineData = {
+  time: UTCTimestamp;
 } & { [keyof: string]: number };
 
 export interface Outcome {
@@ -76,7 +78,7 @@ export function calculateOutcome(input: {
   consolidatedSeries: ConsolidatedLineData[];
   // eslint-disable-next-line @typescript-eslint/ban-types
   outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
-}): Outcome | null {
+}): Omit<Outcome, 'text'> | null {
   const {
     triggerValue,
     triggerOffset,

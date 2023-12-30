@@ -1,13 +1,6 @@
 // src/components/LightweightChart.jsx
-import {
-  CandlestickData,
-  createChart,
-  LineData,
-  SeriesMarker,
-  Time,
-} from 'lightweight-charts';
-import { useEffect, useRef, useState } from 'react';
-import { FUTURE_VALUE_COUNT } from "../App.tsx";
+import { CandlestickData, createChart, LineData, SeriesMarker, Time, } from 'lightweight-charts';
+import { useEffect, useRef } from 'react';
 
 export const LightweightChart = ({
   candlestickData,
@@ -21,7 +14,7 @@ export const LightweightChart = ({
   userSeriesData: {
     overlay: boolean;
     color: string;
-    lineWidth: number;
+    lineWidth: 1 | 2 | 3 | 4;
     data: LineData<Time>[];
   }[];
   seriesMarkers: SeriesMarker<Time>[];
@@ -36,9 +29,13 @@ export const LightweightChart = ({
     scale?: string;
   }
 }) => {
-  const chartContainerRef = useRef();
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!chartContainerRef.current) {
+      return;
+    }
+
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
@@ -158,6 +155,10 @@ export const LightweightChart = ({
     // });
 
     const handleResize = () => {
+      if (!chartContainerRef.current) {
+        return;
+      }
+
       chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     };
 

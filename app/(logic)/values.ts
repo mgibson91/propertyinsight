@@ -1,0 +1,2 @@
+export const HISTORICAL_VALUE_COUNT = 100;
+export const FUTURE_VALUE_COUNT = 100;

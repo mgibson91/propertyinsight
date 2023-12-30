@@ -24,7 +24,7 @@ export function BacktestChart({
   userSeriesData: {
     overlay: boolean;
     color: string;
-    lineWidth: number;
+    lineWidth: 1 | 2 | 3 | 4;
     data: LineData<Time>[];
   }[];
   conditionMarker: SeriesMarker<Time>;
@@ -41,6 +41,9 @@ export function BacktestChart({
   minDatapointsRequiredForAllSeries: number;
   color?: {
     background?: string;
+    gridLines?: string;
+    text?: string;
+    scale?: string;
   }
 }) {
   const intervalRef = useRef<number>();
@@ -77,7 +80,7 @@ export function BacktestChart({
           // Trigger a re-render by updating the renderKey
           setRenderKey((prevKey) => prevKey + 1);
         }
-      }, actualUpdateIntervalMs);
+      }, actualUpdateIntervalMs) as any;
     }
 
     // Clear the interval when the component unmounts or dependencies change

@@ -2,9 +2,9 @@
 
 import { useMatchingSnapshot } from "@/app/matching-snapshot-provider";
 import { BacktestChart } from "@/components/BacktestChart";
-import { HISTORICAL_VALUE_COUNT } from "@/app/page";
 import { Card } from "@radix-ui/themes";
 import { useDisplayMode } from "@/app/display-mode-aware-radix-theme-provider";
+import { HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
 
 export default function SnapshotPage() {
   const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
@@ -37,6 +37,7 @@ export default function SnapshotPage() {
                 minDatapointsRequiredForAllSeries={HISTORICAL_VALUE_COUNT}
                 color={{
                   background: displayMode.mode === 'dark' ? '#18191B' : '#F9F9FB',
+
                   text: displayMode.mode === 'dark' ? '#B0B4BA' : '#60646C',
                   gridLines: displayMode.mode === 'dark' ? '#696E77' : '#8B8D98',
                   scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',

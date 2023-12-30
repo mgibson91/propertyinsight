@@ -1,5 +1,5 @@
-import { CandleData } from "./fetch-candles.ts";
-import { HISTORICAL_BITCOIN_DATA_HOURLY } from "../example-data/hourly-bitcoin.ts";
+import { CandleData } from "@/requests/fetch-candles";
+import { HISTORICAL_BITCOIN_DATA_HOURLY } from "@/example-data/hourly-bitcoin";
 
 export const fetchCandlesFromMemory = async (
   ticker: string,

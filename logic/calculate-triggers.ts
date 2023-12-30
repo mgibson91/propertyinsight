@@ -1,5 +1,7 @@
-import { LineData, OhlcData, SeriesMarker, Time } from "lightweight-charts";
-import { ConsolidatedLineData, FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT, UserSeriesData } from "@/app/page";
+import { LineData, OhlcData, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
+import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
+import { UserSeriesData } from "@/app/page";
+import { ConsolidatedLineData } from "@/logic/calculate-outcomes";
 
 export function calculateTriggers(markerFunctionMap: Map<
   string,
@@ -11,15 +13,15 @@ export function calculateTriggers(markerFunctionMap: Map<
 >, consolidatedSeries: ConsolidatedLineData[], newUserSeriesData: {
   name: string;
   overlay: boolean;
-  data: LineData<Time>[];
+  data: LineData<UTCTimestamp>[];
   color: string;
-  lineWidth: number;
+  lineWidth: 1 | 2 | 3 | 4;
 }[]) {
 
-  const matchingMarkers: SeriesMarker<Time>[] = [];
+  const matchingMarkers: SeriesMarker<UTCTimestamp>[] = [];
   const conditionMarkers: {
-    marker: SeriesMarker<Time>;
-    candlestickData: OhlcData<Time>[];
+    marker: SeriesMarker<UTCTimestamp>;
+    candlestickData: OhlcData<UTCTimestamp>[];
     userSeriesData: UserSeriesData[];
     historicalCandles: number;
   }[] = [];
@@ -37,8 +39,8 @@ export function calculateTriggers(markerFunctionMap: Map<
         .reverse();
       if (func(reversedLookbackSeries)) {
         // TODO: make dynamic from config
-        const marker: SeriesMarker<Time> = {
-          time: consolidatedSeries[i - 1].time,
+        const marker: SeriesMarker<UTCTimestamp> = {
+          time: consolidatedSeries[i - 1].time as UTCTimestamp,
           text: (matchingMarkers.length + 1).toString(),
           position: 'belowBar',
           color: '#D1FE77E4',
@@ -70,15 +72,16 @@ export function calculateTriggers(markerFunctionMap: Map<
         for (let y = 0; y < (HISTORICAL_VALUE_COUNT - i); y++) {
           // Add null values to the beginning of the array for all candlestick data streams
           candlestickData.unshift({
-            high: undefined,
-            low: undefined,
-            open: undefined,
-            close: undefined,
-            time: dataSlice[0].time - (timeDiff * (y + 1)),
+            // TODO: Fix this type hack. OhlcData doesn't allow undefined values but they work as expected
+            high: undefined as unknown as number,
+            low: undefined  as unknown as number,
+            open: undefined  as unknown as number,
+            close: undefined  as unknown as number,
+            time: dataSlice[0].time - (timeDiff * (y + 1)) as UTCTimestamp,
           });
         }
 
-        const userSeriesMap = new Map<string, LineData<Time>[]>();
+        const userSeriesMap = new Map<string, LineData<UTCTimestamp>[]>();
 
         for (const dataPoint of dataSlice) {
           for (const [key, value] of Object.entries(dataPoint)) {
@@ -96,7 +99,7 @@ export function calculateTriggers(markerFunctionMap: Map<
             }
 
             userSeriesMap.get(key)?.push({
-              time: dataPoint.time,
+              time: dataPoint.time as UTCTimestamp,
               value: value as number,
             });
           }
@@ -118,8 +121,9 @@ export function calculateTriggers(markerFunctionMap: Map<
             for (let y = 0; y < backfillCount; y++) {
               // Add null values to the beginning of the array for all candlestick data streams
               backfilledData.unshift({
-                time: dataSlice[0].time - (timeDiff * (y + 1)),
-                value: undefined,
+                time: dataSlice[0].time - (timeDiff * (y + 1)) as UTCTimestamp,
+                // TODO: Fix this type hack. OhlcData doesn't allow undefined values but they work as expected
+                value: undefined as unknown as number,
               });
             }
 
