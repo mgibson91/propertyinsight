@@ -62,6 +62,7 @@ export const LightweightChart = ({
       },
       timeScale: {
         borderColor: color?.scale || '#EDFDEB57',
+        timeVisible: true,
       },
 
       leftPriceScale: {

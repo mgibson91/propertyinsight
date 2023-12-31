@@ -2,12 +2,13 @@
 
 import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { BacktestChart } from '@/components/BacktestChart';
-import { Card, IconButton, Slider } from '@radix-ui/themes';
+import { Button, Card, IconButton, Slider, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
 import { PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SnapshotPage() {
   const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
@@ -17,10 +18,21 @@ export default function SnapshotPage() {
   const [globalIsPlaying, setGlobalIsPlaying] = useState(false);
   const [globalCandlesPerSecond, setGlobalCandlesPerSecond] = useState<number>(1);
 
+  if (matchingSnapshots.length === 0) {
+    return <div className={'w-full h-full items-center justify-center'}>
+      <div className={'h-full gap-2 items-center justify-center flex flex-col'}>
+        <p>No historical setups available</p>
+        <Link href={'/'}>
+          <Button size={'3'}>Configure setups in dashboard</Button>
+        </Link>
+      </div>
+    </div>
+  }
+  
   return (
     <div className="w-full px-4">
-      <div className="sticky top-0 z-10 backdrop-blur-lg">
-        <div className="flex flex-row items-center py-3 justify-between">
+      <div className="sticky top-0 z-10 backdrop-blur-lg" >
+        <div className="flex flex-row items-center py-3 justify-between h-[80px]">
             {/*<h1 className="text-3xl font-bold underline mb-4">Snapshot Page</h1>*/}
             <h1 className="text-xl">Total Snapshots: {matchingSnapshots.length}</h1>
 
@@ -53,9 +65,11 @@ export default function SnapshotPage() {
           <Card className={'h-[300px] !bg-primary-bg-subtle'}>
             <div className={'h-full pt-8 relative'}>
               <div className={'absolute top-0 right-0 w-full z-10 flex justify-end'}>
-                <IconButton onClick={() => router.push(`/snapshots/replay?position=${index}`)}>
-                  <TimerIcon className={'h-5 w-5'}></TimerIcon>
-                </IconButton>
+                <Tooltip content={'Replay'} delayDuration={100}>
+                  <IconButton onClick={() => router.push(`/setups/replay?position=${index}`)}>
+                    <TimerIcon className={'h-5 w-5'}></TimerIcon>
+                  </IconButton>
+                </Tooltip>
               </div>
               <BacktestChart
                 key={index} // Replace 'index' with a unique identifier if available

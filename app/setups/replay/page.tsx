@@ -27,17 +27,70 @@ export default function () {
   if (matchingSnapshots.length === 0) {
     return <div className={'w-full h-full items-center justify-center'}>
         <div className={'h-full gap-2 items-center justify-center flex flex-col'}>
-          <p>No snapshots found</p>
+          <p>No historical setups available</p>
           <Link href={'/'}>
-            <Button size={'3'}>Dashboard</Button>
+            <Button size={'3'}>Configure setups in dashboard</Button>
           </Link>
         </div>
     </div>
   }
 
   return (
-    <div className={'flex flex-col w-full h-full gap-3'}>
-      <div className={'w-full flex-1 p-5'}>
+    <div className={'flex flex-col w-full h-full gap-3 px-4'}>
+      <div className="sticky top-0 z-10 backdrop-blur-lg">
+        {/*<div className="flex flex-row items-center py-3 justify-between">*/}
+        <div className={'flex flex-row items-center py-3 justify-between h-[80px]'}>
+          <div className={'flex-1'}></div>
+          <div className={'flex flex-row gap-2'}>
+            <Button
+              onClick={() => {
+                if (position > 0) {
+                  setPosition(position - 1);
+                  router.push(`/setups/replay?position=${position - 1}`);
+                }
+              }}
+            >
+              Prev setup
+            </Button>
+            <Button
+              onClick={() => {
+                if (position < matchingSnapshots.length - 1) {
+                  setPosition(position + 1);
+                  router.push(`/setups/replay?position=${position + 1}`);
+                }
+              }}
+            >
+              Next setup
+            </Button>
+          </div>
+
+          <div className={'justify-end flex items-center flex-1'}>
+            <div className={'flex flex-row items-center gap-3'}>
+              <IconButton
+                variant={'soft'}
+                onClick={() => setIsPlaying(!isPlaying)}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </IconButton>
+
+              <div className={'flex flex-col gap-1 items-center w-[170px]'}>
+                <label>{candlesPerSecond} candles / second</label>
+                <Slider
+                  value={[candlesPerSecond]}
+                  max={10}
+                  min={1}
+                  defaultValue={[1]}
+                  onValueChange={value => setCandlesPerSecond(value[0])}
+                  className="w-24 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={'w-full flex-1 p-5 pt-0'}>
         <BacktestChart
           autoplay={isPlaying}
           candlesPerSecond={candlesPerSecond}
@@ -61,53 +114,6 @@ export default function () {
             scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',
           }}
         />
-      </div>
-
-      <div className={'p-5 pt-0 flex flex-row gap-2 mt-3 justify-center items-center'}>
-        <div className={'flex-1'}></div>
-        <Button
-          onClick={() => {
-            if (position > 0) {
-              setPosition(position - 1);
-              router.push(`/snapshots/replay?position=${position - 1}`);
-            }
-          }}
-        >
-          Prev setup
-        </Button>
-        <Button
-          onClick={() => {
-            if (position < matchingSnapshots.length - 1) {
-              setPosition(position + 1);
-              router.push(`/snapshots/replay?position=${position + 1}`);
-            }
-          }}
-        >
-          Next setup
-        </Button>
-        <div className={'justify-end flex items-center flex-1'}>
-          <div className={'flex flex-row items-center gap-3'}>
-            <IconButton
-              variant={'soft'}
-              onClick={() => setIsPlaying(!isPlaying)}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </IconButton>
-
-            <div className={'flex flex-col gap13 items-center w-[170px]'}>
-              <label>{candlesPerSecond} candles / second</label>
-              <Slider
-                value={[candlesPerSecond]}
-                max={10}
-                min={1}
-                defaultValue={[1]}
-                onValueChange={value => setCandlesPerSecond(value[0])}
-                className="w-24 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

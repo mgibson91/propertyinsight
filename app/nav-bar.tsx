@@ -21,12 +21,12 @@ export const NavBar = ({ rightSlot }: { rightSlot?: React.ReactNode }) => {
       </div>
 
       <div className={'flex flex-row ml-10 gap-3'}>
-        <Link href={'/snapshots'}>
-          <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>Snapshots</Heading>
+        <Link href={'/setups'}>
+          <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>Historical Setups</Heading>
         </Link>
 
-        <Link href={'/snapshots/replay'}>
-          <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>Replay</Heading>
+        <Link href={'/setups/replay'}>
+          <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>Setup Replay</Heading>
         </Link>
       </div>
 
