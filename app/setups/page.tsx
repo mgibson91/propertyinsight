@@ -1,6 +1,6 @@
 'use client';
 
-import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { MatchingSnapshot, useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { BacktestChart } from '@/components/BacktestChart';
 import { Button, Card, IconButton, Slider, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
@@ -60,7 +60,7 @@ export default function SnapshotPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
         {matchingSnapshots.map((snapshot, index) => (
           <Card className={'h-[300px] !bg-primary-bg-subtle'}>
             <div className={'h-full pt-8 relative'}>
@@ -85,7 +85,8 @@ export default function SnapshotPage() {
                   background: displayMode.mode === 'dark' ? '#18191B' : '#F9F9FB',
 
                   text: displayMode.mode === 'dark' ? '#B0B4BA' : '#60646C',
-                  gridLines: displayMode.mode === 'dark' ? '#696E77' : '#8B8D98',
+                  // gridLines: displayMode.mode === 'dark' ? '#696E77' : '#8B8D98',
+                  gridLines: '#0000',
                   scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',
                 }}
               />

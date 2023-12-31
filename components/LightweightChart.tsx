@@ -104,6 +104,7 @@ export const LightweightChart = ({
         const lineSeries = chart.addLineSeries({
           color: series.color,
           lineWidth: series.lineWidth || 1,
+          lastValueVisible: false,
           // priceScaleId: 'left',
         });
 

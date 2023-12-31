@@ -11,7 +11,28 @@ const defaultUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: 'tradescan.pro',
-  description: 'Backtest faster than ever before',
+  description: 'Test. Learn. Earn - Faster',
+  openGraph: {
+    title: 'Tradescan',
+    description: 'Test. Learn. Earn - Faster',
+    url: 'https://tradescan.pro',
+    siteName: 'Tradescan',
+    images: [
+      {
+        url: 'https://drive.google.com/uc?export=view&id=1dQoOQK9yflBc-vYZAc5VAzAE7652tPbE',
+        width: 1204,
+        height: 632,
+      },
+      // {
+      //   url: 'https://nextjs.org/og-alt.png',
+      //   width: 1800,
+      //   height: 1600,
+      //   alt: 'My custom alt',
+      // },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({

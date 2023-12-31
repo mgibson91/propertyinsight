@@ -84,7 +84,7 @@
   // Filter out the null entries, similar to your offset example
   return smaData.filter(item => item !== null);`,
       overlay: true,
-      color: '#ffffff',
+      color: '#E54D2E',
       lineWidth: 1,
     },
     {
@@ -112,7 +112,7 @@
   // Filter out the null entries, similar to your offset example
   return smaData.filter(item => item !== null);`,
       overlay: true,
-      color: '#ffffff',
+      color: '#29A383',
       lineWidth: 1,
     },
   ];
@@ -422,7 +422,7 @@
               marker: {
                 time: outcome.outcome.time,
                 position: outcome.type === 'success' ? 'belowBar' : 'aboveBar', // 'inBar',
-                color: outcome.type === 'success' ? '#0F0' : '#F00',
+                color: (outcome.type === 'success' ? (displayMode.mode ==='dark' ? '#1FD8A4' : '#208368') : (displayMode.mode ==='dark' ? '#FF977D' : '#D13415')),
                 shape: outcome.type === 'success' ? 'arrowUp' : 'arrowDown',
                 size: 2,
                 text: outcome.text,
@@ -607,6 +607,7 @@
                             <label>Overlay</label>
                             <Checkbox
                               variant={'soft'}
+                              color={'jade'}
                               className="border border-primary-border !cursor-pointer"
                               checked={series.overlay}
                               onClick={() => {
@@ -802,7 +803,10 @@
                       ...t,
                       color: (displayMode.mode ==='dark' ? '#D4FF70' : '#8DB654')
                     })),
-                    ...outcomeMarkers
+                    ...outcomeMarkers.map(t => ({
+                      ...t,
+                      color: (t.shape === 'arrowUp' ? (displayMode.mode ==='dark' ? '#1FD8A4' : '#208368') : (displayMode.mode ==='dark' ? '#FF977D' : '#D13415')),
+                    })),
                   ].sort(
                     (a, b) => (a.time as number) - (b.time as number)
                   )}

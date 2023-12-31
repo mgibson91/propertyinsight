@@ -5,7 +5,7 @@ import { BacktestChart } from '@/components/BacktestChart';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
 import { PauseIcon, PlayIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
-import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { MatchingSnapshot, useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +15,7 @@ export default function () {
   const [candlesPerSecond, setCandlesPerSecond] = useState<number>(1);
 
   const [displayMode, setDisplayMode] = useDisplayMode();
-  const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
+  const [origSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
   const router = useRouter();
 
   const searchParams = useSearchParams()
@@ -23,6 +23,21 @@ export default function () {
   const urlPosition = urlPositionString ? parseInt(urlPositionString) : 0;
 
   const [position, setPosition] = useState<number>(!isNaN(urlPosition) ? urlPosition : 0);
+
+  const matchingSnapshots = origSnapshots.map(snapshot => ({
+    ...snapshot,
+    marker: {
+      ...snapshot.marker,
+      color: (displayMode.mode ==='dark' ? '#D4FF70' : '#8DB654')
+    },
+    outcome: snapshot.outcome?.outcomeDetails ? {
+      ...snapshot.outcome,
+      marker: {
+        ...snapshot.outcome.marker,
+        color: (snapshot.outcome.marker.shape === 'arrowUp' ? (displayMode.mode ==='dark' ? '#1FD8A4' : '#208368') : (displayMode.mode ==='dark' ? '#FF977D' : '#D13415')),
+      }
+    } : undefined
+  } as MatchingSnapshot));
 
   if (matchingSnapshots.length === 0) {
     return <div className={'w-full h-full items-center justify-center'}>
