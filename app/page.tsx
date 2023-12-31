@@ -60,7 +60,7 @@
 
   const INITIAL_USER_SERIES: UserSeries[] = [
     {
-      name: 'sma',
+      name: 'sma20',
       // seriesFunctionString: `
       // return data.map(d => ({ time: d.time, value: d.close }));
       // `,
@@ -87,19 +87,50 @@
       color: '#ffffff',
       lineWidth: 1,
     },
+    {
+      name: 'sma50',
+      // seriesFunctionString: `
+      // return data.map(d => ({ time: d.time, value: d.close }));
+      // `,
+      seriesFunctionString: `const windowSize = 50;  // Setting the period for SMA
+  
+  const smaData = data.map((current, index) => {
+    if (index >= windowSize - 1) {
+      // Calculate SMA only when there are enough preceding data points
+      let sum = 0;
+      // Sum the closing prices of the last 'windowSize' days
+      for (let i = index - windowSize + 1; i <= index; i++) {
+        sum += data[i].close;
+      }
+      let average = sum / windowSize;
+      return { time: current.time, value: average };
+    } else {
+      return null;  // Not enough data to calculate SMA
+    }
+  });
+  
+  // Filter out the null entries, similar to your offset example
+  return smaData.filter(item => item !== null);`,
+      overlay: true,
+      color: '#ffffff',
+      lineWidth: 1,
+    },
   ];
+
+  /**
+   * return (
+   *     data[0].close > data[0].sma &&
+   *     data[1].close <= data[1].sma &&
+   *     data[2].close < data[2].sma
+   *   );
+   */
 
   const INITIAL_USER_TRIGGERS: UserTrigger[] = [
     {
       id: '1',
-      name: 'Close above SMA',
-      triggerFunctionString: `
-  return (
-    data[0].close > data[0].sma &&
-    data[1].close <= data[1].sma &&
-    data[2].close < data[2].sma
-  );
-      `,
+      name: 'sma crossover',
+      triggerFunctionString:
+`return data[0].sma20 > data[0].sma50 && data[1].sma20 < data[1].sma50`,
       size: 2,
       color: '#ffffff',
     },
@@ -125,9 +156,9 @@
     const [timeframe, setTimeframe] = useState('1h');
     const [startDate, setStartDate] = useState(
       // new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-      new Date('2023-12-01')
+      new Date('2023-11-15')
     );
-    const [endDate, setEndDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date('2023-12-15'));
     const [candlestickData, setCandlestickData] = useState<
       CandlestickData<UTCTimestamp>[]
     >([]);
@@ -522,21 +553,21 @@
             </div>
 
             {outcomeSummary && (
-              <Card className={'flex-0 ml-auto'}>
-                <div className={'flex flex-col text-sm'}>
+              <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>
+                <div className={'flex flex-col'}>
                   <div className={'flex flex-row'}>
-                    <span className={'font-bold w-16'}>Wins:&nbsp;</span>
-                    <span>{outcomeSummary?.successCount}</span>
+                    <span className={'font-bold w-20'}>Wins:&nbsp;</span>
+                    <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>
                   </div>
 
                   <div className={'flex flex-row'}>
-                    <span className={'font-bold w-16'}>Losses:&nbsp;</span>
-                    <span>{outcomeSummary?.failCount}</span>
+                    <span className={'font-bold w-20'}>Losses:&nbsp;</span>
+                    <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>
                   </div>
 
                   <div className={'flex flex-row'}>
-                    <span className={'font-bold w-16'}>Win %:&nbsp;</span>
-                    <span>{isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(2)}</span>
+                    <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>
+                    <span className={'text-[var(--slate-11)] font-bold'}>{isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%</span>
                   </div>
                 </div>
               </Card>
