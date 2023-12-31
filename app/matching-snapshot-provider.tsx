@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext } from 'react';
 import { OhlcData, SeriesMarker, Time } from "lightweight-charts";
-import { UserSeriesData } from "@/app/page";
+import { UserSeriesData } from "@/app/client-page";
 
 export interface MatchingSnapshot {
   marker: SeriesMarker<Time>;

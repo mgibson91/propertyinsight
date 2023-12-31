@@ -2,7 +2,7 @@
 
 import { Button, Card, Dialog, TextFieldInput } from '@radix-ui/themes';
 import { Editor } from '@monaco-editor/react';
-import { UserOutcome } from "@/app/page";
+import { UserOutcome } from "@/app/client-page";
 
 export const UserOutcomeDialog = ({
   show,

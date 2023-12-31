@@ -1,5 +1,5 @@
 import { OhlcData, Time, UTCTimestamp } from "lightweight-charts";
-import { UserSeriesData } from "@/app/page";
+import { UserSeriesData } from "@/app/client-page";
 import { ConsolidatedLineData } from "@/logic/calculate-outcomes";
 
 export function getConsolidatedSeries(

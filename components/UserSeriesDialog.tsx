@@ -10,7 +10,7 @@ import {
 import { Editor } from "@monaco-editor/react";
 
 import * as monaco from 'monaco-editor';
-import { UserSeries } from "@/app/page";
+import { UserSeries } from "@/app/client-page";
 
 export const UserSeriesDialog = ({
   show,

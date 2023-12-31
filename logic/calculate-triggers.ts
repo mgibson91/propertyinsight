@@ -1,6 +1,6 @@
 import { LineData, OhlcData, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
 import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
-import { UserSeriesData } from "@/app/page";
+import { UserSeriesData } from "@/app/client-page";
 import { ConsolidatedLineData } from "@/logic/calculate-outcomes";
 
 export function calculateTriggers(markerFunctionMap: Map<
