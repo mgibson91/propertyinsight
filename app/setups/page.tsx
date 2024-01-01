@@ -1,14 +1,16 @@
 'use client';
 
-import { MatchingSnapshot, useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { BacktestChart } from '@/components/BacktestChart';
 import { Button, Card, IconButton, Slider, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
-import { PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import Link from "next/link";
+import { DownloadIcon, PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Link from 'next/link';
+import { CSVLink } from "react-csv";
+import { prepareCsvContent } from "@/app/(logic)/prepare-csv-content";
 
 export default function SnapshotPage() {
   const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
@@ -19,44 +21,59 @@ export default function SnapshotPage() {
   const [globalCandlesPerSecond, setGlobalCandlesPerSecond] = useState<number>(1);
 
   if (matchingSnapshots.length === 0) {
-    return <div className={'w-full h-full items-center justify-center'}>
-      <div className={'h-full gap-2 items-center justify-center flex flex-col'}>
-        <p>No historical setups available</p>
-        <Link href={'/'}>
-          <Button size={'3'}>Configure setups in dashboard</Button>
-        </Link>
+    return (
+      <div className={'w-full h-full items-center justify-center'}>
+        <div className={'h-full gap-2 items-center justify-center flex flex-col'}>
+          <p>No historical setups available</p>
+          <Link href={'/'}>
+            <Button size={'3'}>Configure setups in dashboard</Button>
+          </Link>
+        </div>
       </div>
-    </div>
+    );
   }
-  
+
   return (
     <div className="w-full px-4">
-      <div className="sticky top-0 z-10 backdrop-blur-lg" >
+      <div className="sticky top-0 z-10 backdrop-blur-lg">
         <div className="flex flex-row items-center py-3 justify-between h-[80px]">
-            {/*<h1 className="text-3xl font-bold underline mb-4">Snapshot Page</h1>*/}
+          <div className={'flex flex-row gap-3'}>
             <h1 className="text-xl">Total Snapshots: {matchingSnapshots.length}</h1>
 
-            <div className={'flex flex-row items-center gap-3'}>
-              <IconButton
-                variant={'soft'}
-                onClick={() => setGlobalIsPlaying(!globalIsPlaying)}
-                aria-label={globalIsPlaying ? 'Pause' : 'Play'}
-              >
-                {globalIsPlaying ? <PauseIcon /> : <PlayIcon />}
-              </IconButton>
+            <CSVLink
+              data={prepareCsvContent(matchingSnapshots, 2)}
+              filename={"my-file.csv"}
+              target="_blank"
+            >
+              <Button>
+                Download CSV
+                <DownloadIcon></DownloadIcon>
+              </Button>
+            </CSVLink>
+          </div>
 
-              <div className={'flex flex-col gap-1 items-center w-[170px]'}>
-                <label>{globalCandlesPerSecond} candles / second</label>
-                <Slider
-                  value={[globalCandlesPerSecond]}
-                  max={10}
-                  min={1}
-                  defaultValue={[1]}
-                  onValueChange={value => setGlobalCandlesPerSecond(value[0])}
-                  className="w-24 cursor-pointer"
-                />
-              </div>
+
+          <div className={'flex flex-row items-center gap-3'}>
+            <IconButton
+              variant={'soft'}
+              onClick={() => setGlobalIsPlaying(!globalIsPlaying)}
+              aria-label={globalIsPlaying ? 'Pause' : 'Play'}
+            >
+              {globalIsPlaying ? <PauseIcon /> : <PlayIcon />}
+            </IconButton>
+
+            <div className={'flex flex-col gap-1 items-center w-[170px]'}>
+              <label>{globalCandlesPerSecond} candles / second</label>
+              <Slider
+                value={[globalCandlesPerSecond]}
+                max={10}
+                min={1}
+                defaultValue={[1]}
+                onValueChange={value => setGlobalCandlesPerSecond(value[0])}
+                className="w-24 cursor-pointer"
+              />
             </div>
+          </div>
         </div>
       </div>
 

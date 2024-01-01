@@ -1,12 +1,12 @@
 'use client'
 
 import React, { createContext, useState, useContext } from 'react';
-import { OhlcData, SeriesMarker, Time } from "lightweight-charts";
+import { OhlcData, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
 import { UserSeriesData } from "@/app/client-page";
 
 export interface MatchingSnapshot {
-  marker: SeriesMarker<Time>;
-  candlestickData: OhlcData<Time>[];
+  marker: SeriesMarker<UTCTimestamp>;
+  candlestickData: OhlcData<UTCTimestamp>[];
   userSeriesData: UserSeriesData[];
   outcome?: {
     marker: SeriesMarker<Time>;
