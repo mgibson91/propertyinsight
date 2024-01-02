@@ -1,12 +1,10 @@
-'use client'
+'use client';
 
-import React, { createContext, useState, useContext } from 'react';
-import { OhlcData, SeriesMarker, Time } from "lightweight-charts";
-import { UserSeriesData } from "@/app/client-page";
-import { Theme } from "@radix-ui/themes";
+import React, { createContext, useContext, useState } from 'react';
+import { Theme } from '@radix-ui/themes';
 
 export interface Mode {
-  mode: "light" | "dark";
+  mode: 'light' | 'dark';
 }
 
 // Create a context with a default empty value

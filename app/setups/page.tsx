@@ -35,7 +35,7 @@ export default function SnapshotPage() {
 
   return (
     <div className="w-full px-4">
-      <div className="sticky top-0 z-10 backdrop-blur-lg">
+      <div className="sticky top-[50px] z-10 backdrop-blur-lg">
         <div className="flex flex-row items-center py-3 justify-between h-[80px]">
           <div className={'flex flex-row gap-3'}>
             <h1 className="text-xl">Total Snapshots: {matchingSnapshots.length}</h1>

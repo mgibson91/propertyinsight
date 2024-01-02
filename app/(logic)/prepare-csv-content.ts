@@ -38,13 +38,13 @@ export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedi
 
     // Get relevant user series data (within candle stick window)
     const precedingUserSeriesData: UserSeriesData[] = userSeriesData.map(series => {
-      const sortedSeriesData = series.data.sort((a, b) => a.time - b.time);
-      const snapshotSeriesIndex = sortedSeriesData.findIndex(series => series.time === snapshot.marker.time);
+      const sortedSeriesData = series.data.sort((a: any, b: any) => a.time - b.time);
+      const snapshotSeriesIndex = sortedSeriesData.findIndex((series: any) => series.time === snapshot.marker.time);
       const preceding = sortedSeriesData.slice(snapshotSeriesIndex - precedingCount, snapshotSeriesIndex);
       return {
         ...series,
         data: preceding.filter(
-          series =>
+          (series: any) =>
             series.time >= precedingCandlestickData[0].time &&
             series.time <= precedingCandlestickData[precedingCandlestickData.length - 1].time
         ),

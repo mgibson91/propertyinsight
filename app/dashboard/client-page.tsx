@@ -19,6 +19,7 @@
   import { useDisplayMode } from "@/app/display-mode-aware-radix-theme-provider";
   import { getConsolidatedSeries } from "@/app/(logic)/get-consolidated-series";
   import { HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
+  import { UserOutcome, UserSeries, UserSeriesData, UserTrigger } from "@/app/(logic)/types";
 
   // import 'codemirror/keymap/sublime';
   // import 'codemirror/theme/monokai.css';

@@ -3,7 +3,7 @@ import { CheckIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
 export default function() {
-  return <div className={'w-full h-full flex-col flex text-primary-text-contrast'}>
+  return <div className={'w-full h-full flex-col flex text-primary-text-contrast overflow-auto'}>
     <div className={'mt-[5%] flex flex-col items-center'}>
       <div className={'flex flex-row gap-2 items-center'}>
         <img src={"/tradescan-logo.png"} className={"h-12"}/>
