@@ -1,6 +1,6 @@
 import { MatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
-import { UserSeriesData } from '@/app/client-page';
+import { UserSeriesData } from "@/app/(logic)/types";
 
 export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedingCount: number) {
   const consolidatedSnapshotEntries: {

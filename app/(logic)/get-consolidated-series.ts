@@ -1,6 +1,6 @@
 import { OhlcData, Time, UTCTimestamp } from "lightweight-charts";
-import { UserSeriesData } from "@/app/client-page";
 import { ConsolidatedLineData } from "@/logic/calculate-outcomes";
+import { UserSeriesData } from "@/app/(logic)/types";
 
 export function getConsolidatedSeries(
   candleData: OhlcData<UTCTimestamp>[],

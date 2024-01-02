@@ -2,7 +2,7 @@
 
 import { Button, Card, Dialog, TextFieldInput, } from '@radix-ui/themes';
 import { Editor } from "@monaco-editor/react";
-import { UserTrigger } from "@/app/client-page";
+import { UserTrigger } from "@/app/(logic)/types";
 
 export const UserTriggerDialog = ({
   show,

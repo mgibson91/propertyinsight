@@ -25,39 +25,6 @@
   // Manually loading the language resources here
   // import 'codemirror/mode/javascript/javascript';
 
-  export interface UserSeries {
-    name: string;
-    // seriesFunction: (data: OhlcData[]) => LineData<UTCTimestamp>[];
-    seriesFunctionString: string;
-    overlay: boolean;
-    color: string;
-    lineWidth: 1 | 2 | 3 | 4;
-  }
-
-  export interface UserTrigger {
-    id: string;
-    name: string;
-    triggerFunctionString: string;
-    color: string;
-    size: number;
-  }
-
-  export interface UserOutcome {
-    id: string;
-    name: string;
-    outcomeFunctionString: string;
-    color: string;
-    size: number;
-  }
-
-  export interface UserSeriesData {
-    name: string;
-    overlay: boolean;
-    data: LineData<UTCTimestamp>[];
-    color: string;
-    lineWidth: 1 | 2 | 3 | 4;
-  }
-
   const INITIAL_USER_SERIES: UserSeries[] = [
     {
       name: 'sma20',
@@ -579,7 +546,7 @@
               <Card className={'!bg-primary-bg-subtle'}>
                 <div className={'flex flex-col w-[300px] gap-3'}>
                   <div className={'flex flex-row items-center justify-between'}>
-                    <Heading size={'5'}>User series</Heading>
+                    <Heading size={'5'} className={'text-primary-text-contrast'}>User series</Heading>
 
                     <IconButton
                       onClick={() => {
@@ -664,7 +631,7 @@
               <Card className={'!bg-primary-bg-subtle'}>
                 <div className={'flex flex-col w-[300px] gap-3'}>
                   <div className={'flex flex-row items-center justify-between'}>
-                    <Heading size={'5'}>Triggers</Heading>
+                    <Heading size={'5'} className={'text-primary-text-contrast'}>Triggers</Heading>
 
                     {/* Consolidate series with names */}
                     {/* Pass to function which receives an array of objects */}
@@ -734,7 +701,7 @@
               <Card className={'!bg-primary-bg-subtle'}>
                 <div className={'flex flex-col w-[300px] gap-3'}>
                   <div className={'flex flex-row items-center justify-between'}>
-                    <Heading size={'5'}>Outcome</Heading>
+                    <Heading size={'5'} className={'text-primary-text-contrast'}>Outcome</Heading>
 
                     {/* Consolidate series with names */}
                     {/* Pass to function which receives an array of objects */}
