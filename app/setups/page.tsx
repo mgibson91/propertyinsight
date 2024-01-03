@@ -2,7 +2,7 @@
 
 import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { BacktestChart } from '@/components/BacktestChart';
-import { Button, Card, IconButton, Slider, Tooltip } from '@radix-ui/themes';
+import { Button, Card, Dialog, Heading, IconButton, Slider, TextFieldInput, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
 import { DownloadIcon, PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
@@ -14,6 +14,7 @@ import { prepareCsvContent } from "@/app/(logic)/prepare-csv-content";
 
 export default function SnapshotPage() {
   const [matchingSnapshots, setMatchingSnapshots] = useMatchingSnapshot();
+  const [precedingSamples, setPrecedingSamples] = useState<number>(5);
   const [displayMode, setDisplayMode] = useDisplayMode();
   const router = useRouter();
 
@@ -40,16 +41,41 @@ export default function SnapshotPage() {
           <div className={'flex flex-row gap-3'}>
             <h1 className="text-xl">Total Snapshots: {matchingSnapshots.length}</h1>
 
-            <CSVLink
-              data={prepareCsvContent(matchingSnapshots, 2)}
-              filename={"my-file.csv"}
-              target="_blank"
-            >
-              <Button>
-                Download CSV
-                <DownloadIcon></DownloadIcon>
-              </Button>
-            </CSVLink>
+            <Dialog.Root>
+              <Dialog.Trigger className={'flex flex-row gap-2 items-center'}>
+                <Button>
+                  Download CSV
+                  <DownloadIcon></DownloadIcon>
+                </Button>
+              </Dialog.Trigger>
+
+              <Dialog.Content className={'!max-w-[350px]'}>
+                <div className={'flex flex-col gap-4'}>
+                  <Heading>Download matching setups</Heading>
+
+                  <div className={'flex flex-col'}>
+                    <label>Number of preceding values</label>
+                    <TextFieldInput type={'number'} value={precedingSamples} onChange={
+                      (e) => setPrecedingSamples(parseInt(e.currentTarget.value))
+                    }></TextFieldInput>
+                  </div>
+
+                  <CSVLink
+                    className={'self-center mt-2'}
+                    data={prepareCsvContent(matchingSnapshots, precedingSamples)}
+                    filename={"my-file.csv"}
+                    target="_blank"
+                  >
+                    <Button size={'3'}>
+                      Download CSV
+                      <DownloadIcon></DownloadIcon>
+                    </Button>
+                  </CSVLink>
+                </div>
+              </Dialog.Content>
+            </Dialog.Root>
+
+
           </div>
 
 

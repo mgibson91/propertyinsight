@@ -51,8 +51,8 @@ export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedi
       };
     });
 
-    const consolidatedPreceedingData = getConsolidatedSeries(precedingCandlestickData, precedingUserSeriesData);
-    const reversed = [...consolidatedPreceedingData].reverse();
+    const consolidatedPrecedingData = getConsolidatedSeries(precedingCandlestickData, precedingUserSeriesData);
+    const reversed = [...consolidatedPrecedingData].reverse();
 
     const result: Record<string, number> = {};
 
