@@ -65,7 +65,7 @@ export default function Login() {
             Email
           </label>
 
-          <TextFieldInput type="email" name="email" placeholder="you@example.com" required />
+          <TextFieldInput size='3' type="email" name="email" placeholder="you@example.com" required />
 
           <label className="text-md" htmlFor="password">
             Password
