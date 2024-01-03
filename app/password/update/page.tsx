@@ -42,7 +42,7 @@ export default function Page() {
 
                   logger.error("Password successfully updated");
 
-                  router.push("/products");
+                  router.push("/dashboard");
                 } catch (err) {
                   logger.error("Password update failed", { ...(err || {}) });
                 }
