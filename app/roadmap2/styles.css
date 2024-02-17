@@ -1,0 +1,9 @@
+.list-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr) minmax(
+      300px,
+      1fr
+    );
+    grid-gap: 16px;
+    /* grid-auto-columns: minmax(200px, 1fr) minmax(200px, 1fr) minmax(200px, 1fr); */
+}
