@@ -7,6 +7,13 @@ export async function getHydratedBoard(boardName: string, correlationId?: string
   const logger = getLogger('getBoardHierarchy', { correlationId });
   logger.info('Fetching board hierarchy');
 
+  const allColumns = await db
+    .selectFrom('board_columns')
+    .select(['id', 'title', 'position', 'board_id'])
+    .where('board_id', '=', db.selectFrom('boards').select('id').where('name', '=', boardName))
+    .orderBy('position')
+    .execute();
+
   try {
     const rawQuery = sql`
       SELECT
@@ -38,7 +45,7 @@ ORDER BY
     const { rows: results } = await rawQuery.execute(db);
 
     // Process results into hierarchical structure
-    const board = results.reduce<Board[]>((acc, row: any) => {
+    const boards = results.reduce<Board[]>((acc, row: any) => {
       let board = acc.find(rm => rm.id === row.board_id);
       if (!board) {
         board = { id: row.board_id, name: row.board_name, columns: [] };
@@ -68,7 +75,26 @@ ORDER BY
       return acc;
     }, []);
 
-    return board.length ? board[0] : null;
+    const board = boards.length ? boards[0] : null;
+    if (!board) {
+      return null;
+    }
+
+    allColumns.forEach(col => {
+      const column = board.columns.find(c => c.id === col.id);
+      if (!column) {
+        board.columns.push({
+          id: col.id,
+          title: col.title,
+          position: col.position,
+          items: [],
+        });
+      }
+    });
+
+    board.columns = board.columns.sort((a, b) => a.position - b.position);
+
+    return board;
   } catch (error) {
     logger.error('Error processing board hierarchy', error || {});
     throw error;
