@@ -241,6 +241,7 @@ export interface AuthUsers {
 export interface BoardColumns {
   board_id: string;
   created_at: Generated<Timestamp>;
+  creating_user_id: string;
   id: Generated<string>;
   position: number;
   title: string;
@@ -249,6 +250,7 @@ export interface BoardColumns {
 export interface BoardItems {
   column_id: string;
   created_at: Generated<Timestamp>;
+  creating_user_id: string;
   id: Generated<string>;
   position: number;
   title: string;
@@ -256,6 +258,7 @@ export interface BoardItems {
 
 export interface Boards {
   created_at: Generated<Timestamp>;
+  creating_user_id: string;
   id: Generated<string>;
   name: string;
 }

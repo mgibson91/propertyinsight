@@ -13,7 +13,7 @@ interface Props {
   deleteColumn: (id: Id) => void;
   updateColumn: (id: Id, title: string) => void;
 
-  createTask: (columnId: Id) => void;
+  createTask: (columnId: Id) => Task;
   updateTask: (id: Id, content: string) => void;
   deleteTask: (id: Id) => void;
   addVote: (id: Id) => void;
@@ -31,6 +31,7 @@ export function ColumnContainer({
   addVote,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
+  const [editItemId, setEditItemId] = useState<Id | null>(null);
 
   const tasksIds = useMemo(() => {
     return tasks.map(task => task.id);
@@ -153,7 +154,17 @@ export function ColumnContainer({
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
         <SortableContext items={tasksIds}>
           {tasks.map(task => (
-            <TaskCard key={task.id} task={task} deleteTask={deleteTask} updateTask={updateTask} addVote={addVote} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              deleteTask={deleteTask}
+              updateTask={updateTask}
+              addVote={addVote}
+              editMode={editItemId === task.id}
+              setEditMode={(edit: boolean) => {
+                setEditItemId(edit ? task.id : null);
+              }}
+            />
           ))}
         </SortableContext>
       </div>
@@ -162,7 +173,8 @@ export function ColumnContainer({
         variant={'ghost'}
         className={'!p-3 !m-3'}
         onClick={() => {
-          createTask(column.id);
+          const task = createTask(column.id);
+          setEditItemId(task.id);
         }}
       >
         <PlusIcon />

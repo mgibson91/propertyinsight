@@ -1,6 +1,7 @@
 create table "public"."boards" (
     "id" uuid not null default gen_random_uuid(),
     "created_at" timestamp with time zone not null default now(),
+    "creating_user_id" uuid not null,
     "name" text not null
 );
 
@@ -8,11 +9,12 @@ create table "public"."boards" (
 alter table "public"."boards" enable row level security;
 
 create table "public"."board_columns" (
+    "id" uuid not null default gen_random_uuid(),
     "created_at" timestamp with time zone not null default now(),
+    "creating_user_id" uuid not null,
     "board_id" uuid not null,
     "title" text not null,
-    "position" integer not null,
-    "id" uuid not null default gen_random_uuid()
+    "position" integer not null
 );
 
 
@@ -21,6 +23,7 @@ alter table "public"."board_columns" enable row level security;
 create table "public"."board_items" (
     "id" uuid not null default gen_random_uuid(),
     "created_at" timestamp with time zone not null default now(),
+    "creating_user_id" uuid not null,
     "title" text not null,
     "position" integer not null,
     "column_id" uuid not null
@@ -42,8 +45,6 @@ alter table "public"."board_votes" enable row level security;
 
 CREATE UNIQUE INDEX idx_board_column_position ON public.board_columns USING btree (board_id, "position");
 
-CREATE UNIQUE INDEX idx_board_items_position ON public.board_items USING btree (column_id, "position");
-
 CREATE UNIQUE INDEX idx_boards_name ON public.boards USING btree ("name");
 
 CREATE UNIQUE INDEX board_column_pkey ON public.board_columns USING btree (id);
@@ -62,13 +63,25 @@ alter table "public"."board_items" add constraint "board_items_pkey" PRIMARY KEY
 
 alter table "public"."board_votes" add constraint "board_votes_pkey" PRIMARY KEY using index "board_votes_pkey";
 
+alter table "public"."boards" add constraint "boards_creating_user_id_fkey" FOREIGN KEY (creating_user_id) REFERENCES auth.users(id) not valid;
+
+alter table "public"."boards" validate constraint "boards_creating_user_id_fkey";
+
 alter table "public"."board_columns" add constraint "board_columns_board_id_fkey" FOREIGN KEY (board_id) REFERENCES boards(id) not valid;
 
 alter table "public"."board_columns" validate constraint "board_columns_board_id_fkey";
 
+alter table "public"."board_columns" add constraint "board_columns_creating_user_id_fkey" FOREIGN KEY (creating_user_id) REFERENCES auth.users(id) not valid;
+
+alter table "public"."board_columns" validate constraint "board_columns_creating_user_id_fkey";
+
 alter table "public"."board_items" add constraint "board_items_column_id_fkey" FOREIGN KEY (column_id) REFERENCES board_columns(id) not valid;
 
 alter table "public"."board_items" validate constraint "board_items_column_id_fkey";
+
+alter table "public"."board_items" add constraint "board_items_creating_user_id_fkey" FOREIGN KEY (creating_user_id) REFERENCES auth.users(id) not valid;
+
+alter table "public"."board_items" validate constraint "board_items_creating_user_id_fkey";
 
 alter table "public"."board_votes" add constraint "board_votes_item_id_fkey" FOREIGN KEY (item_id) REFERENCES board_items(id) not valid;
 

@@ -23,6 +23,8 @@ import { Board } from '@/repository/roadmap/types';
 import { updateBoardItemTitle } from '@/repository/roadmap/update-board-item';
 import { updateColumnPosition } from '@/repository/roadmap/update-column-position';
 import { updateItemColumnAndPosition } from '@/repository/roadmap/move-item';
+import { createItem } from '@/repository/roadmap/create-item';
+import { deleteBoardItem } from '@/repository/roadmap/delete-board-item';
 
 const defaultCols: Column[] = [
   {
@@ -175,19 +177,33 @@ export function KanbanBoard({ board }: { board: Board }) {
     </div>
   );
 
-  function createTask(columnId: Id) {
+  function createTask(columnId: Id): Task {
+    const id = uuid();
+
     const newTask: Task = {
-      id: uuid(),
+      id,
       columnId,
-      content: `Task ${tasks.length + 1}`,
+      content: '',
     };
 
+    createItem({
+      id,
+      columnId,
+      title: '',
+    });
+
     setTasks([...tasks, newTask]);
+
+    return newTask;
   }
 
-  function deleteTask(id: Id) {
+  async function deleteTask(id: Id) {
     const newTasks = tasks.filter(task => task.id !== id);
     setTasks(newTasks);
+
+    await deleteBoardItem({
+      itemId: id,
+    });
   }
 
   async function updateTask(id: Id, content: string) {

@@ -14,11 +14,14 @@ interface Props {
   deleteTask: (id: Id) => void;
   updateTask: (id: Id, content: string) => void;
   addVote: (id: Id) => void;
+
+  editMode?: boolean;
+  setEditMode?: (value: boolean) => void;
 }
 
-function TaskCard({ task, deleteTask, updateTask, addVote }: Props) {
+function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode }: Props) {
   const [mouseIsOver, setMouseIsOver] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  // const [editMode, setEditMode] = useState(false);
 
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -35,7 +38,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote }: Props) {
   };
 
   const disableEditMode = () => {
-    setEditMode(false);
+    setEditMode && setEditMode(false);
     setMouseIsOver(false);
   };
 
@@ -71,7 +74,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote }: Props) {
           placeholder="Task content here"
           onBlur={disableEditMode}
           onKeyDown={e => {
-            if (e.key === 'Enter' && e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey) {
               disableEditMode();
             }
           }}
@@ -130,7 +133,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote }: Props) {
               onClick={() => {
                 // deleteTask(task.id);
                 // disableEditMode();
-                setEditMode(true);
+                setEditMode && setEditMode(true);
               }}
             >
               <Pencil1Icon />

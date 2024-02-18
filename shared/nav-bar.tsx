@@ -71,6 +71,18 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
               Replay
             </Text>
           </Link>
+
+          <Link href={'/roadmap'}>
+            <Text
+              size={'5'}
+              className={cx(
+                'hover:text-accent-text transform-all duration-200',
+                path.includes('/roadmap') ? 'text-accent-text' : 'text-primary-text-contrast'
+              )}
+            >
+              Roadmap
+            </Text>
+          </Link>
         </div>
       )}
 
