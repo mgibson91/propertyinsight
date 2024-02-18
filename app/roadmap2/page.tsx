@@ -10,16 +10,15 @@ export default async function Page() {
         <KanbanBoard
           board={roadmap}
           permissions={{
-            canCreateTask: true,
-            canDeleteTask: true,
-            canEditTask: true,
-            canMoveTask: true,
-            canMoveColumn: true,
-            canVote: true,
-            canEditColumn: true,
-            canDeleteColumn: true,
-            canCreateColumn: true,
-            canViewVoteSummary: true,
+            canCreateTask: false,
+            canDeleteTask: false,
+            canEditTask: false,
+            canMoveTask: false,
+            canVote: false,
+            canEditColumn: false,
+            canDeleteColumn: false,
+            canCreateColumn: false,
+            canViewVoteSummary: false,
           }}
         />
       )}

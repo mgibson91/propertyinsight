@@ -1,7 +1,7 @@
 'use client';
 
 import { SortableContext, useSortable } from '@dnd-kit/sortable';
-import { Column, Id, Task } from './types';
+import { BoardPermissions, Column, Id, Task } from './types';
 import { CSS } from '@dnd-kit/utilities';
 import React, { useMemo, useState } from 'react';
 import TaskCard from './TaskCard';
@@ -22,6 +22,8 @@ interface Props {
 
   editMode?: boolean;
   setEditMode?: (value: boolean) => void;
+
+  permissions: BoardPermissions;
 }
 
 export function ColumnContainer({
@@ -36,6 +38,7 @@ export function ColumnContainer({
   viewItemDetails,
   editMode,
   setEditMode,
+  permissions,
 }: Props) {
   // const [editMode, setEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState<Id | null>(null);
@@ -50,7 +53,8 @@ export function ColumnContainer({
       type: 'Column',
       column,
     },
-    disabled: editMode,
+    // disabled: editMode,
+    disabled: !permissions?.canMoveColumn || editMode,
   });
 
   const style = {
@@ -98,13 +102,12 @@ export function ColumnContainer({
         {...attributes}
         {...listeners}
         onClick={() => {
-          setEditMode && setEditMode(true);
+          permissions?.canEditColumn && setEditMode && setEditMode(true);
         }}
-        className="
+        className={`
       bg-accent-bg
       text-md
       h-[60px]
-      cursor-grab
       rounded-md
       rounded-b-none
       p-3
@@ -114,7 +117,8 @@ export function ColumnContainer({
       flex
       items-center
       justify-between
-      "
+      ${permissions?.canMoveColumn ? 'cursor-grab' : 'cursor-default'}
+      `}
       >
         <div className="flex gap-2">
           <div
@@ -148,14 +152,16 @@ export function ColumnContainer({
             />
           )}
         </div>
-        <IconButton
-          variant={'soft'}
-          onClick={() => {
-            deleteColumn(column.id);
-          }}
-        >
-          <TrashIcon />
-        </IconButton>
+        {permissions?.canDeleteColumn && (
+          <IconButton
+            variant={'soft'}
+            onClick={() => {
+              deleteColumn(column.id);
+            }}
+          >
+            <TrashIcon />
+          </IconButton>
+        )}
       </div>
 
       {/* Column task container */}
@@ -163,6 +169,7 @@ export function ColumnContainer({
         <SortableContext items={tasksIds}>
           {tasks.map(task => (
             <TaskCard
+              permissions={permissions}
               key={task.id}
               task={task}
               deleteTask={deleteTask}
@@ -178,17 +185,19 @@ export function ColumnContainer({
         </SortableContext>
       </div>
       {/* Column footer */}
-      <Button
-        variant={'ghost'}
-        className={'!p-3 !m-3'}
-        onClick={() => {
-          const task = createTask(column.id);
-          setEditItemId(task.id);
-        }}
-      >
-        <PlusIcon />
-        Add task
-      </Button>
+      {permissions?.canCreateTask && (
+        <Button
+          variant={'ghost'}
+          className={'!p-3 !m-3'}
+          onClick={() => {
+            const task = createTask(column.id);
+            setEditItemId(task.id);
+          }}
+        >
+          <PlusIcon />
+          Add task
+        </Button>
+      )}
     </div>
   );
 }

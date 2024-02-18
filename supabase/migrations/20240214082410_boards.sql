@@ -43,8 +43,6 @@ create table "public"."board_votes" (
 
 alter table "public"."board_votes" enable row level security;
 
-CREATE UNIQUE INDEX idx_board_column_position ON public.board_columns USING btree (board_id, "position");
-
 CREATE UNIQUE INDEX idx_boards_name ON public.boards USING btree ("name");
 
 CREATE UNIQUE INDEX board_column_pkey ON public.board_columns USING btree (id);

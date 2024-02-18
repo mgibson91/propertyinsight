@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Id, Task } from './types';
+import { BoardPermissions, Id, Task } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ListBulletIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
@@ -17,9 +17,20 @@ interface Props {
 
   editMode?: boolean;
   setEditMode?: (value: boolean) => void;
+
+  permissions: BoardPermissions;
 }
 
-function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode, viewItemDetails }: Props) {
+function TaskCard({
+  task,
+  deleteTask,
+  updateTask,
+  addVote,
+  editMode,
+  setEditMode,
+  viewItemDetails,
+  permissions,
+}: Props) {
   const [mouseIsOver, setMouseIsOver] = useState(false);
   // const [editMode, setEditMode] = useState(false);
 
@@ -29,7 +40,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
       type: 'Task',
       task,
     },
-    disabled: editMode,
+    disabled: !permissions?.canMoveTask || editMode,
   });
 
   const style = {
@@ -47,10 +58,10 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
       <Card
         ref={setNodeRef}
         style={style}
-        className="
+        className={`
         opacity-30
-      p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2 !border-[var(--crimson-9)] cursor-grab relative
-      "
+      p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl border-2 !border-[var(--crimson-9)] relative cursor-grab
+      `}
       ></Card>
     );
   }
@@ -62,7 +73,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
         style={style}
         {...attributes}
         {...listeners}
-        className="p-2.5 h-[100px] min-h-[100px] items-center flex hover:ring-2 hover:ring-inset hover:ring-accent-border !border-none !rounded-xl cursor-grab relative"
+        className="p-2.5 h-[100px] min-h-[100px] items-center flex hover:ring-2 hover:ring-inset hover:ring-accent-border border border-accent-border !rounded-xl cursor-grab relative"
       >
         <textarea
           className="
@@ -91,7 +102,10 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
       {...attributes}
       {...listeners}
       // onClick={disableEditMode}
-      className="!bg-accent-bg p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-accent-border cursor-grab border !border-accent-border relative task"
+      className={`!bg-accent-bg p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-accent-border border !border-accent-border relative task
+      ${permissions?.canMoveTask ? 'cursor-grab' : 'cursor-default'}
+      ${permissions?.canEditTask || permissions?.canDeleteTask || permissions?.canViewVoteSummary ? 'hover:ring-2 hover:ring-inset' : ''}
+      `}
       onMouseEnter={() => {
         setMouseIsOver(true);
       }}
@@ -107,12 +121,12 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
         <div className={'flex flex-col items-center'}>
           <IconButton
             variant={'surface'}
-            className={'!rounded-full'}
+            className={'!rounded-full active:scale-[1.15] duration-75 transition-all hover:scale-105'}
             onClick={() => {
               addVote(task.id);
             }}
           >
-            <img src={'/clap.svg'} className={'h-5 w-5 fill-white active:scale-110 duration-75 transition-all'} />
+            <img src={'/clap.svg'} className={'h-5 w-5'} />
             {/*<ThickArrowUpIcon />*/}
           </IconButton>
           {Boolean(task.totalVotes) ? (
@@ -130,40 +144,46 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
       {mouseIsOver && (
         <>
           <div className={'absolute left-2 bottom-2 flex flex-row gap-2 items-center'}>
-            <IconButton
-              variant={'solid'}
-              size={'1'}
-              className={'!rounded-full'}
-              onClick={() => {
-                // deleteTask(task.id);
-                // disableEditMode();
-                setEditMode && setEditMode(true);
-              }}
-            >
-              <Pencil1Icon />
-            </IconButton>
+            {permissions?.canEditTask && (
+              <IconButton
+                variant={'solid'}
+                size={'1'}
+                className={'!rounded-full'}
+                onClick={() => {
+                  // deleteTask(task.id);
+                  // disableEditMode();
+                  setEditMode && setEditMode(true);
+                }}
+              >
+                <Pencil1Icon />
+              </IconButton>
+            )}
 
-            <IconButton
-              variant={'solid'}
-              size={'1'}
-              className={'!rounded-full'}
-              onClick={() => {
-                deleteTask(task.id);
-              }}
-            >
-              <TrashIcon />
-            </IconButton>
+            {permissions?.canDeleteTask && (
+              <IconButton
+                variant={'solid'}
+                size={'1'}
+                className={'!rounded-full'}
+                onClick={() => {
+                  deleteTask(task.id);
+                }}
+              >
+                <TrashIcon />
+              </IconButton>
+            )}
 
-            <IconButton
-              variant={'solid'}
-              size={'1'}
-              className={'!rounded-full'}
-              onClick={() => {
-                viewItemDetails && viewItemDetails(task.id);
-              }}
-            >
-              <ListBulletIcon />
-            </IconButton>
+            {permissions?.canViewVoteSummary && (
+              <IconButton
+                variant={'solid'}
+                size={'1'}
+                className={'!rounded-full'}
+                onClick={() => {
+                  viewItemDetails && viewItemDetails(task.id);
+                }}
+              >
+                <ListBulletIcon />
+              </IconButton>
+            )}
           </div>
         </>
       )}

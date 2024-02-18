@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Column, Id, Task } from './types';
+import { BoardPermissions, Column, Id, Task } from './types';
 import { ColumnContainer } from './ColumnContainer';
 import {
   DndContext,
@@ -68,7 +68,7 @@ const defaultTasks: Task[] = [
 
 const voteTimers = new Map();
 
-export function KanbanBoard({ board }: { board: Board }) {
+export function KanbanBoard({ board, permissions }: { board: Board; permissions: BoardPermissions }) {
   // const [columns, setColumns] = useState<Column[]>(defaultCols);
   const [columns, setColumns] = useState<Column[]>(board.columns);
   const columnsId = useMemo(() => columns.map(col => col.id), [columns]);
@@ -131,6 +131,7 @@ export function KanbanBoard({ board }: { board: Board }) {
               {columns.map(col => (
                 <ColumnContainer
                   key={col.id}
+                  permissions={permissions}
                   column={col}
                   deleteColumn={deleteColumn}
                   updateColumn={updateColumn}
@@ -148,12 +149,14 @@ export function KanbanBoard({ board }: { board: Board }) {
               ))}
             </SortableContext>
           </div>
-          <Button
-            variant={'soft'}
-            onClick={() => {
-              createNewColumn();
-            }}
-            className="
+
+          {permissions?.canCreateColumn && (
+            <Button
+              variant={'soft'}
+              onClick={() => {
+                createNewColumn();
+              }}
+              className="
       w-[350px]
       !h-[58px]
       min-w-[350px]
@@ -170,10 +173,11 @@ export function KanbanBoard({ board }: { board: Board }) {
       gap-2
       items-center
       "
-          >
-            <PlusIcon />
-            Add Column
-          </Button>
+            >
+              <PlusIcon />
+              Add Column
+            </Button>
+          )}
         </div>
         {/*{createPortal( - https://github.com/Kliton/react-kanban-board-dnd-kit-tutorial-yt/blob/main/src/components/KanbanBoard.tsx*/}
         <DragOverlay>
@@ -403,7 +407,6 @@ export function KanbanBoard({ board }: { board: Board }) {
     setShowItemDetailsDialog(true);
 
     getItemVoteSummary(id).then(votes => {
-      // TODO: loading
       setItemVoteSummary(votes);
     });
   }
