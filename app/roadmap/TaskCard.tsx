@@ -4,22 +4,22 @@ import React, { useState } from 'react';
 import { Id, Task } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Pencil1Icon, ThickArrowUpIcon, TrashIcon } from '@radix-ui/react-icons';
-import { Button, Card, IconButton } from '@radix-ui/themes';
+import { ListBulletIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
+import { Card, IconButton } from '@radix-ui/themes';
 import cx from 'classnames';
-import Image from 'next/image';
 
 interface Props {
   task: Task;
   deleteTask: (id: Id) => void;
   updateTask: (id: Id, content: string) => void;
   addVote: (id: Id) => void;
+  viewItemDetails?: (id: Id) => void;
 
   editMode?: boolean;
   setEditMode?: (value: boolean) => void;
 }
 
-function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode }: Props) {
+function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode, viewItemDetails }: Props) {
   const [mouseIsOver, setMouseIsOver] = useState(false);
   // const [editMode, setEditMode] = useState(false);
 
@@ -62,7 +62,7 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
         style={style}
         {...attributes}
         {...listeners}
-        className="p-2.5 h-[100px] min-h-[100px] items-center flex hover:ring-2 hover:ring-inset hover:ring-[var(--amber-9)] !border-none !rounded-xl cursor-grab relative"
+        className="p-2.5 h-[100px] min-h-[100px] items-center flex hover:ring-2 hover:ring-inset hover:ring-accent-border !border-none !rounded-xl cursor-grab relative"
       >
         <textarea
           className="
@@ -120,6 +120,10 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
           ) : (
             <p className={'invisible'}>1</p>
           )}
+
+          {/*<IconButton variant={'ghost'} className={''}>*/}
+          {/*  <DotsHorizontalIcon />*/}
+          {/*</IconButton>*/}
         </div>
       </div>
 
@@ -148,6 +152,17 @@ function TaskCard({ task, deleteTask, updateTask, addVote, editMode, setEditMode
               }}
             >
               <TrashIcon />
+            </IconButton>
+
+            <IconButton
+              variant={'solid'}
+              size={'1'}
+              className={'!rounded-full'}
+              onClick={() => {
+                viewItemDetails && viewItemDetails(task.id);
+              }}
+            >
+              <ListBulletIcon />
             </IconButton>
           </div>
         </>

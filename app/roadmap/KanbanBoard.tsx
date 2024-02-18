@@ -15,8 +15,8 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard';
-import { PlusIcon } from '@radix-ui/react-icons';
-import { Button, Dialog, Heading, IconButton, Select } from '@radix-ui/themes';
+import { CopyIcon, PlusIcon } from '@radix-ui/react-icons';
+import { Button, Card, Dialog, Heading, IconButton, Select, Table } from '@radix-ui/themes';
 import { recordBoardItemVote } from '@/repository/roadmap/record-board-item-vote';
 import { uuid } from '@supabase/gotrue-js/src/lib/helpers';
 import { Board } from '@/repository/roadmap/types';
@@ -31,6 +31,7 @@ import { migrateTasksBetweenColumns } from '@/repository/roadmap/migrate-tasks-b
 import { AsyncButton } from '@/shared/async-button';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import { updateColumnName } from '@/repository/roadmap/update-column-name';
+import { getItemVoteSummary, VoteSummary } from '@/repository/roadmap/get-item-vote-summary';
 
 const defaultCols: Column[] = [
   {
@@ -99,6 +100,9 @@ export function KanbanBoard({ board }: { board: Board }) {
 
   const [editItemId, setEditItemId] = useState<Id | null>(null);
 
+  const [showItemDetailsDialog, setShowItemDetailsDialog] = useState(false);
+  const [itemVoteSummary, setItemVoteSummary] = useState<VoteSummary | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -134,6 +138,7 @@ export function KanbanBoard({ board }: { board: Board }) {
                   deleteTask={deleteTask}
                   updateTask={updateTask}
                   addVote={addVote}
+                  viewItemDetails={viewItemDetails}
                   tasks={tasks.filter(task => task.columnId === col.id)}
                   editMode={editItemId === col.id}
                   setEditMode={(edit: boolean) => {
@@ -179,6 +184,7 @@ export function KanbanBoard({ board }: { board: Board }) {
               updateColumn={updateColumn}
               createTask={createTask}
               deleteTask={deleteTask}
+              viewItemDetails={viewItemDetails}
               updateTask={updateTask}
               addVote={addVote}
               tasks={tasks.filter(task => task.columnId === activeColumn.id)}
@@ -279,6 +285,68 @@ export function KanbanBoard({ board }: { board: Board }) {
           </div>
         </Dialog.Content>
       </Dialog.Root>
+
+      <Dialog.Root open={showItemDetailsDialog}>
+        <Dialog.Content className={'!max-w-[400px]'}>
+          <div className={'flex flex-col gap-2'}>
+            <div className={'flex flex-row items-center justify-between'}>
+              <Heading>Vote Summary</Heading>
+              <IconButton
+                variant={'ghost'}
+                className={'!rounded-full'}
+                size={'1'}
+                onClick={() => {
+                  setShowItemDetailsDialog(false);
+                  // TODO: Clear item details
+                }}
+              >
+                <CloseIcon></CloseIcon>
+              </IconButton>
+            </div>
+
+            {itemVoteSummary ? (
+              <div className={'flex flex-col gap-3'}>
+                <div className={'flex flex-col'}>
+                  <p className={'text-lg'}>
+                    &bull; <span className={'text-accent-text'}>{itemVoteSummary.totalVotes}</span> total vote
+                    {itemVoteSummary.totalVotes > 1 ? 's' : ''}
+                  </p>
+                  <p className={'text-lg'}>
+                    &bull; <span className={'text-accent-text'}>{itemVoteSummary.averageVotesPerUser}</span> votes per
+                    user
+                  </p>
+                </div>
+
+                <Card className={'flex flex-col !bg-primary-bg'}>
+                  <div className={'flex flex-row gap-2 mb-2 justify-between items-center'}>
+                    <div className={'flex flex-row'}>
+                      <p className={'w-[50px] font-bold'}>Votes</p>
+                      <p className={'font-bold'}>Email</p>
+                    </div>
+
+                    <IconButton size={'1'} variant={'ghost'} className={'mr-[4px]'}>
+                      <CopyIcon
+                        onClick={() => {
+                          navigator.clipboard.writeText(itemVoteSummary.userDetails.map(vote => vote.email).join('\n'));
+                        }}
+                      ></CopyIcon>
+                    </IconButton>
+                  </div>
+
+                  {itemVoteSummary.userDetails.map((vote, index) => (
+                    <div key={index} className={'flex flex-row'}>
+                      <p className={'w-[50px]'}>{vote.votes}</p>
+                      <p>{vote.email}</p>
+                    </div>
+                  ))}
+                </Card>
+              </div>
+            ) : (
+              <div>Loading vote summary...</div>
+            )}
+          </div>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 
@@ -323,6 +391,20 @@ export function KanbanBoard({ board }: { board: Board }) {
     await updateBoardItemTitle({
       itemId: id,
       title: content,
+    });
+  }
+
+  function viewItemDetails(id: Id) {
+    const item = tasks.find(t => t.id === id);
+
+    if (!item) return;
+
+    setItemVoteSummary(null);
+    setShowItemDetailsDialog(true);
+
+    getItemVoteSummary(id).then(votes => {
+      // TODO: loading
+      setItemVoteSummary(votes);
     });
   }
 

@@ -16,6 +16,7 @@ interface Props {
   createTask: (columnId: Id) => Task;
   updateTask: (id: Id, content: string) => void;
   deleteTask: (id: Id) => void;
+  viewItemDetails: (id: Id) => void;
   addVote: (id: Id) => void;
   tasks: Task[];
 
@@ -32,6 +33,7 @@ export function ColumnContainer({
   deleteTask,
   updateTask,
   addVote,
+  viewItemDetails,
   editMode,
   setEditMode,
 }: Props) {
@@ -96,7 +98,7 @@ export function ColumnContainer({
         {...attributes}
         {...listeners}
         onClick={() => {
-          setEditMode(true);
+          setEditMode && setEditMode(true);
         }}
         className="
       bg-accent-bg
@@ -137,11 +139,11 @@ export function ColumnContainer({
               onChange={e => updateColumn(column.id, e.target.value)}
               autoFocus
               onBlur={() => {
-                setEditMode(false);
+                setEditMode && setEditMode(false);
               }}
               onKeyDown={e => {
                 if (e.key !== 'Enter') return;
-                setEditMode(false);
+                setEditMode && setEditMode(false);
               }}
             />
           )}
@@ -166,6 +168,7 @@ export function ColumnContainer({
               deleteTask={deleteTask}
               updateTask={updateTask}
               addVote={addVote}
+              viewItemDetails={viewItemDetails}
               editMode={editItemId === task.id}
               setEditMode={(edit: boolean) => {
                 setEditItemId(edit ? task.id : null);
