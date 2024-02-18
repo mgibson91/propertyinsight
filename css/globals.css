@@ -31,15 +31,31 @@ body {
   filter: none
 }
 
-::-webkit-scrollbar {
+/*::-webkit-scrollbar {*/
+/*  width: 4px;*/
+/*}*/
+
+/*::-webkit-scrollbar:horizontal {*/
+/*  height: 8px;*/
+/*}*/
+
+/*::-webkit-scrollbar-thumb {*/
+/*  @apply bg-accent-border rounded-xl;*/
+/*}*/
+
+.task >  ::-webkit-scrollbar {
   width: 4px;
 }
 
-::-webkit-scrollbar:horizontal {
+.task >  ::-webkit-scrollbar:horizontal {
   height: 8px;
 }
 
-::-webkit-scrollbar-thumb {
+.task >  ::-webkit-scrollbar-thumb {
+  @apply bg-accent-border rounded-xl;
+}
+
+.task > ::-webkit-scrollbar-thumb {
   @apply bg-accent-border rounded-xl;
 }
 

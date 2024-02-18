@@ -18,6 +18,9 @@ interface Props {
   deleteTask: (id: Id) => void;
   addVote: (id: Id) => void;
   tasks: Task[];
+
+  editMode?: boolean;
+  setEditMode?: (value: boolean) => void;
 }
 
 export function ColumnContainer({
@@ -29,8 +32,10 @@ export function ColumnContainer({
   deleteTask,
   updateTask,
   addVote,
+  editMode,
+  setEditMode,
 }: Props) {
-  const [editMode, setEditMode] = useState(false);
+  // const [editMode, setEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState<Id | null>(null);
 
   const tasksIds = useMemo(() => {
@@ -128,6 +133,7 @@ export function ColumnContainer({
           {editMode && (
             <TextFieldInput
               value={column.title}
+              placeholder={'Enter column name'}
               onChange={e => updateColumn(column.id, e.target.value)}
               autoFocus
               onBlur={() => {

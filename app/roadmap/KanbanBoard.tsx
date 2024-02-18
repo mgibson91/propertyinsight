@@ -16,7 +16,7 @@ import {
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard';
 import { PlusIcon } from '@radix-ui/react-icons';
-import { Button } from '@radix-ui/themes';
+import { Button, Dialog, Heading, IconButton, Select } from '@radix-ui/themes';
 import { recordBoardItemVote } from '@/repository/roadmap/record-board-item-vote';
 import { uuid } from '@supabase/gotrue-js/src/lib/helpers';
 import { Board } from '@/repository/roadmap/types';
@@ -25,6 +25,12 @@ import { updateColumnPosition } from '@/repository/roadmap/update-column-positio
 import { updateItemColumnAndPosition } from '@/repository/roadmap/move-item';
 import { createItem } from '@/repository/roadmap/create-item';
 import { deleteBoardItem } from '@/repository/roadmap/delete-board-item';
+import { addBoardColumn } from '@/repository/roadmap/add-board-column';
+import { deleteBoardColumn } from '@/repository/roadmap/delete-board-column';
+import { migrateTasksBetweenColumns } from '@/repository/roadmap/migrate-tasks-between-columns';
+import { AsyncButton } from '@/shared/async-button';
+import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
+import { updateColumnName } from '@/repository/roadmap/update-column-name';
 
 const defaultCols: Column[] = [
   {
@@ -87,6 +93,12 @@ export function KanbanBoard({ board }: { board: Board }) {
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
+  const [pendingDeleteColumnId, setPendingDeleteColumnId] = useState<string | undefined>();
+  const [pendingDeleteColumn, setPendingDeleteColumn] = useState<Column | undefined>();
+  const [targetTaskMigrationColumnId, setTargetTaskMigrationColumnId] = useState<string | undefined>();
+
+  const [editItemId, setEditItemId] = useState<Id | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -105,11 +117,11 @@ export function KanbanBoard({ board }: { board: Board }) {
         items-center
         overflow-x-auto
         overflow-y-hidden
-        px-[40px]
+        mx-[40px]
     "
     >
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
-        <div className="m-auto flex gap-4">
+        <div className="m-auto flex gap-4 overflow-auto p-3">
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
               {columns.map(col => (
@@ -123,6 +135,10 @@ export function KanbanBoard({ board }: { board: Board }) {
                   updateTask={updateTask}
                   addVote={addVote}
                   tasks={tasks.filter(task => task.columnId === col.id)}
+                  editMode={editItemId === col.id}
+                  setEditMode={(edit: boolean) => {
+                    setEditItemId(edit ? col.id : null);
+                  }}
                 />
               ))}
             </SortableContext>
@@ -142,7 +158,7 @@ export function KanbanBoard({ board }: { board: Board }) {
       border-2
       border-columnBackgroundColor
       !py-4
-
+      hover:ring-accent-border
       ring-[var(--crimson-9)]
       hover:ring-2
       flex
@@ -174,6 +190,95 @@ export function KanbanBoard({ board }: { board: Board }) {
         </DragOverlay>
         ,
       </DndContext>
+
+      <Dialog.Root open={Boolean(pendingDeleteColumnId)}>
+        <Dialog.Content className={'!max-w-[400px]'}>
+          <div className={'flex flex-col gap-2'}>
+            <div className={'flex flex-row items-center justify-between'}>
+              <Heading>Migrate items</Heading>
+              <IconButton
+                variant={'ghost'}
+                className={'!rounded-full'}
+                size={'1'}
+                onClick={() => {
+                  setPendingDeleteColumnId(undefined);
+                  setPendingDeleteColumn(undefined);
+                }}
+              >
+                <CloseIcon></CloseIcon>
+              </IconButton>
+            </div>
+
+            <div className={'flex flex-col'}>
+              <Heading size={'4'}>Current column</Heading>
+              <p>{pendingDeleteColumn?.title}</p>
+            </div>
+
+            <div className={'flex flex-col gap-1'}>
+              <Heading size={'4'}>Target column</Heading>
+            </div>
+
+            <Select.Root
+              value={targetTaskMigrationColumnId}
+              onValueChange={colId => setTargetTaskMigrationColumnId(colId)}
+            >
+              <Select.Trigger placeholder="Select ticker" className={'bg-primary-bg-subtle h-[32px]'} />
+              <Select.Content>
+                {columns
+                  .filter(c => c.id !== pendingDeleteColumnId)
+                  .map(option => (
+                    <Select.Item key={option.id} value={option.id}>
+                      {option.title}
+                    </Select.Item>
+                  ))}
+              </Select.Content>
+            </Select.Root>
+
+            <AsyncButton
+              className="!mt-3"
+              disabled={!pendingDeleteColumnId || !targetTaskMigrationColumnId}
+              onClick={async () => {
+                if (!pendingDeleteColumnId || !targetTaskMigrationColumnId) {
+                  console.error('Invalid state. Unable to delete column');
+                  return;
+                }
+
+                // Update UI ----------
+                const tasksToMigrate = tasks.filter(t => t.columnId === pendingDeleteColumnId);
+
+                // Exclude the tasks to be migrated so they can be added in orders
+                const adjustedTasks = tasks.filter(t => t.columnId !== pendingDeleteColumnId);
+
+                for (const item of tasksToMigrate) {
+                  adjustedTasks.push({
+                    ...item,
+                    columnId: targetTaskMigrationColumnId,
+                  });
+                }
+
+                setTasks(adjustedTasks);
+
+                const filteredColumns = columns.filter(col => col.id !== pendingDeleteColumnId);
+                setColumns(filteredColumns);
+
+                // Update database -------
+                migrateTasksBetweenColumns({
+                  fromColumnId: pendingDeleteColumnId,
+                  toColumnId: targetTaskMigrationColumnId,
+                });
+
+                deleteBoardColumn(pendingDeleteColumnId);
+
+                // Clear dialog -----
+                setPendingDeleteColumnId(undefined);
+                setPendingDeleteColumn(undefined);
+              }}
+            >
+              Migrate tasks and delete column
+            </AsyncButton>
+          </div>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 
@@ -280,14 +385,38 @@ export function KanbanBoard({ board }: { board: Board }) {
     };
 
     setColumns([...columns, columnToAdd]);
+
+    addBoardColumn({
+      boardId: board.id,
+      id: columnToAdd.id,
+      title: columnToAdd.title,
+    });
+
+    setEditItemId(columnToAdd.id);
   }
 
+  // TODO: Abstract into a specific delete from UI to prevent duplicate server request
   function deleteColumn(id: Id) {
+    // If there are existing items in column, display migrate modal
+    const activeTasksExist = tasks.filter(t => t.columnId === id).length;
+
+    if (activeTasksExist) {
+      const pos = columns.findIndex(c => c.id === id);
+      if (pos > 0) {
+        setTargetTaskMigrationColumnId(columns[pos - 1].id);
+        setPendingDeleteColumnId(id);
+        setPendingDeleteColumn(columns[pos]);
+      }
+      return; // We can't delete yet as tasks remain
+    }
+
     const filteredColumns = columns.filter(col => col.id !== id);
     setColumns(filteredColumns);
 
     const newTasks = tasks.filter(t => t.columnId !== id);
     setTasks(newTasks);
+
+    deleteBoardColumn(id);
   }
 
   function updateColumn(id: Id, title: string) {
@@ -297,6 +426,11 @@ export function KanbanBoard({ board }: { board: Board }) {
     });
 
     setColumns(newColumns);
+
+    updateColumnName({
+      columnId: id,
+      name: title,
+    });
   }
 
   function onDragStart(event: DragStartEvent) {
