@@ -19,6 +19,10 @@ export default async function Page() {
             canDeleteColumn: false,
             canCreateColumn: false,
             canViewVoteSummary: false,
+            canMoveColumn: false,
+            canViewSuggestedIdeas: false,
+
+            canSuggestIdea: true,
           }}
         />
       )}

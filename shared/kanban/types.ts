@@ -24,4 +24,6 @@ export interface BoardPermissions {
   canCreateTask: boolean;
   canCreateColumn: boolean;
   canViewVoteSummary: boolean;
+  canSuggestIdea: boolean;
+  canViewSuggestedIdeas: boolean;
 }

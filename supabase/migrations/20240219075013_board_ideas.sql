@@ -14,8 +14,7 @@ alter table "public"."board_ideas" enable row level security;
 
 CREATE UNIQUE INDEX board_ideas_pkey ON public.board_ideas USING btree (id);
 
-alter table "public"."board_ideas" add constraint "board_ideas_pkey" PRIMARY KEY using index "board_ideas_pkey";
-
+alter table "public"."board_ideas" add constraint "board_ideas_pkey" PRIMARY KEY using index "board_ideas_pkey"
 alter table "public"."board_ideas" add constraint "board_ideas_board_id_fkey" FOREIGN KEY (board_id) REFERENCES boards(id) not valid;
 
 alter table "public"."board_ideas" validate constraint "board_ideas_board_id_fkey";

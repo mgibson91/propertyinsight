@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BoardPermissions, Column, Id, Task } from './types';
 import { ColumnContainer } from './ColumnContainer';
 import {
@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard';
-import { ChatBubbleIcon, CopyIcon, PlusIcon } from '@radix-ui/react-icons';
+import { AvatarIcon, ChatBubbleIcon, CheckIcon, CopyIcon, PlusIcon } from '@radix-ui/react-icons';
 import { Button, Card, Dialog, Heading, IconButton, Select, Table } from '@radix-ui/themes';
 import { recordBoardItemVote } from '@/repository/roadmap/record-board-item-vote';
 import { uuid } from '@supabase/gotrue-js/src/lib/helpers';
@@ -125,11 +125,12 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
         items-center
         overflow-x-auto
         overflow-y-hidden
-        mx-[40px]
     "
     >
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
-        <div className="flex gap-4 overflow-auto p-3 self-start">
+        <div
+          className={`flex gap-4 overflow-auto p-3 mx-[40px] ${columns.length >= 3 && permissions?.canCreateColumn ? 'self-start' : ''}`}
+        >
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
               {columns.map(col => (
@@ -208,7 +209,7 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
         </DragOverlay>
       </DndContext>
 
-      <SuggestedIdeaDialogSection boardId={board.id} />
+      <SuggestedIdeaDialogSection boardId={board.id} permissions={permissions} />
 
       {/*<SuggestFeatureDialog submitFeature={submitFeature}>*/}
       {/*  <Button*/}
@@ -313,9 +314,9 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
 
       <Dialog.Root open={showItemDetailsDialog}>
         <Dialog.Content className={'!max-w-[400px]'}>
-          <div className={'flex flex-col gap-2'}>
+          <div className={'flex flex-col gap-3'}>
             <div className={'flex flex-row items-center justify-between'}>
-              <Heading>Vote Summary</Heading>
+              <Heading className={''}>Vote Summary</Heading>
               <IconButton
                 variant={'ghost'}
                 className={'!rounded-full'}
@@ -331,18 +332,40 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
 
             {itemVoteSummary ? (
               <div className={'flex flex-col gap-3'}>
-                <div className={'flex flex-col'}>
-                  <p className={'text-lg'}>
-                    &bull; <span className={'text-accent-text'}>{itemVoteSummary.totalVotes}</span> total vote
-                    {itemVoteSummary.totalVotes > 1 ? 's' : ''}
-                  </p>
-                  <p className={'text-lg'}>
-                    &bull; <span className={'text-accent-text'}>{itemVoteSummary.averageVotesPerUser}</span> votes per
-                    user
-                  </p>
+                <div className={'flex flex-row gap-2 items-center justify-around'}>
+                  <div className={'flex flex-col items-center gap-1'}>
+                    <Heading size={'4'}>Total Votes</Heading>
+                    <img src={'/clap.svg'} className={'h-8 w-8'} />
+                    <p className={'text-3xl font-bold text-accent-text-contrast'}>{itemVoteSummary.totalVotes}</p>
+                  </div>
+
+                  <div className={'flex flex-col items-center gap-1'}>
+                    <Heading size={'4'}>Unique Voters</Heading>
+                    <AvatarIcon className={'h-8 w-8 text-accent-text'} />
+                    <p className={'text-3xl font-bold text-accent-text-contrast'}>
+                      {itemVoteSummary.userDetails.length}
+                    </p>
+                  </div>
+
+                  <div className={'flex flex-col items-center gap-1'}>
+                    <Heading size={'4'}>Votes Per User</Heading>
+                    <CheckIcon className={'h-8 w-8 text-accent-text'} />
+                    <p className={'text-3xl font-bold text-accent-text-contrast'}>
+                      {itemVoteSummary.averageVotesPerUser}
+                    </p>
+                  </div>
+
+                  {/*<p className={'text-lg'}>*/}
+                  {/*  &bull; <span className={'text-accent-text'}>{itemVoteSummary.totalVotes}</span> total vote*/}
+                  {/*  {itemVoteSummary.totalVotes > 1 ? 's' : ''}*/}
+                  {/*</p>*/}
+                  {/*<p className={'text-lg'}>*/}
+                  {/*  &bull; <span className={'text-accent-text'}>{itemVoteSummary.averageVotesPerUser}</span> votes per*/}
+                  {/*  user*/}
+                  {/*</p>*/}
                 </div>
 
-                <Card className={'flex flex-col !bg-primary-bg'}>
+                <Card className={'flex flex-col !bg-primary-bg mt-2'}>
                   <div className={'flex flex-row gap-2 mb-2 justify-between items-center'}>
                     <div className={'flex flex-row'}>
                       <p className={'w-[50px] font-bold'}>Votes</p>
