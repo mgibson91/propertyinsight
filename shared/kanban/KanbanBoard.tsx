@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard';
-import { CopyIcon, PlusIcon } from '@radix-ui/react-icons';
+import { ChatBubbleIcon, CopyIcon, PlusIcon } from '@radix-ui/react-icons';
 import { Button, Card, Dialog, Heading, IconButton, Select, Table } from '@radix-ui/themes';
 import { recordBoardItemVote } from '@/repository/roadmap/record-board-item-vote';
 import { uuid } from '@supabase/gotrue-js/src/lib/helpers';
@@ -32,6 +32,9 @@ import { AsyncButton } from '@/shared/async-button';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import { updateColumnName } from '@/repository/roadmap/update-column-name';
 import { getItemVoteSummary, VoteSummary } from '@/repository/roadmap/get-item-vote-summary';
+import { submitIdea } from '@/repository/roadmap/submit-idea';
+import { SuggestFeatureDialog } from '@/shared/suggested-ideas/suggest-feature-dialog';
+import { SuggestedIdeaDialogSection } from '@/shared/suggested-ideas/suggested-idea-dialog-section';
 
 const defaultCols: Column[] = [
   {
@@ -114,10 +117,11 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
   return (
     <div
       className="
-        m-auto
         flex
+        flex-col
         min-h-screen
         w-full
+        justify-center
         items-center
         overflow-x-auto
         overflow-y-hidden
@@ -125,7 +129,7 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
     "
     >
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
-        <div className="m-auto flex gap-4 overflow-auto p-3">
+        <div className="flex gap-4 overflow-auto p-3 self-start">
           <div className="flex gap-4">
             <SortableContext items={columnsId}>
               {columns.map(col => (
@@ -161,10 +165,7 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
       !h-[58px]
       min-w-[350px]
       cursor-pointer
-      rounded-lg
-      bg-mainBackgroundColor
       border-2
-      border-columnBackgroundColor
       !py-4
       hover:ring-accent-border
       ring-[var(--crimson-9)]
@@ -192,14 +193,34 @@ export function KanbanBoard({ board, permissions }: { board: Board; permissions:
               updateTask={updateTask}
               addVote={addVote}
               tasks={tasks.filter(task => task.columnId === activeColumn.id)}
+              permissions={permissions}
             />
           )}
           {activeTask && (
-            <TaskCard task={activeTask} deleteTask={deleteTask} updateTask={updateTask} addVote={addVote} />
+            <TaskCard
+              task={activeTask}
+              deleteTask={deleteTask}
+              updateTask={updateTask}
+              addVote={addVote}
+              permissions={permissions}
+            />
           )}
         </DragOverlay>
-        ,
       </DndContext>
+
+      <SuggestedIdeaDialogSection boardId={board.id} />
+
+      {/*<SuggestFeatureDialog submitFeature={submitFeature}>*/}
+      {/*  <Button*/}
+      {/*    variant={'soft'}*/}
+      {/*    size={'4'}*/}
+      {/*    className={'!mt-3 !border-2 !border-solid !border-accent-border'}*/}
+      {/*    // style={{ border: '1px solid' }}*/}
+      {/*  >*/}
+      {/*    Suggest Feature*/}
+      {/*    <ChatBubbleIcon />*/}
+      {/*  </Button>*/}
+      {/*</SuggestFeatureDialog>*/}
 
       <Dialog.Root open={Boolean(pendingDeleteColumnId)}>
         <Dialog.Content className={'!max-w-[400px]'}>

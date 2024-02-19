@@ -247,6 +247,15 @@ export interface BoardColumns {
   title: string;
 }
 
+export interface BoardIdeas {
+  board_id: string;
+  created_at: Generated<Timestamp>;
+  description: string;
+  id: Generated<string>;
+  requesting_user_id: string;
+  title: string;
+}
+
 export interface BoardItems {
   column_id: string;
   created_at: Generated<Timestamp>;
@@ -519,6 +528,7 @@ export interface DB {
   "auth.sso_providers": AuthSsoProviders;
   "auth.users": AuthUsers;
   board_columns: BoardColumns;
+  board_ideas: BoardIdeas;
   board_items: BoardItems;
   board_votes: BoardVotes;
   boards: Boards;
