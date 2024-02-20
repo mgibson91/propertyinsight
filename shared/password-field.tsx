@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { IconButton, TextField } from "@radix-ui/themes";
-import React from "react";
-import { EyeClosedIcon, EyeOpenIcon } from "@radix-ui/react-icons";
+import { IconButton, TextField } from '@radix-ui/themes';
+import React from 'react';
+import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 
 export function PasswordField({ name }: { name: string }) {
   const [visible, setVisible] = React.useState(false);
@@ -13,17 +13,22 @@ export function PasswordField({ name }: { name: string }) {
     <TextField.Root>
       <TextField.Input
         name={name}
-        type={visible ? "text" : "password"}
+        type={visible ? 'text' : 'password'}
         placeholder="Password"
         required={true}
         minLength={8}
         size="3"
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+          }
+        }}
       />
       <TextField.Slot pr="3">
         <IconButton
           size="2"
           variant="ghost"
-          onClick={(e) => {
+          onClick={e => {
             setVisible(!visible);
             e.preventDefault();
           }}
