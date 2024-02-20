@@ -28,7 +28,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
           router.push('/');
         }}
       >
-        <img src={'/tradescan-logo.png'} className={'h-8'} />
+        <img src={'/logo.png'} className={'h-8'} />
         <Heading size={'6'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>
           Tradescan
         </Heading>
@@ -69,6 +69,18 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
               )}
             >
               Replay
+            </Text>
+          </Link>
+
+          <Link href={'/roadmap'}>
+            <Text
+              size={'5'}
+              className={cx(
+                'hover:text-accent-text transform-all duration-200',
+                path.includes('/roadmap') ? 'text-accent-text' : 'text-primary-text-contrast'
+              )}
+            >
+              Roadmap
             </Text>
           </Link>
         </div>

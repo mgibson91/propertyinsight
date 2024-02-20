@@ -242,12 +242,27 @@
             }) as OhlcData<UTCTimestamp>
         );
 
+        function prependAccessorFunctions(funcString: string): string {
+          const adjustedFunc =
+`
+const _open = index => data[index].open;
+const _high = index => data[index].high;
+const _low = index => data[index].low;
+const _close = index => data[index].close;
+
+//--- USER DEFINED ---
+${funcString}`;
+
+          return adjustedFunc;
+        }
+
         // Calculate indicators
         const newUserSeriesData = userSeries.map((series) => {
           const func = new Function(
             'data',
-            'period',
-            series.seriesFunctionString
+            // 'period',
+            // series.seriesFunctionString
+            prependAccessorFunctions(series.seriesFunctionString)
           );
 
           const seriesData = func(formattedCandles);
@@ -882,67 +897,61 @@
 
   const DEFAULT_USER_SERIES: UserSeries = {
     name: '',
-    seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
+    seriesFunctionString:
+`const windowSize = 20;  // Setting the period for SMA
   
-  const smaData = data.map((current, index) => {
-    if (index >= windowSize - 1) {
-      // Calculate SMA only when there are enough preceding data points
-      let sum = 0;
-      // Sum the closing prices of the last 'windowSize' days
-      for (let i = index - windowSize + 1; i <= index; i++) {
-        sum += data[i].close;
-      }
-      let average = sum / windowSize;
-      return { time: current.time, value: average };
-    } else {
-      return null;  // Not enough data to calculate SMA
+const smaData = data.map((current, index) => {
+  if (index >= windowSize - 1) {
+    // Calculate SMA only when there are enough preceding data points
+    let sum = 0;
+    // Sum the closing prices of the last 'windowSize' days
+    for (let i = index - windowSize + 1; i <= index; i++) {
+      sum += data[i].close;
     }
-  });
-  
-  // Filter out the null entries, similar to your offset example
-  return smaData.filter(item => item !== null);
-  
-  /* Close example:
-  return data.map(d => ({ time: d.time, value: d.close }));
-  */
-  
-  /*
-  Lookback offset example:
-  
-  const offsetData = data.map((d, index) => {
-    return (index >= 5) ? { time: d.time, value: data[index - 5].close } : null
-  })
-  
-  return offsetData.filter(item => item !== null);
-  */
-  
-  /*
-  High pivots example:
-  
-  const pivotData = data.map((d, index) => {
-    if (index >= 10) { 
-      let validPivots = [];
-      for (let i = index - 10; i <= index - 3; i++) {
-        if (data[i].close < data[i+1].close && data[i+2].close < data[i+1].close) {
-          validPivots.push(data[i+1].close); // Push the value of the higher high
-        }
-      }
-  
-      if (validPivots.length > 0) {
-        let highestPivot = Math.max(...validPivots);
-        return { time: d.time, value: highestPivot };
+    let average = sum / windowSize;
+    return { time: current.time, value: average };
+  } else {
+    return null;  // Not enough data to calculate SMA
+  }
+});
+ 
+return smaData.filter(item => item !== null);
+/* Close example:
+return data.map(d => ({ time: d.time, value: d.close }));
+*/
+
+/*
+Lookback offset example:
+
+const offsetData = data.map((d, index) => {
+  return (index >= 5) ? { time: d.time, value: data[index - 5].close } : null
+})
+
+return offsetData.filter(item => item !== null);
+*/
+
+/*
+High pivots example:
+
+const pivotData = data.map((d, index) => {
+  if (index >= 10) { 
+    let validPivots = [];
+    for (let i = index - 10; i <= index - 3; i++) {
+      if (data[i].close < data[i+1].close && data[i+2].close < data[i+1].close) {
+        validPivots.push(data[i+1].close); // Push the value of the higher high
       }
     }
-    return null;
-  });
-  
-  return pivotData.filter(item => item !== null);
-  */
-  
-  /* SMA example
-  
-  */
-        `,
+
+    if (validPivots.length > 0) {
+      let highestPivot = Math.max(...validPivots);
+      return { time: d.time, value: highestPivot };
+    }
+  }
+  return null;
+});
+
+return pivotData.filter(item => item !== null);
+*/`,
     overlay: true,
     color: '#ffffff',
     lineWidth: 1,

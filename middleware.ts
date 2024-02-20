@@ -1,26 +1,54 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { createClient } from '@/utils/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server';
+import { createClient } from '@/utils/supabase/middleware';
+import { getLogger } from '@/utils/logging/logger';
 
-export async function middleware(request: NextRequest) {
+const logger = getLogger('middleware');
+
+export async function middleware(req: NextRequest) {
   try {
     // This `try/catch` block is only here for the interactive tutorial.
     // Feel free to remove once you have Supabase connected.
-    const { supabase, response } = createClient(request)
+    const { supabase, response } = createClient(req);
 
     // Refresh session if expired - required for Server Components
     // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
-    await supabase.auth.getSession()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    return response
+    const PUBLIC_PATHS = [
+      '/login',
+      '/logout',
+      '/password',
+      '/logo.svg',
+      '/clap.svg',
+      '/logo.png',
+      '/favicon.ico',
+      '/_next/static',
+      '/api/stripe/webhook',
+    ];
+
+    const isPublicPath =
+      PUBLIC_PATHS.some(pathRoot => req.nextUrl.pathname.includes(pathRoot)) || req.nextUrl.pathname === '/';
+
+    const protectedPath = !isPublicPath && req.nextUrl.pathname !== '/login';
+
+    // If not logged in, you can only view public paths
+    if (!session && protectedPath) {
+      logger.info(`No session found, redirecting from ${req.url} to /login`);
+      return NextResponse.redirect(`${req.nextUrl.origin}/login`);
+    }
+
+    return response;
   } catch (e) {
     // If you are here, a Supabase client could not be created!
     // This is likely because you have not set up environment variables.
     // Check out http://localhost:3000 for Next Steps.
     return NextResponse.next({
       request: {
-        headers: request.headers,
+        headers: req.headers,
       },
-    })
+    });
   }
 }
 
@@ -35,4 +63,4 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-}
+};

@@ -7,7 +7,7 @@ export default function () {
     <div className={'w-full h-full flex-col flex text-primary-text-contrast overflow-auto'}>
       <div className={'mt-[5%] flex flex-col items-center'}>
         <div className={'flex flex-row gap-2 items-center'}>
-          <img src={'/tradescan-logo.png'} className={'h-12'} />
+          <img src={'/logo.png'} className={'h-12'} />
           <p className={'text-[50px] font-bold'}>Tradescan</p>
         </div>
         {/*<span className={'text-[30px] leading-none font-normal'}>TEST. LEARN. EARN.</span>*/}

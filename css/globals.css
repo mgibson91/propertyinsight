@@ -30,3 +30,23 @@ body {
   background-color: var(--gray-a3) !important;
   filter: none
 }
+
+.task >  ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.task >  ::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+.task >  ::-webkit-scrollbar-thumb {
+  @apply bg-accent-border rounded-xl;
+}
+
+.task > ::-webkit-scrollbar-thumb {
+  @apply bg-accent-border rounded-xl;
+}
+
+.task > ::-webkit-scrollbar-thumb {
+  @apply bg-accent-solid rounded-xl;
+}
