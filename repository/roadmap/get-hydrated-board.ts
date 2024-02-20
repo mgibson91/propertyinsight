@@ -1,7 +1,7 @@
 import { db } from '@/repository/kysely-connection';
 import { getLogger } from '@/utils/logging/logger';
 import { sql } from 'kysely';
-import { Board } from '@/repository/roadmap/types';
+import { Board, BoardColumn } from '@/repository/roadmap/types';
 
 export async function getHydratedBoard(boardName: string, correlationId?: string): Promise<Board | null> {
   const logger = getLogger('getBoardHierarchy', { correlationId });
@@ -14,8 +14,24 @@ export async function getHydratedBoard(boardName: string, correlationId?: string
     .orderBy('position')
     .execute();
 
+  if (!allColumns.length) {
+    return null;
+  }
+
   try {
-    const rawQuery = sql`
+    const rawQuery = sql<{
+      board_id: string;
+      board_name: string;
+      board_column_id: string;
+      board_column_title: string;
+      board_column_order: number;
+      board_item_id: string;
+      board_item_position: number;
+      board_item_title: string;
+      board_item_created_at: string;
+      total_votes: number;
+      unique_voters: number;
+    }>`
       SELECT
     rm.id AS board_id,
     rm.name AS board_name,
@@ -42,55 +58,78 @@ ORDER BY
 
     `;
 
+    const board = {
+      id: allColumns[0].board_id,
+      name: boardName,
+      columns: allColumns.map(
+        col =>
+          ({
+            id: col.id,
+            title: col.title,
+            position: col.position,
+            items: [],
+          }) as BoardColumn
+      ),
+    };
+
     const { rows: results } = await rawQuery.execute(db);
 
-    // Process results into hierarchical structure
-    const boards = results.reduce<Board[]>((acc, row: any) => {
-      let board = acc.find(rm => rm.id === row.board_id);
-      if (!board) {
-        board = { id: row.board_id, name: row.board_name, columns: [] };
-        acc.push(board);
-      }
-
-      let column = board.columns.find(col => col.id === row.board_column_id);
+    for (const item of results) {
+      const column = board.columns.find(col => col.id === item.board_column_id);
       if (!column) {
-        column = {
-          id: row.board_column_id,
-          title: row.board_column_title,
-          position: row.board_column_order,
-          items: [],
-        };
-        board.columns.push(column);
+        logger.error('Column not found', { columnId: item.board_column_id });
+        return null;
       }
 
       column.items.push({
-        id: row.board_item_id,
-        title: row.board_item_title,
-        createdAt: new Date(row.board_item_created_at),
-        totalVotes: Number(row.total_votes),
-        uniqueVoters: Number(row.unique_voters),
-        position: row.board_item_position,
+        id: item.board_item_id,
+        title: item.board_item_title,
+        createdAt: new Date(item.board_item_created_at),
+        totalVotes: Number(item.total_votes),
+        uniqueVoters: Number(item.unique_voters),
+        position: item.board_item_position,
       });
-
-      return acc;
-    }, []);
-
-    const board = boards.length ? boards[0] : null;
-    if (!board) {
-      return null;
     }
+    //
+    // // Process results into hierarchical structure
+    // const boardItems = results.reduce<Board[]>((acc, row: any) => {
+    //   // let board = acc.find(rm => rm.id === row.board_id);
+    //   // if (!board) {
+    //   //   board = { id: row.board_id, name: row.board_name, columns: [] };
+    //   //   acc.push(board);
+    //   // }
+    //
+    //   const column = board.columns.find(col => col.id === row.board_column_id);
+    //   if (!column) {
+    //     logger.error('Column not found', { columnId: row.board_column_id });
+    //     return acc;
+    //   }
+    //   // if (!column) {
+    //   //   column = {
+    //   //     id: row.board_column_id,
+    //   //     title: row.board_column_title,
+    //   //     position: row.board_column_order,
+    //   //     items: [],
+    //   //   };
+    //   //   board.columns.push(column);
+    //   // }
+    //
+    //   column.items.push({
+    //     id: row.board_item_id,
+    //     title: row.board_item_title,
+    //     createdAt: new Date(row.board_item_created_at),
+    //     totalVotes: Number(row.total_votes),
+    //     uniqueVoters: Number(row.unique_voters),
+    //     position: row.board_item_position,
+    //   });
+    //
+    //   return acc;
+    // }, []);
 
-    allColumns.forEach(col => {
-      const column = board.columns.find(c => c.id === col.id);
-      if (!column) {
-        board.columns.push({
-          id: col.id,
-          title: col.title,
-          position: col.position,
-          items: [],
-        });
-      }
-    });
+    // const board = boardItems.length ? boardItems[0] : null;
+    // if (!board) {
+    //   return null;
+    // }
 
     board.columns = board.columns.sort((a, b) => a.position - b.position);
 

@@ -1,40 +1,40 @@
 import Messages from './messages';
 import { Button, TextFieldInput } from '@radix-ui/themes';
 import Link from 'next/link';
-import { PasswordField } from "@/shared/password-field";
-import { redirect } from "next/navigation";
-import { cookies, headers } from "next/headers";
-import { createClient } from '@/utils/supabase/server'
+import { PasswordField } from '@/shared/password-field';
+import { redirect } from 'next/navigation';
+import { cookies, headers } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 export default function Login() {
   const signIn = async (formData: FormData) => {
-    'use server'
+    'use server';
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
-      return redirect('/login?message=Could not authenticate user')
+      return redirect('/login?message=Could not authenticate user');
     }
 
-    return redirect('/dashboard')
-  }
+    return redirect('/dashboard');
+  };
 
   const signUp = async (formData: FormData) => {
-    'use server'
+    'use server';
 
-    const origin = headers().get('origin')
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const origin = headers().get('origin');
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -42,19 +42,19 @@ export default function Login() {
       options: {
         emailRedirectTo: `${origin}/auth/callback`,
       },
-    })
+    });
 
     if (error) {
-      return redirect('/login?message=Could not authenticate user')
+      return redirect('/login?message=Could not authenticate user');
     }
 
-    return redirect('/login?message=Check email to continue sign in process')
-  }
+    return redirect('/login?message=Check email to continue sign in process');
+  };
 
   return (
     <div className="flex flex-auto items-center justify-center">
       <div className="flex flex-col items-center gap-5">
-        <img className="h-24" src="/tradescan-logo.png" alt="Logo" />
+        <img className="h-24" src="/logo.png" alt="Logo" />
 
         <form
           action={signIn}
@@ -65,7 +65,7 @@ export default function Login() {
             Email
           </label>
 
-          <TextFieldInput size='3' type="email" name="email" placeholder="you@example.com" required />
+          <TextFieldInput size="3" type="email" name="email" placeholder="you@example.com" required />
 
           <label className="text-md" htmlFor="password">
             Password

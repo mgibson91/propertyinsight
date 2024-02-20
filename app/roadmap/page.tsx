@@ -30,8 +30,9 @@ export default async function Page() {
             canDeleteColumn: access,
             canCreateColumn: access,
             canViewVoteSummary: access,
-            canSuggestIdea: access,
             canViewSuggestedIdeas: access,
+
+            canSuggestIdea: true,
           }}
         />
       )}

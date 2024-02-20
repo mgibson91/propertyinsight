@@ -28,7 +28,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
           router.push('/');
         }}
       >
-        <img src={'/tradescan-logo.png'} className={'h-8'} />
+        <img src={'/logo.png'} className={'h-8'} />
         <Heading size={'6'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>
           Tradescan
         </Heading>
