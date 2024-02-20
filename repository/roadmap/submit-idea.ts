@@ -35,18 +35,7 @@ export async function submitIdea(input: { boardId: string; title: string; descri
         requesting_user_id: user.id, // Assuming the column in your table is named user_id
         created_at: new Date(), // Assuming you have a created_at column for timestamps
       })
-      // .returning('id') // Assuming you want to return the ID of the inserted idea
       .execute();
-
-    // // Since Kysely is type-safe, you should not get an error object like in Supabase
-    // // Instead, check the insertResult for success/failure
-    // if (insertResult.length === 0) {
-    //   // Handle the case where the insert didn't return anything
-    //   throw new Error('Failed to submit idea');
-    // }
-    //
-    // // Return the inserted data or some success message
-    // return insertResult[0]; // Adjust based on what you actually want to return
   } catch (error) {
     // Log the error or handle it as needed
     console.error('Error submitting idea:', error);

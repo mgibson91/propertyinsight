@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   ChatBubbleIcon,
@@ -8,12 +8,12 @@ import {
   LockClosedIcon,
   PlusIcon,
   RocketIcon,
-} from "@radix-ui/react-icons";
-import { IconButton, Popover } from "@radix-ui/themes";
-import Link from "next/link";
+} from '@radix-ui/react-icons';
+import { IconButton, Popover } from '@radix-ui/themes';
+import Link from 'next/link';
 // import { logoutAction } from "@/app/actions/auth-test/logout";
-import React from "react";
-import { logoutAction } from "@/app/actions/logout-action";
+import React from 'react';
+import { logoutAction } from '@/app/actions/logout-action';
 
 export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => {
   const menuItems = [
@@ -50,10 +50,6 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
       <Popover.Root>
         <Popover.Trigger className={'inline-flex'}>
           <HamburgerMenuIcon className="h-6 w-6 cursor-pointer text-accent-text hover:text-accent-text-contrast duration-200 transition-all" />
-
-          {/*<IconButton variant={"ghost"}>*/}
-          {/*  <HamburgerMenuIcon className="h-6 w-6 cursor-pointer" />*/}
-          {/*</IconButton>*/}
         </Popover.Trigger>
         <Popover.Content className={'w-[250px]'} style={{ padding: 8 }} align="end" sideOffset={15} alignOffset={-5}>
           <div>{headerSlot}</div>

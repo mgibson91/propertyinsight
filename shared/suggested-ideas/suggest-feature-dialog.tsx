@@ -18,42 +18,6 @@ export function SuggestFeatureDialog({
 
   const [open, setOpen] = useState(false);
 
-  // const handleChildClick = (childOnClick: () => void) => {
-  //   setOpen(true);
-  //
-  //   // If the child has its own onClick handler, call it
-  //   if (childOnClick) {
-  //     childOnClick();
-  //   }
-  // };
-  //
-  // // Clone each child and inject the onClick handler
-  // const childrenWithProps = React.Children.map(children, child => {
-  //   if (React.isValidElement(child)) {
-  //     // Capture the existing onClick handler if any
-  //     const originalOnClick = child.props.onClick;
-  //     return React.cloneElement(child, {
-  //       onClick: (event: React.MouseEvent<HTMLElement>) => {
-  //         // Open the dialog
-  //         setOpen(true);
-  //         // Call the original onClick handler if it exists
-  //         if (originalOnClick) {
-  //           originalOnClick(event);
-  //         }
-  //       },
-  //     });
-  //   }
-  //   return child;
-  // });
-  // const childrenWithProps = React.Children.map(children, child => {
-  //   if (React.isValidElement(child)) {
-  //     return React.cloneElement(child, {
-  //       onClick: () => handleChildClick(child.props.onClick),
-  //     } as any);
-  //   }
-  //   return child;
-  // });
-
   return (
     <Dialog.Root open={open}>
       <Dialog.Trigger onClick={() => setOpen(true)}>{children}</Dialog.Trigger>

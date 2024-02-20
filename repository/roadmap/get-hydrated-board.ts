@@ -90,46 +90,6 @@ ORDER BY
         position: item.board_item_position,
       });
     }
-    //
-    // // Process results into hierarchical structure
-    // const boardItems = results.reduce<Board[]>((acc, row: any) => {
-    //   // let board = acc.find(rm => rm.id === row.board_id);
-    //   // if (!board) {
-    //   //   board = { id: row.board_id, name: row.board_name, columns: [] };
-    //   //   acc.push(board);
-    //   // }
-    //
-    //   const column = board.columns.find(col => col.id === row.board_column_id);
-    //   if (!column) {
-    //     logger.error('Column not found', { columnId: row.board_column_id });
-    //     return acc;
-    //   }
-    //   // if (!column) {
-    //   //   column = {
-    //   //     id: row.board_column_id,
-    //   //     title: row.board_column_title,
-    //   //     position: row.board_column_order,
-    //   //     items: [],
-    //   //   };
-    //   //   board.columns.push(column);
-    //   // }
-    //
-    //   column.items.push({
-    //     id: row.board_item_id,
-    //     title: row.board_item_title,
-    //     createdAt: new Date(row.board_item_created_at),
-    //     totalVotes: Number(row.total_votes),
-    //     uniqueVoters: Number(row.unique_voters),
-    //     position: row.board_item_position,
-    //   });
-    //
-    //   return acc;
-    // }, []);
-
-    // const board = boardItems.length ? boardItems[0] : null;
-    // if (!board) {
-    //   return null;
-    // }
 
     board.columns = board.columns.sort((a, b) => a.position - b.position);
 

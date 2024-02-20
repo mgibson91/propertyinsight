@@ -32,7 +32,6 @@ function TaskCard({
   permissions,
 }: Props) {
   const [mouseIsOver, setMouseIsOver] = useState(false);
-  // const [editMode, setEditMode] = useState(false);
 
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -101,7 +100,6 @@ function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      // onClick={disableEditMode}
       className={`!bg-accent-bg p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-accent-border border !border-accent-border relative task
       ${permissions?.canMoveTask ? 'cursor-grab' : 'cursor-default'}
       ${permissions?.canEditTask || permissions?.canDeleteTask || permissions?.canViewVoteSummary ? 'hover:ring-2 hover:ring-inset' : ''}
@@ -134,10 +132,6 @@ function TaskCard({
           ) : (
             <p className={'invisible'}>1</p>
           )}
-
-          {/*<IconButton variant={'ghost'} className={''}>*/}
-          {/*  <DotsHorizontalIcon />*/}
-          {/*</IconButton>*/}
         </div>
       </div>
 

@@ -40,7 +40,6 @@ export function ColumnContainer({
   setEditMode,
   permissions,
 }: Props) {
-  // const [editMode, setEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState<Id | null>(null);
 
   const tasksIds = useMemo(() => {

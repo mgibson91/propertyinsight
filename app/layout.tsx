@@ -2,13 +2,12 @@ import '../css/preflight-without-button.css';
 import '../css/globals.css';
 import '@radix-ui/themes/styles.css';
 import { MatchingSnapshotProvider } from '@/app/matching-snapshot-provider';
-// import { NavBar } from '@/app/nav-bar';
 import { DisplayModeAwareRadixThemeProvider } from '@/app/display-mode-aware-radix-theme-provider';
 import Script from 'next/script';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NavDropdown } from '@/shared/nav-dropdown';
-import { NavBar } from "@/shared/nav-bar";
+import { NavBar } from '@/shared/nav-bar';
 
 const defaultUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
@@ -59,9 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               rightSlot={
                 <div className={'ml-2'}>
                   <NavDropdown
-                    headerSlot={
-                      <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
-                    }
+                    headerSlot={<span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>}
                   />
                 </div>
               }
@@ -69,9 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
 
           <main className="min-h-screen flex flex-col items-center text-primary-text">
-            <MatchingSnapshotProvider>
-                {children}
-            </MatchingSnapshotProvider>
+            <MatchingSnapshotProvider>{children}</MatchingSnapshotProvider>
           </main>
         </DisplayModeAwareRadixThemeProvider>
       </body>

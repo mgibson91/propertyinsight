@@ -15,10 +15,3 @@ module.exports = {
     prefix: '<rootDir>/',
   }),
 };
-
-// module.exports = {
-//
-//   transform: {
-//     '^.+\\.ts$': 'ts-jest',
-//   },
-// };
