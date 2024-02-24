@@ -29,7 +29,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
         }}
       >
         <img src={'/logo.png'} className={'h-8'} />
-        <Heading size={'6'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>
+        <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>
           Tradescan
         </Heading>
       </div>
@@ -38,7 +38,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
         <div className={'flex flex-row items-center ml-10 gap-5'}>
           <Link href={'/dashboard'}>
             <Text
-              size={'5'}
+              size={'4'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path === '/dashboard' ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -50,7 +50,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
           <Link href={'/setups'}>
             <Text
-              size={'5'}
+              size={'4'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path === '/setups' ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -62,7 +62,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
           <Link href={'/setups/replay'}>
             <Text
-              size={'5'}
+              size={'4'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path.includes('/setups/replay') ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -72,15 +72,27 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
             </Text>
           </Link>
 
-          <Link href={'/roadmap'}>
+          <Link href={'/roadmap'} className={'invisible md:visible'}>
             <Text
-              size={'5'}
+              size={'4'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path.includes('/roadmap') ? 'text-accent-text' : 'text-primary-text-contrast'
               )}
             >
               Roadmap
+            </Text>
+          </Link>
+
+          <Link href={'/changelog'} className={'invisible md:visible'}>
+            <Text
+              size={'4'}
+              className={cx(
+                'hover:text-accent-text transform-all duration-200',
+                path.includes('/changelog') ? 'text-accent-text' : 'text-primary-text-contrast'
+              )}
+            >
+              Changelog
             </Text>
           </Link>
         </div>
@@ -90,12 +102,12 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
       <IconButton
         size={'1'}
-        className={'!bg-primary-text-contrast'}
+        className={'!bg-primary-bg-active'}
         onClick={() => {
           setDisplayMode({ mode: displayMode.mode === 'dark' ? 'light' : 'dark' });
         }}
       >
-        <Icon className={displayMode.mode === 'dark' ? 'text-accent-solid' : 'text-accent-solid'} />
+        <Icon className={displayMode.mode === 'dark' ? 'text-primary-text-contrast' : 'text-primary-text-contrast'} />
       </IconButton>
 
       {isLoggedIn && rightSlot}

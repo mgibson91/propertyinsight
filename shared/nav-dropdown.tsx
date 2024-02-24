@@ -9,11 +9,12 @@ import {
   PlusIcon,
   RocketIcon,
 } from '@radix-ui/react-icons';
-import { IconButton, Popover } from '@radix-ui/themes';
+import { IconButton, Popover, Text } from '@radix-ui/themes';
 import Link from 'next/link';
 // import { logoutAction } from "@/app/actions/auth-test/logout";
 import React from 'react';
 import { logoutAction } from '@/app/actions/logout-action';
+import cx from 'classnames';
 
 export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => {
   const menuItems = [
@@ -37,11 +38,23 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
     //   icon: <PlusIcon />,
     //   url: '/product/upload',
     // },
+
+    {
+      title: 'Roadmap',
+      icon: <DashboardIcon />,
+      url: '/roadmap',
+    },
+    {
+      title: 'Changelog',
+      icon: <RocketIcon />,
+      url: '/changelog',
+    },
     {
       title: 'Privacy',
       icon: <LockClosedIcon />,
       url: '/privacy',
     },
+
     // ... add more items as needed
   ];
 
@@ -49,7 +62,7 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
     <>
       <Popover.Root>
         <Popover.Trigger className={'inline-flex'}>
-          <HamburgerMenuIcon className="h-6 w-6 cursor-pointer text-accent-text hover:text-accent-text-contrast duration-200 transition-all" />
+          <HamburgerMenuIcon className="h-6 w-6 mt-[-3px] cursor-pointer text-accent-text hover:text-accent-text-contrast duration-200 transition-all" />
         </Popover.Trigger>
         <Popover.Content className={'w-[250px]'} style={{ padding: 8 }} align="end" sideOffset={15} alignOffset={-5}>
           <div>{headerSlot}</div>
