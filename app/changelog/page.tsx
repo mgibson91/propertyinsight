@@ -12,7 +12,7 @@ export default function Page() {
         <p className={'text-primary-text'}>Stay updated with the latest changes and improvements</p>
       </div>
 
-      <div className={'flex flex-col items-start gap-2  w-2/3 xl:w-1/2 border-t border-primary-border pt-8'}>
+      <div className={'flex flex-col items-start gap-2 w-2/3 xl:w-1/2 border-t border-primary-border pt-8'}>
         <div className={'flex flex-col items-start'}>
           <Heading size={'4'} className={'text-primary-text'}>
             24th Feb 2024

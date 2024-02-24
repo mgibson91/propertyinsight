@@ -38,7 +38,11 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
     //   icon: <PlusIcon />,
     //   url: '/product/upload',
     // },
-
+    {
+      title: 'Discord',
+      icon: <ChatBubbleIcon />,
+      url: 'https://discord.gg/Nv55UxJQ',
+    },
     {
       title: 'Roadmap',
       icon: <DashboardIcon />,
