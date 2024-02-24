@@ -25,7 +25,7 @@ export function SuggestFeatureDialog({
         <div className={'flex flex-col gap-2'}>
           <div className={'flex flex-row justify-between items-center gap-2'}>
             <Heading size={'5'} className={'!mb-2'}>
-              Submit Feature
+              Submit Idea
             </Heading>
 
             <IconButton
