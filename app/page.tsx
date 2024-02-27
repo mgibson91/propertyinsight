@@ -21,24 +21,32 @@ export default function () {
       </div>
 
       <div className={'mt-10 flex flex-col items-center gap-2'}>
-        <p className={'text-[30px] leading-none font-bold'}>Simultaneous historical replay</p>
-        <video autoPlay loop muted className="w-2/3">
-          <source
-            src="https://lmdjnapcgjqqcfbjkvbq.supabase.co/storage/v1/object/public/media/2x2-tradescan.mp4?t=2024-01-21T07%3A57%3A11.423Z"
-            type="video/mp4"
-          />
-        </video>
+        <p className={'text-[30px] leading-none font-bold'}>Parallel historical replay</p>
+        <div className={'youtube-container w-2/3 overflow-hidden aspect-video pointer-events-none'}>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/2Eu0NoR4JGA?autoplay=1&mute=1&controls=0&iv_load_policy=3"
+            title="Parallel replay"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
       </div>
 
       <div className={'mt-10 flex flex-col items-center gap-2'}>
         <p className={'text-[30px] leading-none font-bold mb-1'}>Fully extensible JavaScript</p>
-        <div className="w-2/3 object-cover">
-          <video autoPlay loop muted>
-            <source
-              src="https://lmdjnapcgjqqcfbjkvbq.supabase.co/storage/v1/object/public/media/tradescan-configuration-demo.mp4?t=2024-01-21T07%3A57%3A28.744Z"
-              type="video/mp4"
-            />
-          </video>
+        <div className={'youtube-container w-2/3 overflow-hidden aspect-video pointer-events-none'}>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/Ytb-W-h1nnk?autoplay=1&mute=1&controls=0&iv_load_policy=3"
+            title="Configuration example"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
         </div>
       </div>
 
