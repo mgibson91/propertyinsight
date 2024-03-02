@@ -26,7 +26,7 @@ export default function () {
           <iframe
             width="560"
             height="315"
-            src="https://www.youtube.com/embed/2Eu0NoR4JGA?autoplay=1&mute=1&controls=0&iv_load_policy=3"
+            src="https://www.youtube.com/embed/2Eu0NoR4JGA?playlist=2Eu0NoR4JGA&loop=1&autoplay=1&mute=1&controls=0&iv_load_policy=3"
             title="Parallel replay"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -41,7 +41,7 @@ export default function () {
           <iframe
             width="560"
             height="315"
-            src="https://www.youtube.com/embed/Ytb-W-h1nnk?autoplay=1&mute=1&controls=0&iv_load_policy=3"
+            src="https://www.youtube.com/embed/Ytb-W-h1nnk?playlist=Ytb-W-h1nnk&loop=1&autoplay=1&mute=1&controls=0&iv_load_policy=3"
             title="Configuration example"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
