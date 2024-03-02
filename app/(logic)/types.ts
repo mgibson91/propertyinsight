@@ -1,4 +1,11 @@
-import { LineData, UTCTimestamp } from "lightweight-charts";
+import { Indicator } from '@/logic/indicators/types';
+import { LineData, UTCTimestamp } from 'lightweight-charts';
+
+export interface UserIndicator extends Indicator {
+  overlay: boolean;
+  color: string;
+  lineWidth: 1 | 2 | 3 | 4;
+}
 
 export interface UserSeries {
   name: string;

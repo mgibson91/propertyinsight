@@ -1,5 +1,6 @@
 export enum IndicatorType {
   SIMPLE_MOVING_AVERAGE = 'simple-moving-average',
+  EXPONENTIAL_MOVING_AVERAGE = 'exponential-moving-average',
   BOLLINGER_BANDS = 'bollinger-bands',
 }
 export enum IndicatorParamType {

@@ -1,5 +1,5 @@
 import { OhlcData, Time } from 'lightweight-charts';
-import { sma } from '@/common/indicator/indicators/sma';
+import { sma } from '@/logic/built-in-functions/sma';
 
 const INITIAL_SERIES: OhlcData[] = new Array(100).fill(10).map(
   (val, i) =>

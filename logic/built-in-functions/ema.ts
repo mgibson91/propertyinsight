@@ -1,4 +1,4 @@
-export function calculateEMA(dataArray: number[], period: number): number {
+export function ema(dataArray: number[], period: number): number {
   // Start with an SMA for the first EMA value
   let sma = 0;
   for (let i = 0; i < period; i++) {

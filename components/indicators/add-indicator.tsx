@@ -2,9 +2,15 @@
 
 import React, { useEffect } from 'react';
 import { Card, TextFieldInput } from '@radix-ui/themes';
-import { Indicator } from '@/common/indicator/types';
+import { Indicator } from '@/logic/indicators/types';
 
-const AddIndicatorView = ({ indicators }: { indicators: Indicator[] }) => {
+const IndicatorSearchView = ({
+  indicators,
+  onItemClicked,
+}: {
+  indicators: Indicator[];
+  onItemClicked: (item: Indicator) => void;
+}) => {
   const [search, setSearch] = React.useState('');
   const [filteredIndicators, setFilteredIndicators] = React.useState(indicators);
 
@@ -13,12 +19,8 @@ const AddIndicatorView = ({ indicators }: { indicators: Indicator[] }) => {
     setFilteredIndicators(filtered);
   }, [search]);
 
-  // const filteredIndicators = indicators.filter(indicator =>
-  //   indicator.name.toLowerCase().includes(search.toLowerCase())
-  // );
-
   return (
-    <Card className="max-w-sm w-full">
+    <div className="w-full min-h-[200px]">
       <div className="mb-4">
         <TextFieldInput
           className="w-full"
@@ -31,6 +33,9 @@ const AddIndicatorView = ({ indicators }: { indicators: Indicator[] }) => {
       <div className="flex flex-col gap-2">
         {filteredIndicators.map(indicator => (
           <div
+            onClick={() => {
+              onItemClicked(indicator);
+            }}
             key={indicator.id}
             className="bg-primary-bg cursor-pointer hover:bg-primary-bg-active p-2 text-left rounded-lg"
           >
@@ -38,8 +43,8 @@ const AddIndicatorView = ({ indicators }: { indicators: Indicator[] }) => {
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 };
 
-export default AddIndicatorView;
+export default IndicatorSearchView;
