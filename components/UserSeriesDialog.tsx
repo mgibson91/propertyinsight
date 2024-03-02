@@ -1,16 +1,9 @@
-import {
-  Button,
-  Card,
-  Checkbox, Code,
-  Dialog, Heading, HoverCard,
-  TextArea,
-  TextFieldInput,
-} from '@radix-ui/themes';
+import { Button, Card, Checkbox, Code, Dialog, Heading, HoverCard, TextArea, TextFieldInput } from '@radix-ui/themes';
 
-import { Editor } from "@monaco-editor/react";
+import { Editor } from '@monaco-editor/react';
 
 import * as monaco from 'monaco-editor';
-import { UserSeries } from "@/app/(logic)/types";
+import { UserSeries } from '@/app/(logic)/types';
 
 export const UserSeriesDialog = ({
   show,
@@ -38,17 +31,32 @@ export const UserSeriesDialog = ({
         <Card>
           <div className={'flex flex-col gap-3'} onKeyDown={handleKeyDown}>
             <div className={'flex flex-row items-start justify-between gap-3'}>
-              <div className={'flex flex-col'}>
-                <label>Series Name</label>
-                <TextFieldInput
-                  value={series.name}
-                  onChange={(e) =>
-                    setSeries({
-                      ...series,
-                      name: e.target.value,
-                    })
-                  }
-                />
+              <div className={'flex flex-row gap-2 items-center'}>
+                <div className={'flex flex-col'}>
+                  <label>Series Name</label>
+                  <TextFieldInput
+                    value={series.name}
+                    onChange={e =>
+                      setSeries({
+                        ...series,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className={'flex flex-col'}>
+                  <label>Preset Indicator</label>
+                  <TextFieldInput
+                    value={series.name}
+                    onChange={e =>
+                      setSeries({
+                        ...series,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
 
               <div className={'flex flex-row items-center gap-3'}>
@@ -77,7 +85,7 @@ export const UserSeriesDialog = ({
                 id="head"
                 name="head"
                 value={series.color}
-                onChange={(e) =>
+                onChange={e =>
                   setSeries({
                     ...series,
                     color: e.target.value,
@@ -91,7 +99,7 @@ export const UserSeriesDialog = ({
               <TextFieldInput
                 type={'number'}
                 value={series.lineWidth}
-                onChange={(e) =>
+                onChange={e =>
                   setSeries({
                     ...series,
                     lineWidth: parseInt(e.target.value) as 1 | 2 | 3 | 4,
@@ -106,20 +114,21 @@ export const UserSeriesDialog = ({
                 <div className={'flex flex-row'}>
                   <HoverCard.Root>
                     <HoverCard.Trigger>
-                      <Heading size={'3'} className={'cursor-pointer text-accent-text hover:text-accent-text-contrast'}>Syntax guide</Heading>
+                      <Heading size={'3'} className={'cursor-pointer text-accent-text hover:text-accent-text-contrast'}>
+                        Syntax guide
+                      </Heading>
                     </HoverCard.Trigger>
                     <HoverCard.Content>
                       <div className={'flex flex-col gap-1'}>
-
                         <Editor
                           height="50vh"
                           width={'50vw'}
                           options={{
                             readOnly: true,
-                            language: "typescript",
+                            language: 'typescript',
                             minimap: {
                               enabled: false,
-                            }
+                            },
                           }}
                           defaultLanguage="typescript"
                           defaultValue={`type Series = {
@@ -144,15 +153,13 @@ function seriesFunction(
                     </HoverCard.Content>
                   </HoverCard.Root>
                 </div>
-
               </div>
 
               <Editor
                 height="90vh"
                 defaultLanguage="javascript"
                 value={series.seriesFunctionString}
-                defaultValue={
-`const windowSize = 20;  // Setting the period for SMA
+                defaultValue={`const windowSize = 20;  // Setting the period for SMA
 
 const smaData = data.map((current, index) => {
   if (index >= windowSize - 1) {
@@ -176,16 +183,12 @@ return smaData.filter(item => item !== null);`}
                   setSeries({
                     ...series,
                     seriesFunctionString: value || 'data[0].close > data[0].sma',
-                  })
+                  });
                 }}
               />
 
               <div className={'flex justify-between mt-3'}>
-                <Button
-                  color="gray"
-                  className={'w-32'}
-                  onClick={() => onCancelClicked()}
-                >
+                <Button color="gray" className={'w-32'} onClick={() => onCancelClicked()}>
                   Cancel
                 </Button>
 

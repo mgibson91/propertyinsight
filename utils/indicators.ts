@@ -1,7 +1,7 @@
 // src/utils/indicators.ts
 
 // Calculate the Simple Moving Average (SMA) for a given period
-export const calculateSMA = (data: number[], period: number): number[] => {
+export const sma = (data: number[], period: number): number[] => {
   const sma: number[] = [];
 
   for (let i = period - 1; i < data.length; i++) {
@@ -38,15 +38,8 @@ export const calculateRSI = (data: number[], period: number): number[] => {
   // Subsequent average gain and loss
   for (let i = period + 1; i < data.length; i++) {
     const change = data[i] - data[i - 1];
-    avgGain.push(
-      (avgGain[avgGain.length - 1] * (period - 1) + (change > 0 ? change : 0)) /
-        period
-    );
-    avgLoss.push(
-      (avgLoss[avgLoss.length - 1] * (period - 1) +
-        (change < 0 ? -change : 0)) /
-        period
-    );
+    avgGain.push((avgGain[avgGain.length - 1] * (period - 1) + (change > 0 ? change : 0)) / period);
+    avgLoss.push((avgLoss[avgLoss.length - 1] * (period - 1) + (change < 0 ? -change : 0)) / period);
   }
 
   // Calculate RSI

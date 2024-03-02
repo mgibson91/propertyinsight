@@ -77,12 +77,7 @@ describe('indicator', () => {
   });`,
     };
 
-    const params = {
-      windowSize: 20,
-      field: 'close',
-    };
-
-    const output = buildIndicator(indicator, [
+    const populatedIndicatorString = buildIndicator(indicator, [
       {
         key: 'windowSize',
         value: 20,
@@ -92,6 +87,12 @@ describe('indicator', () => {
         value: 'close',
       },
     ]);
+
+    const func = new Function('data', 'period', populatedIndicatorString);
+
+    const seriesData = func(INITIAL_SERIES);
+
+    console.log(seriesData);
 
     console.log(output);
   });
