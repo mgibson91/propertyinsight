@@ -1,18 +1,18 @@
--- INSERT INTO auth.users (id, instance_id, aud, role) VALUES ('f9da86f3-b364-4050-9023-f9921a760577', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
--- INSERT INTO auth.users (id, instance_id, aud, role) VALUES ('d5a33e4e-e60c-4a48-af5f-950ac59aa9c6', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
--- INSERT INTO auth.users (id, instance_id, aud, role) VALUES ('e54c9010-c5f0-41fc-900a-5147c2e4b65d', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
+-- INSERT INTO auth.users (tag, instance_tag, aud, role) VALUES ('f9da86f3-b364-4050-9023-f9921a760577', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
+-- INSERT INTO auth.users (tag, instance_tag, aud, role) VALUES ('d5a33e4e-e60c-4a48-af5f-950ac59aa9c6', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
+-- INSERT INTO auth.users (tag, instance_tag, aud, role) VALUES ('e54c9010-c5f0-41fc-900a-5147c2e4b65d', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
 --
--- INSERT INTO boards (id, created_at, name) VALUES ('4c0467a7-7b5b-434c-85c5-c2a9baa4e969', '2023-09-25', 'roadmap-dev');
+-- INSERT INTO boards (tag, created_at, name) VALUES ('4c0467a7-7b5b-434c-85c5-c2a9baa4e969', '2023-09-25', 'roadmap-dev');
 --
--- INSERT INTO board_columns (id, board_id, title, position) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'To Do', 1);
--- INSERT INTO board_columns (id, board_id, title, position) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'In Progress', 2);
--- INSERT INTO board_columns (id, board_id, title, position) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'Done', 3);
+-- INSERT INTO board_columns (tag, board_tag, title, position) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'To Do', 1);
+-- INSERT INTO board_columns (tag, board_tag, title, position) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'In Progress', 2);
+-- INSERT INTO board_columns (tag, board_tag, title, position) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', '4c0467a7-7b5b-434c-85c5-c2a9baa4e969', 'Done', 3);
 --
--- INSERT INTO board_items (id, column_id, title, created_at, position) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', '6a6a1bd9-6401-4621-9038-f0db161b6201', 'Feature 1', '2023-10-25', 1);
--- INSERT INTO board_items (id, column_id, title, created_at, position) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', '814a600e-8365-4c6c-aae9-68ea3e394f07', 'Feature 2', '2024-02-10', 2);
--- INSERT INTO board_items (id, column_id, title, created_at, position) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', '0cf4c61d-b276-419d-9d68-fbd9dc43f841', 'Feature 3', '2024-01-15', 3);
+-- INSERT INTO board_items (tag, column_tag, title, created_at, position) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', '6a6a1bd9-6401-4621-9038-f0db161b6201', 'Feature 1', '2023-10-25', 1);
+-- INSERT INTO board_items (tag, column_tag, title, created_at, position) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', '814a600e-8365-4c6c-aae9-68ea3e394f07', 'Feature 2', '2024-02-10', 2);
+-- INSERT INTO board_items (tag, column_tag, title, created_at, position) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', '0cf4c61d-b276-419d-9d68-fbd9dc43f841', 'Feature 3', '2024-01-15', 3);
 --
--- INSERT INTO board_votes (item_id, user_id, count) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', 'd5a33e4e-e60c-4a48-af5f-950ac59aa9c6', 2);
--- INSERT INTO board_votes (item_id, user_id, count) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', 'f9da86f3-b364-4050-9023-9f921a760617', 3);
--- INSERT INTO board_votes (item_id, user_id, count) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', 'e54c9010-c5f0-41fc-900a-5147c2e4b65d', 5);
--- INSERT INTO board_votes (item_id, user_id, count) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', 'd5a33e4e-e60c-4a48-af5f-950ac59aa9c6', 1);
+-- INSERT INTO board_votes (item_tag, user_tag, count) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', 'd5a33e4e-e60c-4a48-af5f-950ac59aa9c6', 2);
+-- INSERT INTO board_votes (item_tag, user_tag, count) VALUES ('6a6a1bd9-6401-4621-9038-f0db161b6201', 'f9da86f3-b364-4050-9023-9f921a760617', 3);
+-- INSERT INTO board_votes (item_tag, user_tag, count) VALUES ('814a600e-8365-4c6c-aae9-68ea3e394f07', 'e54c9010-c5f0-41fc-900a-5147c2e4b65d', 5);
+-- INSERT INTO board_votes (item_tag, user_tag, count) VALUES ('0cf4c61d-b276-419d-9d68-fbd9dc43f841', 'd5a33e4e-e60c-4a48-af5f-950ac59aa9c6', 1);

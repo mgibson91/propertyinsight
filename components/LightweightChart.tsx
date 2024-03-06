@@ -1,10 +1,11 @@
 // src/components/LightweightChart.jsx
-import { CandlestickData, createChart, LineData, SeriesMarker, Time, } from 'lightweight-charts';
+import { CandlestickData, createChart, LineData, SeriesMarker, Time } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
 
 export const LightweightChart = ({
   candlestickData,
   userSeriesData,
+  indicatorData,
   seriesMarkers,
   futureValues,
   visibleRange,
@@ -12,6 +13,12 @@ export const LightweightChart = ({
 }: {
   candlestickData: CandlestickData<Time>[];
   userSeriesData: {
+    overlay: boolean;
+    color: string;
+    lineWidth: 1 | 2 | 3 | 4;
+    data: LineData<Time>[];
+  }[];
+  indicatorData: {
     overlay: boolean;
     color: string;
     lineWidth: 1 | 2 | 3 | 4;
@@ -27,7 +34,7 @@ export const LightweightChart = ({
     gridLines?: string;
     text?: string;
     scale?: string;
-  }
+  };
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +80,6 @@ export const LightweightChart = ({
     // Fit content to the chart's time scale
     chart.timeScale().fitContent();
 
-
     if (futureValues) {
       chart.timeScale().scrollToPosition(10, false);
     }
@@ -94,7 +100,6 @@ export const LightweightChart = ({
     candlestickSeries.setData(candlestickData);
     candlestickSeries.setMarkers(seriesMarkers);
 
-
     for (const series of userSeriesData) {
       if (!series.data?.length) {
         continue;
@@ -108,7 +113,26 @@ export const LightweightChart = ({
           // priceScaleId: 'left',
         });
 
-        lineSeries.setData( series.data);
+        lineSeries.setData(series.data);
+      } else {
+        // Plot in extra chart
+      }
+    }
+
+    for (const series of indicatorData) {
+      if (!series.data?.length) {
+        continue;
+      }
+
+      if (series.overlay) {
+        const lineSeries = chart.addLineSeries({
+          color: series.color,
+          lineWidth: series.lineWidth || 1,
+          lastValueVisible: false,
+          // priceScaleId: 'left',
+        });
+
+        lineSeries.setData(series.data);
       } else {
         // Plot in extra chart
       }
@@ -136,9 +160,8 @@ export const LightweightChart = ({
     //   }, updateIntervalMs);
     // }
 
-// Initially call the function
-//     updateChartRecursively();
-
+    // Initially call the function
+    //     updateChartRecursively();
 
     // lineSeries.priceScale().applyOptions({
     //   // set the positioning of the volume series
@@ -172,7 +195,5 @@ export const LightweightChart = ({
     };
   }, [candlestickData, userSeriesData, seriesMarkers]);
 
-  return (
-    <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
-  );
+  return <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />;
 };

@@ -94,7 +94,7 @@ function sma(data, period) {
   return func(data, cache);
 }
 
-function processBatches(batchSize: number, data: OhlcData[] = INITIAL_SERIES) {
+function calculateIndicatorData(batchSize: number, data: OhlcData[] = INITIAL_SERIES) {
   const batches: OhlcData[][] = [];
   // Adjust loop to increment by 1 for overlapping batches
   for (let i = 0; i < data.length - batchSize + 1; i++) {
@@ -131,7 +131,7 @@ describe('new path', () => {
   beforeAll(() => {
     // Adjust the batchSize as needed
     const batchSize = 20; // Example batch size
-    result = processBatches(batchSize);
+    result = calculateIndicatorData(batchSize);
     finalResult = result[INITIAL_SERIES.length - 1];
   });
 

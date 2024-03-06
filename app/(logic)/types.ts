@@ -1,12 +1,6 @@
 import { Indicator } from '@/logic/indicators/types';
 import { LineData, UTCTimestamp } from 'lightweight-charts';
 
-export interface UserIndicator extends Indicator {
-  overlay: boolean;
-  color: string;
-  lineWidth: 1 | 2 | 3 | 4;
-}
-
 export interface UserSeries {
   name: string;
   // seriesFunction: (data: OhlcData[]) => LineData<UTCTimestamp>[];
@@ -38,4 +32,17 @@ export interface UserSeriesData {
   data: LineData<UTCTimestamp>[];
   color: string;
   lineWidth: 1 | 2 | 3 | 4;
+}
+
+export interface GenericData {
+  time: UTCTimestamp;
+  [key: string]: number | object;
+}
+
+// OHLC + Generic
+export interface EnrichedOhlcData extends GenericData {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
 }

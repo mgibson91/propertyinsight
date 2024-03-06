@@ -1,7 +1,7 @@
 import { Indicator, IndicatorParamType, IndicatorParamWidget, IndicatorType } from '@/logic/indicators/types';
 
 export const PRESET_INDICATOR_SMA: Indicator = {
-  id: 'simple-moving-average',
+  tag: 'sma',
   type: IndicatorType.SIMPLE_MOVING_AVERAGE,
   label: 'Simple Moving Average',
   params: [
@@ -9,17 +9,72 @@ export const PRESET_INDICATOR_SMA: Indicator = {
       name: 'length',
       type: IndicatorParamType.NUMBER,
       label: 'Length',
-      defaultValue: 20,
+      required: true,
+      defaultValue: 2,
+      value: 20,
     },
-    // { name: 'field', type: IndicatorParamType.FIELD, label: 'Field' },
+    {
+      name: 'field',
+      type: IndicatorParamType.FIELD,
+      label: 'Field',
+      required: true,
+      defaultValue: 'close',
+      value: 'close',
+    },
   ],
   funcStr: `
-  return sma(close.slice(length), length)
+  const value = sma($field.slice(0, $length), $length);
+  return { value };
 `,
+  overlay: true,
+  streams: [
+    {
+      tag: 'value',
+      overlay: true,
+      lineWidth: 1,
+      color: '#FFFFFF',
+    },
+  ],
+};
+
+export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
+  tag: 'sma_channel',
+  type: IndicatorType.SIMPLE_MOVING_AVERAGE_CHANNEL,
+  label: 'Simple Moving Average Channel',
+  params: [
+    {
+      name: 'length',
+      type: IndicatorParamType.NUMBER,
+      label: 'Length',
+      required: true,
+      defaultValue: 2,
+      value: 20,
+    },
+  ],
+  funcStr: `
+  const low_channel = sma(low.slice(0, $length), $length);
+  const high_channel = sma(high.slice(0, $length), $length);
+  return { low_channel, high_channel };
+`,
+  overlay: true,
+  streams: [
+    {
+      tag: 'low_channel',
+      overlay: true,
+      lineWidth: 1,
+      color: '#FF0000',
+    },
+    {
+      tag: 'high_channel',
+      overlay: true,
+      lineWidth: 1,
+      color: '#00FF00',
+    },
+  ],
 };
 
 export const PRESET_INDICATOR_EMA: Indicator = {
-  id: 'exponential-moving-average',
+  tag: 'value',
   type: IndicatorType.EXPONENTIAL_MOVING_AVERAGE,
   label: 'Exponential Moving Average',
   params: [
@@ -27,48 +82,90 @@ export const PRESET_INDICATOR_EMA: Indicator = {
       name: 'length',
       type: IndicatorParamType.NUMBER,
       label: 'Length',
+      required: true,
       defaultValue: 20,
+      value: 20,
     },
-    // { name: 'field', type: IndicatorParamType.FIELD, label: 'Field' },
+    {
+      name: 'field',
+      type: IndicatorParamType.FIELD,
+      label: 'Field',
+      required: true,
+      defaultValue: 'close',
+      value: 'close',
+    },
   ],
   funcStr: `
-  return ema(close.slice(length), length)
+  const value = ema($field.slice(0, $length), $length);
+  return { value };
 `,
+  overlay: true,
+  streams: [
+    {
+      tag: 'value',
+      overlay: true,
+      lineWidth: 1,
+      color: 'yellow',
+    },
+  ],
 };
 
-const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
-  id: 'bollinger-bands',
+export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
+  tag: 'bollinger_bands',
   type: IndicatorType.BOLLINGER_BANDS,
-  label: 'Bolling Bands',
+  label: 'Bollinger Bands',
   params: [
     {
       name: 'length',
       type: IndicatorParamType.NUMBER,
-      label: 'Window Size',
+      label: 'Length',
+      required: true,
       defaultValue: 20,
+      value: 20,
     },
-    { name: 'field', type: IndicatorParamType.FIELD, label: 'Field' },
+    {
+      name: 'stdDevMultiplier',
+      type: IndicatorParamType.NUMBER,
+      label: 'Std Dev Multiplier',
+      required: true,
+      defaultValue: 2,
+      value: 2,
+    },
   ],
-  funcStr: `const length = %length%;  // Setting the period for SMA
-  
-  const smaData = data.map((current, index) => {
-    if (index >= length - 1) {
-      // Calculate SMA only when there are enough preceding data points
-      let sum = 0;
-      // Sum the closing prices of the last 'length' days
-      for (let i = index - length + 1; i <= index; i++) {
-        sum += data[i]['%field%'];
-      }
-      let average = sum / length;
-      return { time: current.time, value: average };
-    } else {
-      return null;  // Not enough data to calculate SMA
-    }
-  });`,
+  funcStr: `
+const middle_band = sma(close, $length);
+const std_dev = stddev(close, $length);
+const upper_band = middle_band + std_dev * $stdDevMultiplier;
+const lower_band = middle_band - std_dev * $stdDevMultiplier;
+return { middle_band, upper_band, lower_band };
+`,
+  overlay: true,
+  streams: [
+    {
+      tag: 'middle_band',
+      overlay: true,
+      lineWidth: 1,
+      color: '#CC0000', // Middle band in blue
+    },
+    {
+      tag: 'upper_band',
+      overlay: true,
+      lineWidth: 1,
+      color: '#10CAF9', // Upper band in red
+    },
+    {
+      tag: 'lower_band',
+      overlay: true,
+      lineWidth: 1,
+      color: '#10CAF9', // Lower band in green
+    },
+  ],
 };
 
 export const PRESET_INDICATORS: Indicator[] = [
   PRESET_INDICATOR_SMA,
   PRESET_INDICATOR_EMA,
+  PRESET_INDICATOR_SMA_CHANNEL,
+  PRESET_INDICATOR_BOLLINGER_BANDS,
   // ... add more presets here
 ];

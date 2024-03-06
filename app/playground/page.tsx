@@ -1,5 +1,9 @@
 import IndicatorSearchView from '@/components/indicators/add-indicator';
 import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
+import DemoComponent from '@/app/playground/DemoComponent';
+import SlideToggle from '@/app/playground/SlideToggle';
+import React from 'react';
+import SlideToggle2 from '@/shared/layout/slide-toggle2';
 
 // Mock data array
 // const indicators: Indicator[] = [
@@ -39,7 +43,38 @@ import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
 export default function Page() {
   return (
     <div className={'w-full h-full'}>
-      <IndicatorSearchView indicators={PRESET_INDICATORS}></IndicatorSearchView>
+      {/*<IndicatorSearchView indicators={PRESET_INDICATORS}></IndicatorSearchView>*/}
+      <DemoComponent />
+      {/*<SlideToggle*/}
+      {/*  trigger={*/}
+      {/*    <button className="z-2 px-4 py-2 bg-blue-500 text-white cursor-pointer font-semibold rounded hover:bg-blue-700 transition duration-300">*/}
+      {/*      Toggle Content*/}
+      {/*    </button>*/}
+      {/*  }*/}
+      {/*>*/}
+      {/*  <div className="p-4 border border-gray-200 shadow rounded bg-white h-[300px]">*/}
+      {/*    This is the content that slides into view directly below the button. This is the content that slides into view*/}
+      {/*    directly below the button. This is the content that slides into view directly below the button. This is the*/}
+      {/*    content that slides into view directly below the button. This is the content that slides into view directly*/}
+      {/*    below the button. This is the content that slides into view directly below the button.*/}
+      {/*  </div>*/}
+      {/*</SlideToggle>*/}
+
+      <SlideToggle2
+        heightClass="h-50px"
+        trigger={
+          <button className="z-2 px-4 py-2 bg-blue-500 text-white cursor-pointer font-semibold rounded hover:bg-blue-700 transition duration-300">
+            Toggle Content
+          </button>
+        }
+      >
+        <div className="p-4 border border-gray-200 shadow bg-white rounded h-full">
+          This is the content that slides into view directly below the button. This is the content that slides into view
+          directly below the button. This is the content that slides into view directly below the button. This is the
+          content that slides into view directly below the button. This is the content that slides into view directly
+          below the button. This is the content that slides into view directly below the button.
+        </div>
+      </SlideToggle2>
     </div>
   );
 }

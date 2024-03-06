@@ -1,23 +1,27 @@
-import { LineData, OhlcData, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
-import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from "@/app/(logic)/values";
-import { ConsolidatedLineData } from "@/logic/calculate-outcomes";
-import { UserSeriesData } from "@/app/(logic)/types";
+import { LineData, OhlcData, SeriesMarker, Time, UTCTimestamp } from 'lightweight-charts';
+import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
+import { ConsolidatedLineData } from '@/logic/calculate-outcomes';
+import { GenericData, UserSeriesData } from '@/app/(logic)/types';
 
-export function calculateTriggers(markerFunctionMap: Map<
-  string,
-  {
-    lookback: number;
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    func: Function; // (data: ConsolidatedLineData[]) => boolean;
-  }
->, consolidatedSeries: ConsolidatedLineData[], newUserSeriesData: {
-  name: string;
-  overlay: boolean;
-  data: LineData<UTCTimestamp>[];
-  color: string;
-  lineWidth: 1 | 2 | 3 | 4;
-}[], darkMode: boolean) {
-
+export function calculateTriggers(
+  markerFunctionMap: Map<
+    string,
+    {
+      lookback: number;
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      func: Function; // (data: ConsolidatedLineData[]) => boolean;
+    }
+  >,
+  consolidatedSeries: GenericData[],
+  newUserSeriesData: {
+    name: string;
+    overlay: boolean;
+    data: LineData<UTCTimestamp>[];
+    color: string;
+    lineWidth: 1 | 2 | 3 | 4;
+  }[],
+  darkMode: boolean
+) {
   const matchingMarkers: SeriesMarker<UTCTimestamp>[] = [];
   const conditionMarkers: {
     marker: SeriesMarker<UTCTimestamp>;
@@ -34,9 +38,7 @@ export function calculateTriggers(markerFunctionMap: Map<
       }
 
       // We reverse it to mirror trading view data[0] = now, data[1] = 1 candle ago
-      const reversedLookbackSeries = consolidatedSeries
-        .slice(i - lookback, i)
-        .reverse();
+      const reversedLookbackSeries = consolidatedSeries.slice(i - lookback, i).reverse();
       if (func(reversedLookbackSeries)) {
         // TODO: make dynamic from config
         const marker: SeriesMarker<UTCTimestamp> = {
@@ -54,31 +56,26 @@ export function calculateTriggers(markerFunctionMap: Map<
         const snapshotLookback = i > HISTORICAL_VALUE_COUNT ? HISTORICAL_VALUE_COUNT : i;
 
         // const dataSlice = consolidatedSeries.slice(i - snapshotLookback, i);
-        const dataSlice = consolidatedSeries.slice(
-          i - snapshotLookback,
-          i + FUTURE_VALUE_COUNT
-        );
-        const candlestickData = dataSlice.map(
-          ({ high, low, open, close, time }) => ({
-            high,
-            low,
-            open,
-            close,
-            time,
-          })
-        );
+        const dataSlice = consolidatedSeries.slice(i - snapshotLookback, i + FUTURE_VALUE_COUNT);
+        const candlestickData = dataSlice.map(({ high, low, open, close, time }) => ({
+          high,
+          low,
+          open,
+          close,
+          time,
+        }));
 
         const timeDiff = dataSlice[1].time - dataSlice[0].time;
 
-        for (let y = 0; y < (HISTORICAL_VALUE_COUNT - i); y++) {
+        for (let y = 0; y < HISTORICAL_VALUE_COUNT - i; y++) {
           // Add null values to the beginning of the array for all candlestick data streams
           candlestickData.unshift({
             // TODO: Fix this type hack. OhlcData doesn't allow undefined values but they work as expected
             high: undefined as unknown as number,
-            low: undefined  as unknown as number,
-            open: undefined  as unknown as number,
-            close: undefined  as unknown as number,
-            time: dataSlice[0].time - (timeDiff * (y + 1)) as UTCTimestamp,
+            low: undefined as unknown as number,
+            open: undefined as unknown as number,
+            close: undefined as unknown as number,
+            time: (dataSlice[0].time - timeDiff * (y + 1)) as UTCTimestamp,
           });
         }
 
@@ -91,9 +88,7 @@ export function calculateTriggers(markerFunctionMap: Map<
             }
 
             if (!userSeriesMap.has(key)) {
-              const userSeries = newUserSeriesData.find(
-                (series) => series.name === key
-              );
+              const userSeries = newUserSeriesData.find(series => series.name === key);
               if (userSeries) {
                 userSeriesMap.set(key, []);
               }
@@ -109,9 +104,7 @@ export function calculateTriggers(markerFunctionMap: Map<
         // Concert userSeriesMap to array of UserSeriesData
         const adjacentUserSeriesData: UserSeriesData[] = [];
         for (const [name, data] of userSeriesMap) {
-          const userSeries = newUserSeriesData.find(
-            (series) => series.name === name
-          );
+          const userSeries = newUserSeriesData.find(series => series.name === name);
           if (userSeries) {
             const backfilledData = [...data];
 
@@ -122,7 +115,7 @@ export function calculateTriggers(markerFunctionMap: Map<
             for (let y = 0; y < backfillCount; y++) {
               // Add null values to the beginning of the array for all candlestick data streams
               backfilledData.unshift({
-                time: dataSlice[0].time - (timeDiff * (y + 1)) as UTCTimestamp,
+                time: (dataSlice[0].time - timeDiff * (y + 1)) as UTCTimestamp,
                 // TODO: Fix this type hack. OhlcData doesn't allow undefined values but they work as expected
                 value: undefined as unknown as number,
               });
@@ -140,12 +133,12 @@ export function calculateTriggers(markerFunctionMap: Map<
 
         conditionMarkers.push({
           marker,
-          candlestickData: candlestickData.sort((a, b) => a.time - b.time),
-          userSeriesData: adjacentUserSeriesData.map((series) => ({
+          candlestickData: candlestickData.sort((a, b) => a.time - b.time) as OhlcData<UTCTimestamp>[],
+          userSeriesData: adjacentUserSeriesData.map(series => ({
             ...series,
             data: series.data.sort((a, b) => a.time - b.time),
           })),
-          historicalCandles: Math.min(i, HISTORICAL_VALUE_COUNT)
+          historicalCandles: Math.min(i, HISTORICAL_VALUE_COUNT),
         });
       }
     }
@@ -153,6 +146,6 @@ export function calculateTriggers(markerFunctionMap: Map<
 
   return {
     matchingMarkers: matchingMarkers.sort((a, b) => a.time - b.time),
-    conditionMarkers
+    conditionMarkers,
   };
 }

@@ -6,10 +6,25 @@ import { fetchCandlesFromMemory } from '@/requests/get-bitcoin-prices';
 import { calculateTriggers } from '@/logic/calculate-triggers';
 import TimeFrameSelector from '@/components/TimeFrameSelector';
 import { calculateOutcomes } from '@/logic/calculate-outcomes';
-import { Button, Card, Checkbox, Dialog, Heading, IconButton, Slider, TextFieldInput, Theme } from '@radix-ui/themes';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Code,
+  Dialog,
+  Heading,
+  HoverCard,
+  IconButton,
+  Slider,
+  TextFieldInput,
+  Theme,
+} from '@radix-ui/themes';
 import TickerSelector from '@/components/TickerSelector';
 import { BacktestChart } from '@/components/BacktestChart';
 import {
+  ChevronDownIcon,
+  CodeIcon,
+  CopyIcon,
   EyeNoneIcon,
   EyeOpenIcon,
   PauseIcon,
@@ -28,11 +43,15 @@ import Link from 'next/link';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
-import { UserIndicator, UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
+import { UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
 import { Indicator } from '@/logic/indicators/types';
 import { EditIndicatorDialog } from '@/components/edit-indicator-dialog';
 import { PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
 import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
+import SlideToggle from '@/shared/layout/slide-toggle';
+import SlideToggle2 from '@/shared/layout/slide-toggle2';
+import { Toast } from '@/shared/toast';
+import { EditIndicatorCodeDialog } from '@/components/edit-indicator-code-dialog';
 
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/monokai.css';
@@ -40,62 +59,62 @@ import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
 // import 'codemirror/mode/javascript/javascript';
 
 const INITIAL_USER_SERIES: UserSeries[] = [
-  {
-    name: 'sma20',
-    // seriesFunctionString: `
-    // return data.map(d => ({ time: d.time, value: d.close }));
-    // `,
-    seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
-  
-  const smaData = data.map((current, index) => {
-    if (index >= windowSize - 1) {
-      // Calculate SMA only when there are enough preceding data points
-      let sum = 0;
-      // Sum the closing prices of the last 'windowSize' days
-      for (let i = index - windowSize + 1; i <= index; i++) {
-        sum += data[i].close;
-      }
-      let average = sum / windowSize;
-      return { time: current.time, value: average };
-    } else {
-      return null;  // Not enough data to calculate SMA
-    }
-  });
-  
-  // Filter out the null entries, similar to your offset example
-  return smaData.filter(item => item !== null);`,
-    overlay: true,
-    color: '#E54D2E',
-    lineWidth: 1,
-  },
-  {
-    name: 'sma50',
-    // seriesFunctionString: `
-    // return data.map(d => ({ time: d.time, value: d.close }));
-    // `,
-    seriesFunctionString: `const windowSize = 50;  // Setting the period for SMA
-  
-  const smaData = data.map((current, index) => {
-    if (index >= windowSize - 1) {
-      // Calculate SMA only when there are enough preceding data points
-      let sum = 0;
-      // Sum the closing prices of the last 'windowSize' days
-      for (let i = index - windowSize + 1; i <= index; i++) {
-        sum += data[i].close;
-      }
-      let average = sum / windowSize;
-      return { time: current.time, value: average };
-    } else {
-      return null;  // Not enough data to calculate SMA
-    }
-  });
-  
-  // Filter out the null entries, similar to your offset example
-  return smaData.filter(item => item !== null);`,
-    overlay: true,
-    color: '#29A383',
-    lineWidth: 1,
-  },
+  // {
+  //   name: 'sma20',
+  //   // seriesFunctionString: `
+  //   // return data.map(d => ({ time: d.time, value: d.close }));
+  //   // `,
+  //   seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
+  //
+  // const smaData = data.map((current, index) => {
+  //   if (index >= windowSize - 1) {
+  //     // Calculate SMA only when there are enough preceding data points
+  //     let sum = 0;
+  //     // Sum the closing prices of the last 'windowSize' days
+  //     for (let i = index - windowSize + 1; i <= index; i++) {
+  //       sum += data[i].close;
+  //     }
+  //     let average = sum / windowSize;
+  //     return { time: current.time, value: average };
+  //   } else {
+  //     return null;  // Not enough data to calculate SMA
+  //   }
+  // });
+  //
+  // // Filter out the null entries, similar to your offset example
+  // return smaData.filter(item => item !== null);`,
+  //   overlay: true,
+  //   color: '#E54D2E',
+  //   lineWidth: 1,
+  // },
+  // {
+  //   name: 'sma50',
+  //   // seriesFunctionString: `
+  //   // return data.map(d => ({ time: d.time, value: d.close }));
+  //   // `,
+  //   seriesFunctionString: `const windowSize = 50;  // Setting the period for SMA
+  //
+  // const smaData = data.map((current, index) => {
+  //   if (index >= windowSize - 1) {
+  //     // Calculate SMA only when there are enough preceding data points
+  //     let sum = 0;
+  //     // Sum the closing prices of the last 'windowSize' days
+  //     for (let i = index - windowSize + 1; i <= index; i++) {
+  //       sum += data[i].close;
+  //     }
+  //     let average = sum / windowSize;
+  //     return { time: current.time, value: average };
+  //   } else {
+  //     return null;  // Not enough data to calculate SMA
+  //   }
+  // });
+  //
+  // // Filter out the null entries, similar to your offset example
+  // return smaData.filter(item => item !== null);`,
+  //   overlay: true,
+  //   color: '#29A383',
+  //   lineWidth: 1,
+  // },
 ];
 
 /**
@@ -107,28 +126,64 @@ const INITIAL_USER_SERIES: UserSeries[] = [
  */
 
 const INITIAL_USER_TRIGGERS: UserTrigger[] = [
-  {
-    id: '1',
-    name: 'sma crossover',
-    triggerFunctionString: `return data[0].sma20 > data[0].sma50 && data[1].sma20 < data[1].sma50`,
-    size: 2,
-    color: '#ffffff',
-  },
+  // {
+  //   tag: '1',
+  //   name: 'sma crossover',
+  //   triggerFunctionString: `return data[0].sma20 > data[0].sma50 && data[1].sma20 < data[1].sma50`,
+  //   size: 2,
+  //   color: '#ffffff',
+  // },
 ];
 
-const INITIAL_USER_OUTCOME: UserOutcome = {
-  id: '1',
-  name: '2% either way',
-  outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
-    return 'success';
-  } else if (data[0].low < trigger.value * 0.98) {
-    return 'failure';
-  }
-  
-  return 'uncertain';`,
-  color: '',
-  size: 1,
-};
+// const INITIAL_USER_OUTCOME: UserOutcome = {
+//   tag: '1',
+//   name: '2% either way',
+//   outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
+//     return 'success';
+//   } else if (data[0].low < trigger.value * 0.98) {
+//     return 'failure';
+//   }
+//
+//   return 'uncertain';`,
+//   color: '',
+//   size: 1,
+// };
+
+function convertStreamsToChartSeries(
+  streamDataMap: Record<string, LineData<UTCTimestamp>[]>,
+  indicators: Indicator[]
+): {
+  overlay: boolean;
+  data: LineData<UTCTimestamp>[];
+  color: string;
+  lineWidth: 1 | 2 | 3 | 4;
+}[] {
+  console.log('AAAAA');
+  return Object.keys(streamDataMap || {}).map(key => {
+    const indicator = indicators.find(indicator =>
+      indicator.streams.find(stream => `${indicator.tag}.${stream.tag}` === key)
+    );
+
+    if (!indicator) {
+      return {
+        overlay: true, // Default to true if no indicator is found
+        data: streamDataMap[key],
+        color: 'red', // Default color
+        lineWidth: 1, // Default line width
+      };
+    }
+
+    // Assuming each indicator has multiple streams for different streams
+    const streamStyle = indicator.streams.find(stream => `${indicator.tag}.${stream.tag}` === key);
+
+    return {
+      overlay: streamStyle?.overlay ?? true, // Use overlay from streamStyle if available, else default to true
+      data: streamDataMap[key],
+      color: streamStyle?.color ?? 'red', // Use color from streamStyle if available, else default to red
+      lineWidth: streamStyle?.lineWidth ?? 1, // Use lineWidth from streamStyle if available, else default to 1
+    };
+  });
+}
 
 const App = () => {
   const [ticker, setTicker] = useState('BTCUSD');
@@ -146,11 +201,21 @@ const App = () => {
       color: string;
       lineWidth: 1 | 2 | 3 | 4;
     }[]
-  >([]); // [smaData, rsiData
+  >([]);
+  const [userIndicatorData, setUserIndicatorData] = useState<
+    {
+      overlay: boolean;
+      data: LineData<UTCTimestamp>[];
+      color: string;
+      lineWidth: 1 | 2 | 3 | 4;
+    }[]
+  >([]);
+  // Record for easy build and mapping of tag : data
+  const [indicatorSeriesMap, setIndicatorSeriesMap] = useState<Record<string, LineData<UTCTimestamp>[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
-  const [userIndicators, setUserIndicators] = useState<Array<Indicator & { overlay: boolean }>>([]);
+  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([]);
   const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
   const [userOutcome, setUserOutcome] = useState<UserOutcome | null>(null);
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
@@ -183,7 +248,7 @@ const App = () => {
     winPerc: number;
   } | null>(null);
 
-  const [currentIndicator, setCurrentIndicator] = useState<UserIndicator>(DEFAULT_INDICATOR);
+  const [currentIndicator, setCurrentIndicator] = useState<Indicator>(DEFAULT_INDICATOR);
   const [currentSeries, setCurrentSeries] = useState<UserSeries>(DEFAULT_USER_SERIES);
   const [currentTrigger, setCurrentTrigger] = useState<UserTrigger>({
     id: '',
@@ -200,21 +265,56 @@ const App = () => {
     size: 0,
   });
   const [showDialog, setShowDialog] = useState(false);
-  const [showIndicatorDialog, setShowIndicatorDialog] = useState(false);
+  const [showAddIndicatorDialog, setShowAddIndicatorDialog] = useState(false);
+  const [showEditIndicatorDialog, setShowEditIndicatorDialog] = useState(false);
+  const [showEditIndicatorCodeDialog, setShowEditIndicatorCodeDialog] = useState(false);
   const [showTriggerDialog, setShowTriggerDialog] = useState(false);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [candlesPerSecond, setCandlesPerSecond] = useState<number>(1);
 
+  // Gets the indicator stream data and it's style config
+  function getIndicatorChartData(tag: string): LineData<UTCTimestamp>[] {
+    const indicatorStream = indicatorSeriesMap[tag];
+
+    if (!indicatorStream) {
+      return [];
+    }
+
+    return indicatorStream;
+  }
+
+  useEffect(() => {
+    const newIndicatorData = convertStreamsToChartSeries(indicatorSeriesMap, userIndicators);
+    setUserIndicatorData(newIndicatorData);
+  }, [indicatorSeriesMap, userIndicators]);
+
   useEffect(() => {
     setUserSeries(INITIAL_USER_SERIES);
     setUserTriggers(INITIAL_USER_TRIGGERS);
-    setUserOutcome(INITIAL_USER_OUTCOME);
+    // setUserOutcome(INITIAL_USER_OUTCOME);
   }, []);
 
   useEffect(() => {
     handleFetchClick();
-  }, [ticker, timeframe, startDate, endDate, userSeries, userTriggers, userOutcome]);
+  }, [ticker, timeframe, startDate, endDate, userSeries, userTriggers, userOutcome, userIndicators]);
+
+  // // Change the user data on change of config
+  // useEffect(() => {
+  //   const newIndicatorData: Record<string, LineData<UTCTimestamp>[]> = {};
+  //   // Update indicator data
+  //   const newIndicatorData = userIndicators.map(indicator => {
+  //     return {
+  //       tag: indicator.tag,
+  //       data: getIndicatorChartData(indicator.tag),
+  //       overlay: indicator.overlay,
+  //       streams: indicator.streams,
+  //     };
+  //   });
+  //
+  //   // Update indicator data
+  //   setIndicatorSeriesMap(newIndicatorData);
+  // }, [userIndicators]);
 
   const handleFetchClick = async () => {
     setLoading(true);
@@ -279,7 +379,19 @@ ${funcString}`;
       setCandlestickData(formattedCandles);
 
       // 1. The consolidated input series
-      const consolidatedSeries = getConsolidatedSeries(formattedCandles, newUserSeriesData);
+      const { consolidatedSeries, indicatorStreams } = getConsolidatedSeries(
+        formattedCandles,
+        newUserSeriesData,
+        userIndicators
+      );
+
+      const indicatorSeriesMap: Record<string, LineData<UTCTimestamp>[]> = {};
+
+      for (const stream of indicatorStreams) {
+        indicatorSeriesMap[`${stream.indicatorTag}.${stream.tag}`] = stream.data;
+      }
+
+      setIndicatorSeriesMap(indicatorSeriesMap);
 
       /**
        * Get Consolidated series
@@ -460,12 +572,54 @@ ${funcString}`;
     }
   };
 
-  const toggleIndicatorOverlay = (indicatorId: string) => {
-    const index = userIndicators.findIndex(i => i.id === indicatorId);
+  const toggleIndicatorOverlay = (indicatorTag: string) => {
+    const index = userIndicators.findIndex(i => i.tag === indicatorTag);
     const newIndicators = [...userIndicators];
-    newIndicators[index].overlay = !newIndicators[index].overlay;
+    const newOverlay = !newIndicators[index].overlay;
+    newIndicators[index].overlay = newOverlay;
+    newIndicators[index].streams = newIndicators[index].streams.map(style => {
+      return { ...style, overlay: newOverlay };
+    });
+
+    // // TODO: Better sync between config and data!!!!
     setUserIndicators(newIndicators);
+    //
+    // // Update indicatorData
+    // const newIndicatorData = indicatorSeriesMap.map(indicator => {
+    //   if (indicator.id === indicatorId) {
+    //     indicator.overlay = newOverlay;
+    //   }
+    //   return indicator;
+    // });
+    // setIndicatorSeriesMap(newIndicatorData);
   };
+
+  // const handleKeyDown = (event: React.KeyboardEvent) => {
+  //   console.log('KEYDOWN', event.key);
+  //   if (event.key === 'i') {
+  //     event.preventDefault();
+  //     setShowAddIndicatorDialog(true);
+  //   }
+  // };
+
+  useEffect(() => {
+    const handleKeyDown = event => {
+      console.log('KEYDOWN', event.key);
+      if ((event.key === 'i' && event.ctrlKey) || (event.key === 'i' && event.metaKey)) {
+        event.preventDefault();
+        setShowAddIndicatorDialog(true);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowAddIndicatorDialog(false);
+      }
+    };
+
+    // Bind keydown event to window
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []); // Empty dependency array means this effect runs once on mount
 
   return (
     <>
@@ -566,7 +720,7 @@ ${funcString}`;
 
                   <IconButton
                     onClick={() => {
-                      setShowIndicatorDialog(true);
+                      setShowAddIndicatorDialog(true);
                     }}
                   >
                     <PlusIcon />
@@ -574,33 +728,101 @@ ${funcString}`;
                 </div>
 
                 {userIndicators.map(indicator => (
-                  <div key={indicator.id} className={'flex flex-row items-center gap-3'}>
+                  <div key={indicator.tag} className={'flex flex-row items-center gap-3'}>
                     <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
                       <div className={'flex flex-row gap-5 justify-between'}>
-                        <label className={'font-bold'}>{indicator.label}</label>
-
-                        <div className={'flex flex-row items-center gap-3'}>
+                        <div className={'flex flex-col'}>
                           <div className={'flex flex-row items-center gap-2'}>
-                            <IconButton variant={'ghost'}>
-                              {indicator.overlay ? (
-                                <EyeOpenIcon
-                                  className={'w-5 h-5'}
-                                  onClick={() => toggleIndicatorOverlay(indicator.id)}
-                                />
-                              ) : (
-                                <EyeNoneIcon
-                                  className={'w-5 h-5'}
-                                  onClick={() => toggleIndicatorOverlay(indicator.id)}
-                                />
-                              )}
+                            <label className={'font-bold text-sm truncate max-w-[150px]'}>{indicator.label}</label>
+                          </div>
+
+                          <SlideToggle2
+                            heightClass="h-[100%]"
+                            trigger={
+                              <Code className={'!text-[10px] cursor-pointer hover:bg-accent-bg-active'}>
+                                {indicator.tag}
+                              </Code>
+                            }
+                          >
+                            <div className={'flex flex-col gap-1 pt-1'}>
+                              {indicator.streams.map((stream, i) => (
+                                <Code className={'!text-[9px] cursor-pointer hover:bg-accent-bg-active'}>
+                                  <Toast
+                                    durationMs={1500}
+                                    description={
+                                      <div className={'flex flex-row items-center gap-2 text-primary-text text-sm'}>
+                                        <Code size={'2'}>
+                                          {indicator.tag}.${stream.tag}
+                                        </Code>
+                                        copied to clipboard
+                                      </div>
+                                    }
+                                  >
+                                    <div className={'flex flex-row items-center justify-between gap-2'}>
+                                      {indicator.tag}.{stream.tag}
+                                      <CopyIcon className={'h-3 w-3'} />
+                                    </div>
+                                  </Toast>
+                                </Code>
+                              ))}
+                            </div>
+                          </SlideToggle2>
+
+                          {/*{indicator.streams.map((stream, i) => (*/}
+                          {/*  <div className={'flex flex-row'}>*/}
+                          {/*    <HoverCard.Root openDelay={300}>*/}
+                          {/*      <HoverCard.Trigger>*/}
+                          {/*        <Code*/}
+                          {/*          className={'!text-[8px] cursor-pointer'}*/}
+                          {/*          onClick={() => {*/}
+                          {/*            navigator.clipboard.writeText(`${indicator.tag}.${stream.tag}`);*/}
+                          {/*          }}*/}
+                          {/*        >*/}
+                          {/*          {stream.tag}*/}
+                          {/*        </Code>*/}
+                          {/*      </HoverCard.Trigger>*/}
+                          {/*      <HoverCard.Content>*/}
+                          {/*        Reference in code using{' '}*/}
+                          {/*        <Code className={''}>*/}
+                          {/*          {indicator.tag}.{stream.tag}*/}
+                          {/*        </Code>*/}
+                          {/*      </HoverCard.Content>*/}
+                          {/*    </HoverCard.Root>*/}
+
+                          {/*    {i === indicator.streams.length - 1 ? '' : '·'}*/}
+                          {/*  </div>*/}
+                          {/*))}*/}
+                        </div>
+
+                        <div className={'flex flex-row items-start gap-3'}>
+                          <div className={'flex flex-row items-center gap-2'}>
+                            <IconButton
+                              variant={'ghost'}
+                              size={'1'}
+                              onClick={() => toggleIndicatorOverlay(indicator.tag)}
+                            >
+                              {indicator.overlay ? <EyeOpenIcon /> : <EyeNoneIcon />}
                             </IconButton>
                           </div>
 
                           <IconButton
+                            color={'gray'}
+                            variant={'ghost'}
+                            size={'1'}
+                            onClick={() => {
+                              setCurrentIndicator(indicator);
+                              setShowEditIndicatorCodeDialog(true);
+                            }}
+                          >
+                            <CodeIcon color="gray"></CodeIcon>
+                          </IconButton>
+
+                          <IconButton
                             color={'tomato'}
                             variant={'ghost'}
+                            size={'1'}
                             onClick={() => {
-                              const index = userIndicators.findIndex(i => i.id === indicator.id);
+                              const index = userIndicators.findIndex(i => i.tag === indicator.tag);
                               const newIndicators = [...userIndicators];
                               newIndicators.splice(index, 1);
                               setUserIndicators(newIndicators);
@@ -611,15 +833,10 @@ ${funcString}`;
 
                           <IconButton
                             variant={'ghost'}
+                            size={'1'}
                             onClick={() => {
-                              // setUserIndicators({
-                              //   color: series.color,
-                              //   lineWidth: series.lineWidth,
-                              //   name: series.name,
-                              //   overlay: series.overlay,
-                              //   seriesFunctionString: series.seriesFunctionString,
-                              // });
-                              setShowIndicatorDialog(true);
+                              setCurrentIndicator(indicator);
+                              setShowEditIndicatorDialog(true);
                             }}
                           >
                             <Pencil1Icon></Pencil1Icon>
@@ -753,7 +970,7 @@ ${funcString}`;
                                 size: trigger.size,
                                 name: trigger.name,
                                 triggerFunctionString: trigger.triggerFunctionString,
-                                id: trigger.id,
+                                tag: trigger.tag,
                               });
                               setShowTriggerDialog(true);
                             }}
@@ -827,6 +1044,7 @@ ${funcString}`;
             <Card className={'w-full h-full !bg-primary-bg-subtle'}>
               <LightweightChart
                 userSeriesData={userSeriesData}
+                indicatorData={userIndicatorData}
                 candlestickData={candlestickData}
                 seriesMarkers={[
                   ...triggerMarkers.map(t => ({
@@ -858,67 +1076,101 @@ ${funcString}`;
           </div>
         </div>
       </div>
-
       <AddIndicatorDialog
-        show={showIndicatorDialog}
+        show={showAddIndicatorDialog}
         onIndicatorSelected={(indicator: Indicator) => {
-          const newIndicator: UserIndicator = {
-            id: indicator.id,
+          // Check how many of this indicator type already exist
+          const existingIndicators = userIndicators.filter(i => i.type === indicator.type);
+          const indicatorCount = existingIndicators.length;
+
+          const newIndicator: Indicator = {
+            tag: indicatorCount ? `${indicator.tag}${indicatorCount + 1}` : indicator.tag,
             funcStr: indicator.funcStr,
             type: indicator.type,
             params: indicator.params,
             label: indicator.label,
-            overlay: true,
-            color: '#ffffff',
-            lineWidth: 1,
+            overlay: indicator.overlay,
+            streams: indicator.streams,
           };
 
           setUserIndicators([...userIndicators, newIndicator]);
-          setShowIndicatorDialog(false);
+          setShowAddIndicatorDialog(false);
         }}
         onClose={() => {
-          setShowIndicatorDialog(false);
+          setShowAddIndicatorDialog(false);
+        }}
+      />
+      <EditIndicatorDialog
+        show={showEditIndicatorDialog}
+        existingIndicators={userIndicators}
+        indicator={currentIndicator}
+        setIndicator={setCurrentIndicator}
+        onSaveClicked={() => {
+          const dialogIndicator: Indicator = {
+            tag: currentIndicator.tag,
+            funcStr: currentIndicator.funcStr,
+            type: currentIndicator.type,
+            params: currentIndicator.params,
+            label: currentIndicator.label,
+            overlay: currentIndicator.overlay,
+            streams: currentIndicator.streams,
+          };
+
+          const index = userIndicators.findIndex(i => i.tag === currentIndicator.tag);
+
+          if (index !== -1) {
+            // Update existing indicator
+            const newIndicators = [...userIndicators];
+            newIndicators[index] = dialogIndicator;
+
+            setUserIndicators(newIndicators);
+          } else {
+            // Add dialog indicator
+            setUserIndicators([...userIndicators, dialogIndicator]);
+          }
+
+          setCurrentIndicator(DEFAULT_INDICATOR);
+
+          setShowEditIndicatorDialog(false);
+        }}
+        onCancelClicked={() => {
+          setCurrentIndicator(DEFAULT_INDICATOR);
+          setShowEditIndicatorDialog(false);
         }}
       />
 
-      {/*<UserIndicatorDialog*/}
-      {/*  show={showIndicatorDialog}*/}
-      {/*  indicator={currentIndicator}*/}
-      {/*  setIndicator={setCurrentIndicator}*/}
-      {/*  onSaveClicked={() => {*/}
-      {/*    const dialogIndicator: UserIndicator = {*/}
-      {/*      id: currentIndicator.id,*/}
-      {/*      funcStr: currentIndicator.funcStr,*/}
-      {/*      type: currentIndicator.type,*/}
-      {/*      params: currentIndicator.params,*/}
-      {/*      label: currentIndicator.label,*/}
-      {/*      overlay: currentIndicator.overlay,*/}
-      {/*      color: currentIndicator.color,*/}
-      {/*      lineWidth: currentIndicator.lineWidth,*/}
-      {/*    };*/}
+      <EditIndicatorCodeDialog
+        show={showEditIndicatorCodeDialog}
+        existingIndicators={userIndicators}
+        indicator={currentIndicator}
+        setIndicator={setCurrentIndicator}
+        onSaveClicked={(funcStr: string) => {
+          const dialogIndicator: Indicator = {
+            ...currentIndicator,
+            funcStr,
+          };
 
-      {/*    const index = userIndicators.findIndex(i => i.id === currentIndicator.id);*/}
+          const index = userIndicators.findIndex(i => i.tag === currentIndicator.tag);
 
-      {/*    if (index !== -1) {*/}
-      {/*      // Update existing indicator*/}
-      {/*      const newIndicators = [...userIndicators];*/}
-      {/*      newIndicators[index] = dialogIndicator;*/}
+          if (index !== -1) {
+            // Update existing indicator
+            const newIndicators = [...userIndicators];
+            newIndicators[index] = dialogIndicator;
 
-      {/*      setUserIndicators(newIndicators);*/}
-      {/*    } else {*/}
-      {/*      // Add dialog indicator*/}
-      {/*      setUserIndicators([...userIndicators, dialogIndicator]);*/}
-      {/*    }*/}
+            setUserIndicators(newIndicators);
+          } else {
+            // Add dialog indicator
+            setUserIndicators([...userIndicators, dialogIndicator]);
+          }
 
-      {/*    setCurrentIndicator(DEFAULT_INDICATOR);*/}
-
-      {/*    setShowDialog(false);*/}
-      {/*  }}*/}
-      {/*  onCancelClicked={() => {*/}
-      {/*    setCurrentIndicator(DEFAULT_INDICATOR);*/}
-      {/*    setShowDialog(false);*/}
-      {/*  }}*/}
-      {/*/>we*/}
+          setCurrentIndicator(DEFAULT_INDICATOR);
+          setShowEditIndicatorCodeDialog(false);
+        }}
+        onCancelClicked={() => {
+          setCurrentIndicator(DEFAULT_INDICATOR);
+          setShowEditIndicatorCodeDialog(false);
+        }}
+      />
 
       <UserSeriesDialog
         show={showDialog}
@@ -955,14 +1207,13 @@ ${funcString}`;
           setShowDialog(false);
         }}
       />
-
       <UserTriggerDialog
         show={showTriggerDialog}
         trigger={currentTrigger}
         setTrigger={setCurrentTrigger}
         onSaveClicked={() => {
           const updatedTriggers = [...userTriggers];
-          const triggerIndex = updatedTriggers.findIndex(t => t.id === currentTrigger.id);
+          const triggerIndex = updatedTriggers.findIndex(t => t.tag === currentTrigger.tag);
 
           if (triggerIndex !== -1) {
             // Update existing trigger
@@ -971,7 +1222,7 @@ ${funcString}`;
             // Add new trigger
             updatedTriggers.push({
               ...currentTrigger,
-              id: Date.now().toString(),
+              tag: Date.now().toString(),
             });
           }
 
@@ -983,7 +1234,6 @@ ${funcString}`;
           setShowTriggerDialog(false);
         }}
       />
-
       <UserOutcomeDialog
         show={showOutcomeDialog}
         outcome={currentOutcome}
@@ -1003,12 +1253,7 @@ ${funcString}`;
 
 export default App;
 
-const DEFAULT_INDICATOR: UserIndicator = {
-  ...PRESET_INDICATOR_SMA,
-  overlay: true,
-  color: '#ffffff',
-  lineWidth: 1,
-};
+const DEFAULT_INDICATOR: Indicator = PRESET_INDICATOR_SMA;
 
 const DEFAULT_USER_SERIES: UserSeries = {
   name: '',
@@ -1072,7 +1317,7 @@ return pivotData.filter(item => item !== null);
 };
 
 const DEFAULT_USER_TRIGGER = {
-  id: '',
+  tag: '',
   name: '',
   triggerFunctionString: `
   // Crossing about the 'sma' series after being below for at two candles
@@ -1087,7 +1332,7 @@ const DEFAULT_USER_TRIGGER = {
 };
 
 const DEFAULT_USER_OUTCOME: UserOutcome = {
-  id: '',
+  tag: '',
   name: '',
   outcomeFunctionString: `
   if (data[0].high > trigger.value * 1.02) {

@@ -1,4 +1,5 @@
-import { UTCTimestamp } from "lightweight-charts";
+import { OhlcData, UTCTimestamp } from 'lightweight-charts';
+import { GenericData } from '@/app/(logic)/types';
 
 export type ConsolidatedLineData = {
   time: UTCTimestamp;
@@ -20,7 +21,7 @@ export interface Outcome {
 }
 
 export function calculateOutcomes(input: {
-  consolidatedSeries: ConsolidatedLineData[];
+  consolidatedSeries: GenericData[];
   triggers: { offset: number; time: number; text: string }[];
   // eslint-disable-next-line @typescript-eslint/ban-types
   outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
@@ -33,9 +34,7 @@ export function calculateOutcomes(input: {
   };
 
   for (const trigger of input.triggers) {
-    const index = input.consolidatedSeries.findIndex(
-      ({ time }) => time === trigger.time
-    );
+    const index = input.consolidatedSeries.findIndex(({ time }) => time === trigger.time);
     if (index === -1) {
       continue;
     }
@@ -43,6 +42,7 @@ export function calculateOutcomes(input: {
     const triggerData = input.consolidatedSeries[index];
 
     const outcome = calculateOutcome({
+      // @ts-ignore - Mkae this be a configurable field that the trigger is displayed ons
       triggerValue: triggerData.close, // TODO: Update this to be stored on each successful trigger
       triggerOffset: index,
       triggerTime: triggerData.time,
@@ -58,11 +58,9 @@ export function calculateOutcomes(input: {
 
       if (outcome.type === 'success') {
         summary.successCount++;
-      }
-      else if (outcome.type === 'failure') {
+      } else if (outcome.type === 'failure') {
         summary.failCount++;
-      }
-      else {
+      } else {
         summary.uncertainCount++;
       }
     }
@@ -75,17 +73,11 @@ export function calculateOutcome(input: {
   triggerValue: number;
   triggerOffset: number;
   triggerTime: number;
-  consolidatedSeries: ConsolidatedLineData[];
+  consolidatedSeries: GenericData[];
   // eslint-disable-next-line @typescript-eslint/ban-types
   outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
 }): Omit<Outcome, 'text'> | null {
-  const {
-    triggerValue,
-    triggerOffset,
-    triggerTime,
-    consolidatedSeries,
-    outcomeFunc,
-  } = input;
+  const { triggerValue, triggerOffset, triggerTime, consolidatedSeries, outcomeFunc } = input;
 
   // TODO: Optimize the heck out of this once verified
   const dataPostTrigger = consolidatedSeries.slice(triggerOffset);
@@ -99,6 +91,11 @@ export function calculateOutcome(input: {
     if (result === 'success' || result === 'failure') {
       const outcomeTime = dataPostTrigger[i - 1].time;
       const outcomeValue = dataPostTrigger[i - 1].close;
+
+      if (typeof outcomeValue !== 'number') {
+        console.error('TODO: Handle non numeric conditions', outcomeValue);
+        return null;
+      }
 
       return {
         type: result,

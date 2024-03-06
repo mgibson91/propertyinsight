@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import * as RadixToast from "@radix-ui/react-toast";
-import "./toast.css";
-import { Button, Card, Heading } from "@radix-ui/themes";
+import * as React from 'react';
+import * as RadixToast from '@radix-ui/react-toast';
+import './toast.css';
+import { Button, Card, Heading } from '@radix-ui/themes';
 
 export const Toast = ({
   title,
@@ -12,7 +12,7 @@ export const Toast = ({
   description,
   durationMs = 3000,
 }: {
-  title: string;
+  title?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
   description?: React.ReactNode;
@@ -39,7 +39,7 @@ export const Toast = ({
   };
 
   // Clone each child and inject the onClick handler
-  const childrenWithProps = React.Children.map(children, (child) => {
+  const childrenWithProps = React.Children.map(children, child => {
     if (React.isValidElement(child)) {
       return React.cloneElement(child, {
         onClick: () => handleChildClick(child.props.onClick),
@@ -53,20 +53,16 @@ export const Toast = ({
       {childrenWithProps}
 
       <RadixToast.Root className="ToastRoot" open={open} onOpenChange={setOpen}>
-        <RadixToast.Title className="ToastTitle">
-          <Heading size={"3"}>{title}</Heading>
-        </RadixToast.Title>
-
-        {description && (
-          <RadixToast.Description asChild>{description}</RadixToast.Description>
+        {title && (
+          <RadixToast.Title className="ToastTitle">
+            <Heading size={'3'}>{title}</Heading>
+          </RadixToast.Title>
         )}
 
+        {description && <RadixToast.Description>{description}</RadixToast.Description>}
+
         {action && (
-          <RadixToast.Action
-            className={"ToastAction"}
-            asChild
-            altText="Description"
-          >
+          <RadixToast.Action className={'ToastAction'} asChild altText="Description">
             {action}
           </RadixToast.Action>
         )}

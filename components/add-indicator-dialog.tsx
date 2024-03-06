@@ -34,7 +34,7 @@ export const AddIndicatorDialog = ({
       <Dialog.Content className={''}>
         <div className={'flex flex-col gap-3'}>
           <div className={'flex flex-row justify-between items-center'}>
-            <Heading size={'3'}>Add Indicator</Heading>
+            <Heading size={'6'}>Add Indicator</Heading>
             <IconButton
               variant={'ghost'}
               className={'!rounded-full'}
