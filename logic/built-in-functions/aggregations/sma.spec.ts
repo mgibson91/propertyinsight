@@ -1,5 +1,5 @@
-import { prefixBuiltInFunctions } from '@/logic/built-in-functions/prefix-built-in-functions';
-import { sma } from '@/logic/built-in-functions/sma';
+import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
+import { sma } from '@/logic/built-in-functions/aggregations/sma';
 
 describe('sma', () => {
   test('calculates simple moving average for a period within array length', () => {

@@ -26,7 +26,6 @@ export interface IndicatorParam {
 // Represent everything either configured by or displayed to the user
 export interface Indicator {
   tag: string;
-  type: IndicatorType; // For type safety of metadata down the line
   label: string;
   funcStr: string;
   params: IndicatorParam[];

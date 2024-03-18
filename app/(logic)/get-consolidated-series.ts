@@ -2,26 +2,44 @@ import { LineData, OhlcData, SingleValueData, Time, UTCTimestamp } from 'lightwe
 import { ConsolidatedLineData } from '@/logic/calculate-outcomes';
 import { EnrichedOhlcData, GenericData, UserSeriesData } from '@/app/(logic)/types';
 import { Indicator, IndicatorParam } from '@/logic/indicators/types';
-import { prefixBuiltInFunctions } from '@/logic/built-in-functions/prefix-built-in-functions';
+import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { buildIndicatorDelayMap } from '@/app/(logic)/build-indicator-delay-map';
+import { findUsedVariablesInCode } from '@/app/(logic)/find-used-variables-in-code';
 
-function buildIndicatorStreamVariables(existingIndicatorStreamss: IndicatorStreamData[]): string {
+function buildIndicatorStreamVariables(existingIndicatorStreams: IndicatorStreamMetadata[]): string {
   let lines: string[] = [];
 
-  for (const indicatorStream of existingIndicatorStreamss) {
+  for (const indicatorStream of existingIndicatorStreams) {
     lines.push(
-      `const ${indicatorStream.indicator.tag}_${indicatorStream.tag} = inputData.map(d => (d && d.${indicatorStream.indicator.tag} && d.${indicatorStream.indicator.tag}.${indicatorStream.tag}) ? d.${indicatorStream.indicator.tag}.${indicatorStream.tag} : null);`
+      `const ${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => (d && d.${indicatorStream.indicatorTag} && d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag}) ? d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag} : null);`
     );
   }
 
   return lines.join('\n');
 }
 
-function prependSpreadFunctions(
-  funcString: string,
-  indicator: Indicator,
-  existingIndicatorStreams: IndicatorStreamData[]
-): string {
+function substituteIndicatorParams(funcString: string, indicator: Indicator): string {
+  const params = indicator.params;
+
+  // Perform substitutions for each parameter in the user's function string
+  for (const param of params) {
+    funcString = funcString.replaceAll(`$${param.name}`, `${param.value ?? param.defaultValue}` || '');
+  }
+
+  return funcString;
+}
+
+export function prependSpreadFunctions({
+  funcString,
+  indicator,
+  existingIndicatorStreams = [],
+  existingIndicatorMetadata,
+}: {
+  funcString: string;
+  indicator: Indicator;
+  existingIndicatorStreams?: IndicatorStreamData[];
+  existingIndicatorMetadata: { streamTag: string; indicatorTag: string }[];
+}): string {
   const params = indicator.params;
 
   let adjustedFunc = `
@@ -33,20 +51,10 @@ const close = inputData.map(d => d.close);
 
 ${params.map(({ name }) => `const ${name} = data.${name};`).join('\n')}
 
-${buildIndicatorStreamVariables(existingIndicatorStreams)}
-
-// const length = data.length;
-
-// TODO: Access everything else
-
+${buildIndicatorStreamVariables(existingIndicatorMetadata)}
 
 //--- USER DEFINED ---
 ${funcString}`;
-
-  // TODO: extract this elsewhere
-  for (const param of params) {
-    adjustedFunc = adjustedFunc.replaceAll(`$${param.name}`, `${param.value ?? param.defaultValue}` || '');
-  }
 
   return adjustedFunc;
 }
@@ -58,12 +66,17 @@ export interface IndicatorStreamData {
   data: LineData<UTCTimestamp>[];
 }
 
+export interface IndicatorStreamMetadata {
+  streamTag: string;
+  indicatorTag: string;
+}
+
 // Purely calculate indicator data - multiple streams
 function calculateIndicatorData(
   batchSize: number,
   data: EnrichedOhlcData[],
   indicator: Indicator,
-  existingIndicatorStreams: IndicatorStreamData[]
+  existingIndicatorMetadata: IndicatorStreamMetadata[]
 ): IndicatorStreamData[] {
   if (!data || !data?.length) {
     console.error('No data to calculate indicator');
@@ -88,7 +101,14 @@ function calculateIndicatorData(
   const indicatorFunc = new Function(
     'data',
     'cache',
-    prependSpreadFunctions(prefixBuiltInFunctions(indicator.funcStr), indicator, existingIndicatorStreams)
+    substituteIndicatorParams(
+      prependSpreadFunctions({
+        funcString: prefixBuiltInFunctions(indicator.funcStr),
+        indicator,
+        existingIndicatorMetadata,
+      }),
+      indicator
+    )
   );
 
   let cache = {};
@@ -174,7 +194,7 @@ function mergeIndicatorStreamWithOriginalData(
   return result;
 }
 
-function calculateMaxIndicatorDepedencyDelay(indicator: Indicator, indicatorDelayMap: Map<string, number>) {
+function calculateMaxIndicatorDependencyDelay(indicator: Indicator, indicatorDelayMap: Map<string, number>) {
   let indicatorDependencyDelay = 0;
 
   // Get params from configured indicator params using name and value | default
@@ -238,6 +258,7 @@ export function getConsolidatedSeries(
   let result = [...consolidatedSeries] as unknown as GenericData[];
 
   const indicatorStreams: IndicatorStreamData[] = [];
+  const existingIndicatorMetadata: IndicatorStreamMetadata[] = [];
   const indicatorDelayMap = buildIndicatorDelayMap(userIndicators);
 
   for (const indicator of userIndicators) {
@@ -248,26 +269,65 @@ export function getConsolidatedSeries(
 
     // Give the indicator params, check the delay map to see if it's dependent on other indicators and if so,
     // the longest delay required until all indiciators are ready
-    const indicatorDependencyDelay = calculateMaxIndicatorDepedencyDelay(indicator, indicatorDelayMap);
+    // const indicatorDependencyDelay = calculateMaxIndicatorDependencyDelay(indicator, indicatorDelayMap);
+
+    // TODO: Build referenced stream tags
+    function calculateMaxIndicatorDelay(
+      indicator: Indicator,
+      indicatorDelayMap: Map<string, number>,
+      existingIndicatorMetadata: IndicatorStreamMetadata[]
+    ) {
+      const dependentStreams = new Set<string>();
+
+      indicator.params.map(param => {
+        if (param.type === 'field' && !['open', 'high', 'low', 'close'].includes(param.value as string)) {
+          dependentStreams.add(param.value as string);
+        }
+      });
+
+      const dependentIndicatorStreams = findUsedVariablesInCode(
+        `() => { ${indicator.funcStr} }`,
+        existingIndicatorMetadata.map(metadata => `${metadata.indicatorTag}_${metadata.streamTag}`)
+      );
+      dependentIndicatorStreams.forEach(stream => {
+        dependentStreams.add(stream);
+      });
+
+      let maxDelay = 0;
+      dependentStreams.forEach(stream => {
+        const delay = indicatorDelayMap.get(stream) || 0;
+        maxDelay = Math.max(maxDelay, delay);
+      });
+
+      return maxDelay;
+    }
+
+    let indicatorDependencyDelay = calculateMaxIndicatorDelay(indicator, indicatorDelayMap, existingIndicatorMetadata);
+
+    //
+
+    // All indicator streams currently have the same delays so we can just find the first one, instead of the max
 
     // Assuming hardcoded length for now. Optimal solution however is to dynamically determine the min length required
     const batchSize = indicator.params.find(param => param.name === 'length')?.value as number;
     // const batchSize = 20;
     // console.log('batchSize', batchSize);
 
-    if (!batchSize) {
+    // Allowing 0 atm
+    if (batchSize == null) {
       throw new Error('Indicator length not found');
     }
 
     const calculatedIndicatorStream = calculateIndicatorData(
-      batchSize,
+      batchSize || 1, // If no length is specified, default to 1
       (result as EnrichedOhlcData[]).slice(indicatorDependencyDelay),
       indicator,
-      indicatorStreams
+      existingIndicatorMetadata
     );
 
     for (const stream of calculatedIndicatorStream) {
       // const streamStyle = indicator.streams.find(style => style.id === stream.id);
+      existingIndicatorMetadata.push({ streamTag: stream.tag, indicatorTag: stream.indicatorTag });
 
       indicatorStreams.push({
         tag: stream.tag,

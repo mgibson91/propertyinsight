@@ -2,7 +2,9 @@ import { Box, Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextField
 import { Indicator } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
-import { Editor } from '@monaco-editor/react';
+import { Editor, BeforeMount } from '@monaco-editor/react';
+import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
+import { IndicatorStreamData, prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series';
 
 export const EditIndicatorCodeDialog = ({
   show,
@@ -33,16 +35,29 @@ export const EditIndicatorCodeDialog = ({
   };
 
   // Define global variables before the editor mounts
-  const beforeMount = monaco => {
+  const beforeMount: BeforeMount = monaco => {
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       noLib: true,
       allowNonTsExtensions: true,
     });
 
+    // declare var existingIndicators: ${JSON.stringify(existingIndicators)};
+
     // TODO: Something with prependSpreadFunctions(prefixBuiltInFunctions(indicator.funcStr), indicator, existingIndicatorStreams)
+
+    // It's right through indicators, and for each indicator at all streams
     monaco.languages.typescript.typescriptDefaults.addExtraLib(`
-      declare var existingIndicators: ${JSON.stringify(existingIndicators)};
-    `);
+      ${prependSpreadFunctions({
+        funcString: prefixBuiltInFunctions(indicator.funcStr),
+        indicator,
+        existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
+          indicator.streams.map(stream => ({
+            streamTag: stream.tag,
+            indicatorTag: indicator.tag,
+          }))
+        ),
+      })}
+      `);
   };
 
   return (
@@ -74,7 +89,7 @@ export const EditIndicatorCodeDialog = ({
             defaultLanguage="typescript"
             value={funcStr}
             onChange={(value, event) => {
-              setFuncStr(value);
+              setFuncStr(value || '');
             }}
             theme="vs-dark"
             beforeMount={beforeMount}
@@ -86,9 +101,19 @@ export const EditIndicatorCodeDialog = ({
                 Cancel
               </Button>
 
-              <Button className={'w-32'} onClick={() => onSaveClicked(funcStr)}>
-                Save
-              </Button>
+              {/*<Button className={'w-32'} onClick={() => onSaveClicked(funcStr)}>*/}
+              {/*  Save*/}
+              {/*</Button>*/}
+
+              <div className={'flex flex-row gap-2 items-center'}>
+                <Button className={'w-32'} onClick={() => onSaveClicked(funcStr)} variant={'outline'}>
+                  Save to library
+                </Button>
+
+                <Button className={'w-32'} onClick={() => onSaveClicked(funcStr)}>
+                  Save
+                </Button>
+              </div>
             </div>
           </div>
         </div>

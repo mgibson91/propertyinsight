@@ -1,41 +1,35 @@
 import { Indicator } from '@/logic/indicators/types';
-
-// export function buildIndicatorDelayMap(indicators: Indicator[]): Map<string, number> {
-//   const dependencyMap = new Map<string, number>();
-//
-//   indicators.forEach(indicator => {
-//     indicator.streams.forEach(stream => {
-//       // Assuming each stream's required "length" is directly stated in the indicator's params
-//       const lengthParam = indicator.params.find(param => param.name === 'length');
-//       const length = lengthParam ? Number(lengthParam.value) : 0;
-//       const key = `${indicator.tag}_${stream.tag}`;
-//
-//       // Add or update the entry in the map
-//       dependencyMap.set(key, length);
-//     });
-//   });
-//
-//   return dependencyMap;
-// }
+import { findUsedVariablesInCode } from '@/app/(logic)/find-used-variables-in-code';
 
 export function buildIndicatorDelayMap(indicators: Indicator[]): Map<string, number> {
+  const existingIndicatorStreams = new Set<string>();
   const dependencyMap = new Map<string, number>();
 
   // Helper function to recursively calculate length, including dependencies
-  function calculateLength(indicator: Indicator, streamTag: string): number {
+  function calculateLength(indicator: Indicator): number {
     const lengthParam = indicator.params.find(param => param.name === 'length');
     let length = lengthParam ? Number(lengthParam.value) : 0;
 
-    // Check if the indicator depends on another indicator's stream
-    const fieldParam = indicator.params.find(param => param.name === 'field');
-    if (fieldParam && typeof fieldParam.value === 'string' && fieldParam.value.includes('_')) {
-      const dependencyKey = fieldParam.value;
-      const dependencyLength = dependencyMap.get(dependencyKey) || 0;
-      length += dependencyLength; // Add the dependency's length to this indicator's length
-    }
+    // If the indicator has already been processed, return the length
+    const streamDependenciesFromInput = indicator.params
+      .filter(param => param.type === 'field' && !['open', 'high', 'low', 'close'].includes(param.value as string))
+      .map(param => param.value) as string[];
+    const streamDependenciesFromCode = findUsedVariablesInCode(`() => {${indicator.funcStr}}`, [
+      ...existingIndicatorStreams,
+    ]);
 
-    // Store the calculated length for this indicator's stream
-    dependencyMap.set(`${indicator.tag}_${streamTag}`, length);
+    const streamDependencies = new Set<string>([...streamDependenciesFromInput, ...streamDependenciesFromCode]);
+
+    const maxStreamLength = [...streamDependencies].reduce((max: number, indicatorStream: string) => {
+      return Math.max(max, dependencyMap.get(indicatorStream) || 0);
+    }, 0);
+
+    length += maxStreamLength;
+
+    indicator.streams.forEach(stream => {
+      const key = `${indicator.tag}_${stream.tag}`;
+      dependencyMap.set(key, length);
+    });
 
     return length;
   }
@@ -43,7 +37,8 @@ export function buildIndicatorDelayMap(indicators: Indicator[]): Map<string, num
   // Iterate through each indicator and calculate length, including for dependencies
   indicators.forEach(indicator => {
     indicator.streams.forEach(stream => {
-      calculateLength(indicator, stream.tag);
+      calculateLength(indicator);
+      existingIndicatorStreams.add(`${indicator.tag}_${stream.tag}`);
     });
   });
 

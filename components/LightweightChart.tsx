@@ -1,6 +1,8 @@
+'ues client';
+
 // src/components/LightweightChart.jsx
-import { CandlestickData, createChart, LineData, SeriesMarker, Time } from 'lightweight-charts';
-import { useEffect, useRef } from 'react';
+import { CandlestickData, createChart, IChartApi, LineData, SeriesMarker, Time } from 'lightweight-charts';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 export const LightweightChart = ({
   candlestickData,
@@ -36,14 +38,26 @@ export const LightweightChart = ({
     scale?: string;
   };
 }) => {
+  let chart: IChartApi;
+  //
+  // useImperativeHandle(ref, () => ({
+  //   resize() {
+  //     // Method to be called from the parent component
+  //     console.log('Method called from child component');
+  //     chart.timeScale().fitContent();
+  //   },
+  // }));
+
   const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  let resizeObserver;
 
   useEffect(() => {
     if (!chartContainerRef.current) {
       return;
     }
 
-    const chart = createChart(chartContainerRef.current, {
+    chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
       layout: {
@@ -179,21 +193,28 @@ export const LightweightChart = ({
     //   },
     // });
 
-    const handleResize = () => {
-      if (!chartContainerRef.current) {
+    // Make Chart Responsive with screen resize
+    resizeObserver = new ResizeObserver(entries => {
+      console.log('resize', entries);
+      if (entries.length === 0 || entries[0].target !== chartContainerRef.current) {
         return;
       }
+      const newRect = entries[0].contentRect;
+      chart.applyOptions({ height: newRect.height, width: newRect.width });
+    });
 
-      chart.applyOptions({ width: chartContainerRef.current.clientWidth });
-    };
-
-    window.addEventListener('resize', handleResize);
+    resizeObserver.observe(chartContainerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.remove();
+      if (chart) {
+        chart.remove();
+      }
+
+      resizeObserver.disconnect();
     };
   }, [candlestickData, userSeriesData, seriesMarkers]);
 
-  return <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <div ref={chartContainerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
+  );
 };

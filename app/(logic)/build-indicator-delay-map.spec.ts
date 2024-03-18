@@ -6,9 +6,8 @@ describe('buildIndicatorDelayMap', () => {
     const indicators: Indicator[] = [
       {
         tag: 'sma',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [{ name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 }],
         overlay: true,
         streams: [
@@ -31,9 +30,9 @@ describe('buildIndicatorDelayMap', () => {
     const indicators: Indicator[] = [
       {
         tag: 'sma',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [
           { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
           { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'close' },
@@ -50,9 +49,9 @@ describe('buildIndicatorDelayMap', () => {
       },
       {
         tag: 'sma2',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [
           { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
           { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'sma_value' },
@@ -74,13 +73,13 @@ describe('buildIndicatorDelayMap', () => {
     expect(dependencyMap.get('sma2_value')).toBe(40);
   });
 
-  test('3 - Triple nested', () => {
+  test('2b - Another indicator, referencing the original in code', () => {
     const indicators: Indicator[] = [
       {
         tag: 'sma',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [
           { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
           { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'close' },
@@ -97,9 +96,53 @@ describe('buildIndicatorDelayMap', () => {
       },
       {
         tag: 'sma2',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: 'return { value: sma_value + 1000 };',
+        params: [{ name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 }],
+        overlay: true,
+        streams: [
+          {
+            tag: 'value',
+            overlay: true,
+            color: 'blue',
+            lineWidth: 2,
+          },
+        ],
+      },
+    ];
+
+    const dependencyMap = buildIndicatorDelayMap(indicators);
+
+    expect(dependencyMap.get('sma2_value')).toBe(40);
+  });
+
+  test('3 - Triple nested', () => {
+    const indicators: Indicator[] = [
+      {
+        tag: 'sma',
+
+        label: 'Simple Moving Average',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
+        params: [
+          { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
+          { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'close' },
+        ],
+        overlay: true,
+        streams: [
+          {
+            tag: 'value',
+            overlay: true,
+            color: 'blue',
+            lineWidth: 2,
+          },
+        ],
+      },
+      {
+        tag: 'sma2',
+
+        label: 'Simple Moving Average',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [
           { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
           { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'sma_value' },
@@ -116,9 +159,9 @@ describe('buildIndicatorDelayMap', () => {
       },
       {
         tag: 'sma3',
-        type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
         label: 'Simple Moving Average',
-        funcStr: 'calculateSMA',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
         params: [
           { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
           { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'sma2_value' },
@@ -138,5 +181,71 @@ describe('buildIndicatorDelayMap', () => {
     const dependencyMap = buildIndicatorDelayMap(indicators);
 
     expect(dependencyMap.get('sma3_value')).toBe(60);
+  });
+
+  test('Correctly takes the max of multiple', () => {
+    const indicators: Indicator[] = [
+      {
+        tag: 'sma1',
+
+        label: 'Simple Moving Average',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
+        params: [
+          { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 20 },
+          { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'close' },
+        ],
+        overlay: true,
+        streams: [
+          {
+            tag: 'value',
+            overlay: true,
+            color: 'blue',
+            lineWidth: 2,
+          },
+        ],
+      },
+      {
+        tag: 'sma2',
+
+        label: 'Simple Moving Average',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
+        params: [
+          { name: 'length', type: IndicatorParamType.NUMBER, label: 'Length', required: true, value: 21 },
+          { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'close' },
+        ],
+        overlay: true,
+        streams: [
+          {
+            tag: 'value',
+            overlay: true,
+            color: 'blue',
+            lineWidth: 2,
+          },
+        ],
+      },
+      {
+        tag: 'sma3',
+
+        label: 'Simple Moving Average',
+        funcStr: `const value = sma($field.slice(0, $length), $length); return { value };`,
+        params: [
+          { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'sma1_value' },
+          { name: 'field', type: IndicatorParamType.FIELD, label: 'Field', required: true, value: 'sma2_value' },
+        ],
+        overlay: true,
+        streams: [
+          {
+            tag: 'value',
+            overlay: true,
+            color: 'blue',
+            lineWidth: 2,
+          },
+        ],
+      },
+    ];
+
+    const dependencyMap = buildIndicatorDelayMap(indicators);
+
+    expect(dependencyMap.get('sma3_value')).toBe(21);
   });
 });

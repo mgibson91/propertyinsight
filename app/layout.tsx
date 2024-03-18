@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           })(window,document,'script','dataLayer','${process.env.GTM_ID}');
           `}
       </Script>
-      <body className="">
+      <body className="min-h-screen">
         <DisplayModeAwareRadixThemeProvider>
           {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
           <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             />
           </div>
 
-          <main className="min-h-screen flex flex-col items-center text-primary-text">
+          <main className="flex-auto flex flex-col items-center text-primary-text">
             <MatchingSnapshotProvider>{children}</MatchingSnapshotProvider>
           </main>
           {/*</ResponsiveDisplay>*/}

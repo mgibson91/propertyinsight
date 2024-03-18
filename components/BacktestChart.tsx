@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LightweightChart } from './LightweightChart';
-import {
-  CandlestickData,
-  LineData,
-  SeriesMarker,
-  Time,
-} from 'lightweight-charts';
+import { CandlestickData, LineData, SeriesMarker, Time } from 'lightweight-charts';
 
 export function BacktestChart({
   autoplay = false,
@@ -35,7 +30,7 @@ export function BacktestChart({
       text: string;
     };
     marker: SeriesMarker<Time>;
-  }
+  };
   futureValueCount: number;
   updateIntervalMs?: number;
   minDatapointsRequiredForAllSeries: number;
@@ -44,7 +39,7 @@ export function BacktestChart({
     gridLines?: string;
     text?: string;
     scale?: string;
-  }
+  };
 }) {
   const intervalRef = useRef<number>();
   const positionRef = useRef<number>(0); // Create a ref for position
@@ -78,7 +73,7 @@ export function BacktestChart({
           }
 
           // Trigger a re-render by updating the renderKey
-          setRenderKey((prevKey) => prevKey + 1);
+          setRenderKey(prevKey => prevKey + 1);
         }
       }, actualUpdateIntervalMs) as any;
     }
@@ -95,7 +90,7 @@ export function BacktestChart({
     // You can update positionRef.current as needed
     // For example: positionRef.current = 0;
     positionRef.current = 0;
-    setRenderKey(0)
+    setRenderKey(0);
   }, [candlestickData, userSeriesData, conditionMarker]);
 
   return (
@@ -103,19 +98,17 @@ export function BacktestChart({
       key={renderKey} // Use the key to trigger re-renders when needed
       visibleRange={200}
       futureValues={100}
-      userSeriesData={userSeriesData.map((series) => ({
+      indicatorData={[]}
+      userSeriesData={userSeriesData.map(series => ({
         ...series,
-        data: series.data.slice(
-          0,
-          minDatapointsRequiredForAllSeries + positionRef.current
-        ),
+        data: series.data.slice(0, minDatapointsRequiredForAllSeries + positionRef.current),
       }))}
-      candlestickData={candlestickData.slice(
-        0,
-        minDatapointsRequiredForAllSeries + positionRef.current
-      )}
+      candlestickData={candlestickData.slice(0, minDatapointsRequiredForAllSeries + positionRef.current)}
       // seriesMarkers={[conditionMarker, ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : [])]}
-      seriesMarkers={[conditionMarker, ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : [])]}
+      seriesMarkers={[
+        conditionMarker,
+        ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : []),
+      ]}
       // seriesMarkers={[conditionMarker, ...(outcome?.outcomeDetails ? [outcome.marker] : [])]}
       color={color}
     />

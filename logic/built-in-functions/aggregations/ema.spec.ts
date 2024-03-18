@@ -1,4 +1,4 @@
-import { ema } from '@/logic/built-in-functions/ema';
+import { ema } from '@/logic/built-in-functions/aggregations/ema';
 
 describe('ema', () => {
   test('calculates simple moving average for a period within array length', () => {

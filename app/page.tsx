@@ -24,6 +24,7 @@ export default function () {
         <p className={'text-[30px] leading-none font-bold'}>Parallel historical replay</p>
         <div className={'youtube-container w-2/3 overflow-hidden aspect-video pointer-events-none'}>
           <iframe
+            className={'youtube-iframe'}
             width="560"
             height="315"
             src="https://www.youtube.com/embed/2Eu0NoR4JGA?playlist=2Eu0NoR4JGA&loop=1&autoplay=1&mute=1&controls=0&iv_load_policy=3"
@@ -39,6 +40,7 @@ export default function () {
         <p className={'text-[30px] leading-none font-bold mb-1'}>Fully extensible JavaScript</p>
         <div className={'youtube-container w-2/3 overflow-hidden aspect-video pointer-events-none'}>
           <iframe
+            className={'youtube-iframe'}
             width="560"
             height="315"
             src="https://www.youtube.com/embed/Ytb-W-h1nnk?playlist=Ytb-W-h1nnk&loop=1&autoplay=1&mute=1&controls=0&iv_load_policy=3"

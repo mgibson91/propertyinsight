@@ -18,9 +18,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
   return (
     <div
-      className={
-        'h-[50px] flex flex-row px-5 py-2 items-center bg-primary-bg-subtle border-b-[0.5px] border-primary-border'
-      }
+      className={'h-[50px] flex flex-row px-5 py-2 items-center bg-primary-base border-b-[2px] border-primary-border'}
     >
       <div
         className={'cursor-pointer flex flex-row gap-2 items-center'}
@@ -38,7 +36,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
         <div className={'flex flex-row items-center ml-10 gap-5'}>
           <Link href={'/dashboard'}>
             <Text
-              size={'4'}
+              size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path === '/dashboard' ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -48,9 +46,21 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
             </Text>
           </Link>
 
+          <Link href={'/dashboaard'}>
+            <Text
+              size={'3'}
+              className={cx(
+                'hover:text-accent-text transform-all duration-200',
+                path === '/dashboaard' ? 'text-accent-text' : 'text-primary-text-contrast'
+              )}
+            >
+              Dashboaard
+            </Text>
+          </Link>
+
           <Link href={'/setups'}>
             <Text
-              size={'4'}
+              size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path === '/setups' ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -62,7 +72,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
           <Link href={'/setups/replay'}>
             <Text
-              size={'4'}
+              size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path.includes('/setups/replay') ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -74,7 +84,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
           <Link href={'/roadmap'} className={'invisible md:visible'}>
             <Text
-              size={'4'}
+              size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path.includes('/roadmap') ? 'text-accent-text' : 'text-primary-text-contrast'
@@ -86,7 +96,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
 
           <Link href={'/changelog'} className={'invisible md:visible'}>
             <Text
-              size={'4'}
+              size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
                 path.includes('/changelog') ? 'text-accent-text' : 'text-primary-text-contrast'

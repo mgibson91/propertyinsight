@@ -2,7 +2,7 @@ import { Indicator, IndicatorParamType, IndicatorParamWidget, IndicatorType } fr
 
 export const PRESET_INDICATOR_SMA: Indicator = {
   tag: 'sma',
-  type: IndicatorType.SIMPLE_MOVING_AVERAGE,
+
   label: 'Simple Moving Average',
   params: [
     {
@@ -39,7 +39,6 @@ export const PRESET_INDICATOR_SMA: Indicator = {
 
 export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
   tag: 'sma_channel',
-  type: IndicatorType.SIMPLE_MOVING_AVERAGE_CHANNEL,
   label: 'Simple Moving Average Channel',
   params: [
     {
@@ -75,7 +74,6 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
 
 export const PRESET_INDICATOR_EMA: Indicator = {
   tag: 'value',
-  type: IndicatorType.EXPONENTIAL_MOVING_AVERAGE,
   label: 'Exponential Moving Average',
   params: [
     {
@@ -112,7 +110,6 @@ export const PRESET_INDICATOR_EMA: Indicator = {
 
 export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
   tag: 'bollinger_bands',
-  type: IndicatorType.BOLLINGER_BANDS,
   label: 'Bollinger Bands',
   params: [
     {
