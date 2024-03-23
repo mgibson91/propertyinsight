@@ -14,7 +14,7 @@ function getIndicatorStreamTags(indicator: Indicator, existingIndicators: Indica
 
 const DEFAULT_FIELDS = ['open', 'high', 'low', 'close']; // TODO: Make configurable for multi domain
 
-export const EditIndicatorDialog = ({
+export const SaveIndicatorToLibraryDialog = ({
   show,
   existingIndicators,
   indicator,
@@ -68,7 +68,7 @@ export const EditIndicatorDialog = ({
                   {indicator.params.map((param, index) => {
                     return (
                       <div key={index} className={'flex flex-row gap-2 items-center justify-between'}>
-                        <label>{param.name}</label>
+                        <label>{param.label}</label>
                         {param.type === 'number' && (
                           <TextFieldInput
                             className={'!w-32'}

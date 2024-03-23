@@ -10,7 +10,7 @@ export const PRESET_INDICATOR_SMA: Indicator = {
       type: IndicatorParamType.NUMBER,
       label: 'Length',
       required: true,
-      defaultValue: 2,
+      defaultValue: 20,
       value: 20,
     },
     {
@@ -22,9 +22,8 @@ export const PRESET_INDICATOR_SMA: Indicator = {
       value: 'close',
     },
   ],
-  funcStr: `
-  const value = sma($field.slice(0, $length), $length);
-  return { value };
+  funcStr: `const value = sma($field.slice(0, $length), $length);
+return { value };
 `,
   overlay: true,
   streams: [
@@ -46,14 +45,13 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
       type: IndicatorParamType.NUMBER,
       label: 'Length',
       required: true,
-      defaultValue: 2,
+      defaultValue: 20,
       value: 20,
     },
   ],
-  funcStr: `
-  const low_channel = sma(low.slice(0, $length), $length);
-  const high_channel = sma(high.slice(0, $length), $length);
-  return { low_channel, high_channel };
+  funcStr: `const low_channel = sma(low.slice(0, $length), $length);
+const high_channel = sma(high.slice(0, $length), $length);
+return { low_channel, high_channel };
 `,
   overlay: true,
   streams: [
@@ -93,9 +91,8 @@ export const PRESET_INDICATOR_EMA: Indicator = {
       value: 'close',
     },
   ],
-  funcStr: `
-  const value = ema($field.slice(0, $length), $length);
-  return { value };
+  funcStr: `const value = ema($field.slice(0, $length), $length);
+return { value };
 `,
   overlay: true,
   streams: [
@@ -129,8 +126,7 @@ export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
       value: 2,
     },
   ],
-  funcStr: `
-const middle_band = sma(close, $length);
+  funcStr: `const middle_band = sma(close, $length);
 const std_dev = stddev(close, $length);
 const upper_band = middle_band + std_dev * $stdDevMultiplier;
 const lower_band = middle_band - std_dev * $stdDevMultiplier;

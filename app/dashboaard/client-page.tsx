@@ -1,22 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CandlestickData, LineData, OhlcData, SeriesMarker, UTCTimestamp } from 'lightweight-charts';
 import { fetchCandlesFromMemory } from '@/requests/get-bitcoin-prices';
 import { calculateTriggers } from '@/logic/calculate-triggers';
+import TimeFrameSelector from '@/components/TimeFrameSelector';
 import { calculateOutcomes } from '@/logic/calculate-outcomes';
-import { Button, Card, Checkbox, Code, Heading, IconButton } from '@radix-ui/themes';
-import {
-  BarChartIcon,
-  CodeIcon,
-  CopyIcon,
-  Cross1Icon,
-  EyeNoneIcon,
-  EyeOpenIcon,
-  GearIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@radix-ui/react-icons';
+import { Button, Card, Checkbox, Code, Heading, IconButton, TextFieldInput } from '@radix-ui/themes';
+import TickerSelector from '@/components/TickerSelector';
+import { CodeIcon, CopyIcon, EyeNoneIcon, EyeOpenIcon, Pencil1Icon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { LightweightChart } from '@/components/LightweightChart';
 import { UserSeriesDialog } from '@/components/UserSeriesDialog';
 import { UserTriggerDialog } from '@/components/UserTriggerDialog';
@@ -27,16 +19,11 @@ import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 import { UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
 import { Indicator } from '@/logic/indicators/types';
 import { EditIndicatorDialog } from '@/components/edit-indicator-dialog';
-import { PRESET_INDICATOR_EMA, PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
+import { PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
 import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
 import { Toast } from '@/shared/toast';
 import { EditIndicatorCodeDialog } from '@/components/edit-indicator-code-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EditorTab } from '@/app/dashboard/_components/editor-tab';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { useDebounceCallback } from 'usehooks-ts';
-import dynamic from 'next/dynamic';
 
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/monokai.css';
@@ -170,13 +157,7 @@ function convertStreamsToChartSeries(
   });
 }
 
-type Size = {
-  width?: number;
-  height?: number;
-};
-
 const App = () => {
-  const chartRef = useRef(null);
   const [ticker, setTicker] = useState('BTCUSD');
   const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState(
@@ -206,7 +187,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
-  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([PRESET_INDICATOR_SMA, PRESET_INDICATOR_EMA]);
+  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([PRESET_INDICATOR_SMA]);
   const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
   const [userOutcome, setUserOutcome] = useState<UserOutcome | null>(null);
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
@@ -215,9 +196,6 @@ const App = () => {
   const [markerSnapshots, setMarkerSnapshots] = useMatchingSnapshot();
 
   const [displayMode] = useDisplayMode();
-
-  const [tabResetKey, setTabResetKey] = useState<number>(0);
-  const [bottomTab, setBottomTab] = useState<'editor' | 'strategies' | undefined>();
 
   // const [markerSnapshots, setMarkerSnapshots] = useState<
   //   {
@@ -266,12 +244,6 @@ const App = () => {
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [candlesPerSecond, setCandlesPerSecond] = useState<number>(1);
-
-  const resizeChart = useDebounceCallback(() => {
-    if (chartRef.current) {
-      (chartRef.current as any).resize();
-    }
-  }, 200);
 
   // Gets the indicator stream data and it's style config
   function getIndicatorChartData(tag: string): LineData<UTCTimestamp>[] {
@@ -621,271 +593,96 @@ ${funcString}`;
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []); // Empty dependency array means this effect runs once on mount
 
-  function ChartPanel() {
-    return (
-      <div className={'flex flex-col w-full flex-auto !bg-primary-base relative'}>
-        <div className={'absolute top-3 left-3 flex flex-col items-start z-[100]'}>
-          {userIndicators.map(indicator => (
-            <div key={indicator.tag} className={'flex flex-row items-center gap-3'}>
-              <div
-                className={
-                  'flex flex-col flex-auto bg-transparent hover:bg-primary-bg hover:ring-[1px] hover:ring-inset hover:ring-primary-border p-1 rounded-md'
-                }
-              >
-                <div className={'flex flex-row gap-3 justify-between group'}>
-                  <label className={'font-medium text-sm'}>{indicator.label}</label>
-                  <div className={'flex-row items-center gap-2 hidden group-hover:flex'}>
-                    <div className={'flex flex-row items-center gap-2'}>
-                      <IconButton variant={'ghost'} size={'1'} onClick={() => toggleIndicatorOverlay(indicator.tag)}>
-                        {indicator.overlay ? <EyeOpenIcon /> : <EyeNoneIcon />}
-                      </IconButton>
-                    </div>
-
-                    <IconButton
-                      color={'gray'}
-                      variant={'ghost'}
-                      size={'1'}
-                      onClick={() => {
-                        setCurrentIndicator(indicator);
-                        // setShowEditIndicatorCodeDialog(true);
-                        setBottomTab('editor');
-                      }}
-                    >
-                      <CodeIcon color="gray"></CodeIcon>
-                    </IconButton>
-
-                    <IconButton
-                      variant={'ghost'}
-                      size={'1'}
-                      onClick={() => {
-                        setCurrentIndicator(indicator);
-                        setShowEditIndicatorDialog(true);
-                      }}
-                    >
-                      <GearIcon></GearIcon>
-                    </IconButton>
-
-                    <IconButton
-                      color={'tomato'}
-                      variant={'ghost'}
-                      size={'1'}
-                      onClick={() => {
-                        const index = userIndicators.findIndex(i => i.tag === indicator.tag);
-                        const newIndicators = [...userIndicators];
-                        newIndicators.splice(index, 1);
-                        setUserIndicators(newIndicators);
-                      }}
-                    >
-                      <Cross1Icon color="tomato"></Cross1Icon>
-                    </IconButton>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <LightweightChart
-          ref={chartRef}
-          userSeriesData={userSeriesData}
-          indicatorData={userIndicatorData}
-          candlestickData={candlestickData}
-          seriesMarkers={[
-            ...triggerMarkers.map(t => ({
-              ...t,
-              color: displayMode.mode === 'dark' ? '#D4FF70' : '#8DB654',
-            })),
-            ...outcomeMarkers.map(t => ({
-              ...t,
-              color:
-                t.shape === 'arrowUp'
-                  ? displayMode.mode === 'dark'
-                    ? '#1FD8A4'
-                    : '#208368'
-                  : displayMode.mode === 'dark'
-                    ? '#FF977D'
-                    : '#D13415',
-            })),
-          ].sort((a, b) => (a.time as number) - (b.time as number))}
-          visibleRange={200}
-          // seriesMarkers={triggerMarkers}
-          color={{
-            background: displayMode.mode === 'dark' ? '#111113' : '#F9F9FB',
-            text: displayMode.mode === 'dark' ? '#B0B4BA' : '#60646C',
-            gridLines: displayMode.mode === 'dark' ? '#363A3F' : '#D9D9E0',
-            scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',
-          }}
-        />
-      </div>
-    );
-  }
-
-  function SecondaryPanel() {
-    return (
-      <Tabs
-        className="w-full"
-        value={bottomTab}
-        onFocus={() => {
-          // Need as first setBottomTab from non resizable panel wasn't setting value
-          if (!bottomTab) {
-            setBottomTab('editor');
-          }
-        }}
-      >
-        <TabsList className={'flex gap-2 justify-start px-3'}>
-          <TabsTrigger
-            value="editor"
-            onClick={() => {
-              if (bottomTab === 'editor') {
-                setBottomTab(null as any);
-              } else {
-                setBottomTab('editor');
-              }
-            }}
-          >
-            Code Editor
-          </TabsTrigger>
-          <TabsTrigger
-            value="strategies"
-            onClick={() => {
-              if (bottomTab === 'strategies') {
-                setBottomTab(null as any);
-              } else {
-                setBottomTab('strategies');
-              }
-            }}
-          >
-            Strategies
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="editor">
-          <EditorTab
-            existingIndicators={userIndicators}
-            indicator={currentIndicator}
-            setIndicator={setCurrentIndicator}
-            onSaveToChartClicked={({ funcStr, name, inputs }) => {
-              const dialogIndicator: Indicator = {
-                ...currentIndicator,
-                funcStr,
-                label: name,
-                params: inputs,
-              };
-
-              const index = userIndicators.findIndex(i => i.tag === currentIndicator.tag);
-
-              if (index !== -1) {
-                // Update existing indicator
-                const newIndicators = [...userIndicators];
-                newIndicators[index] = dialogIndicator;
-
-                setUserIndicators(newIndicators);
-              } else {
-                // Add dialog indicator
-                setUserIndicators([...userIndicators, dialogIndicator]);
-              }
-
-              setCurrentIndicator(dialogIndicator);
-              // setShowEditIndicatorCodeDialog(false);
-            }}
-            onSaveToLibraryClicked={({ indicatorId, funcStr, name }) => {}}
-            onSaveToStrategyClicked={({ indicatorId, strategyId, funcStr, name }) => {}}
-          />
-        </TabsContent>
-        <TabsContent value="strategies">Change your password here.</TabsContent>
-      </Tabs>
-    );
-  }
-
   return (
     <>
-      <div className={'flex-auto flex flex-col w-[100vw]'}>
-        {/*<div className={'flex flex-row gap-2 m-5 w-full pr-10'}>*/}
-        {/*  <Card className={''}>*/}
-        {/*    <div className={'flex flex-row items-center gap-3'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Ticker</label>*/}
-        {/*        <TickerSelector*/}
-        {/*          options={[*/}
-        {/*            // { value: 'FETUSD', label: 'FET/USD' },*/}
-        {/*            { value: 'BTCUSD', label: 'BTC/USD' },*/}
-        {/*            // { value: 'ETHUSD', label: 'ETH/USD' },*/}
-        {/*          ]}*/}
-        {/*          value={ticker}*/}
-        {/*          onChange={selectedOption => setTicker(selectedOption)}*/}
-        {/*        />*/}
-        {/*      </div>*/}
+      <div className={'flex flex-col w-[100vw] items-start'}>
+        <div className={'flex flex-row gap-2 m-5 w-full pr-10'}>
+          <Card className={''}>
+            <div className={'flex flex-row items-center gap-3'}>
+              <div className={'flex flex-col'}>
+                <label>Ticker</label>
+                <TickerSelector
+                  options={[
+                    // { value: 'FETUSD', label: 'FET/USD' },
+                    { value: 'BTCUSD', label: 'BTC/USD' },
+                    // { value: 'ETHUSD', label: 'ETH/USD' },
+                  ]}
+                  value={ticker}
+                  onChange={selectedOption => setTicker(selectedOption)}
+                />
+              </div>
 
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Timeframe</label>*/}
-        {/*        <TimeFrameSelector*/}
-        {/*          options={[*/}
-        {/*            // { value: '15m', label: '15m' },*/}
-        {/*            { value: '1h', label: '1h' },*/}
-        {/*          ]}*/}
-        {/*          value={timeframe}*/}
-        {/*          onChange={selectedOption => setTimeframe(selectedOption)}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </Card>*/}
+              <div className={'flex flex-col'}>
+                <label>Timeframe</label>
+                <TimeFrameSelector
+                  options={[
+                    // { value: '15m', label: '15m' },
+                    { value: '1h', label: '1h' },
+                  ]}
+                  value={timeframe}
+                  onChange={selectedOption => setTimeframe(selectedOption)}
+                />
+              </div>
+            </div>
+          </Card>
 
-        {/*  <Card className={''}>*/}
-        {/*    <div className={'flex flex-row items-center gap-3'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Start Time</label>*/}
-        {/*        /!*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*!/*/}
-        {/*        /!*Change to use normal html input date*!/*/}
-        {/*        <TextFieldInput*/}
-        {/*          type="date"*/}
-        {/*          value={startDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'*/}
-        {/*          onChange={e => setStartDate(new Date(e.target.value))}*/}
-        {/*        />*/}
-        {/*      </div>*/}
+          <Card className={''}>
+            <div className={'flex flex-row items-center gap-3'}>
+              <div className={'flex flex-col'}>
+                <label>Start Time</label>
+                {/*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*/}
+                {/*Change to use normal html input date*/}
+                <TextFieldInput
+                  type="date"
+                  value={startDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
+                  onChange={e => setStartDate(new Date(e.target.value))}
+                />
+              </div>
 
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>End Time</label>*/}
-        {/*        <TextFieldInput*/}
-        {/*          type="date"*/}
-        {/*          value={endDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'*/}
-        {/*          onChange={e => setEndDate(new Date(e.target.value))}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </Card>*/}
+              <div className={'flex flex-col'}>
+                <label>End Time</label>
+                <TextFieldInput
+                  type="date"
+                  value={endDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
+                  onChange={e => setEndDate(new Date(e.target.value))}
+                />
+              </div>
+            </div>
+          </Card>
 
-        {/*  <div className={'flex flex-col gap-2 justify-between'}>*/}
-        {/*    <Button onClick={handleFetchClick} disabled={loading}>*/}
-        {/*      {loading ? 'Loading...' : 'Refresh'}*/}
-        {/*    </Button>*/}
-        {/*    {error && <div>Error fetching data: {error}</div>}*/}
-        {/*  </div>*/}
+          <div className={'flex flex-col gap-2 justify-between'}>
+            <Button onClick={handleFetchClick} disabled={loading}>
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
+            {error && <div>Error fetching data: {error}</div>}
+          </div>
 
-        {/*  {outcomeSummary && (*/}
-        {/*    <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Wins:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>*/}
-        {/*        </div>*/}
+          {outcomeSummary && (
+            <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>
+              <div className={'flex flex-col'}>
+                <div className={'flex flex-row'}>
+                  <span className={'font-bold w-20'}>Wins:&nbsp;</span>
+                  <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>
+                </div>
 
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Losses:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>*/}
-        {/*        </div>*/}
+                <div className={'flex flex-row'}>
+                  <span className={'font-bold w-20'}>Losses:&nbsp;</span>
+                  <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>
+                </div>
 
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--slate-11)] font-bold'}>*/}
-        {/*            {isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%*/}
-        {/*          </span>*/}
-        {/*        </div>*/}
-        {/*      </div>*/}
-        {/*    </Card>*/}
-        {/*  )}*/}
-        {/*</div>*/}
+                <div className={'flex flex-row'}>
+                  <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>
+                  <span className={'text-[var(--slate-11)] font-bold'}>
+                    {isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
 
-        <div className={'flex flex-row w-[100%] flex-auto gap-5'}>
-          <div className={'hidden flex flex-col gap-5'}>
+        <div className={'flex flex-row w-[100%] flex-auto gap-5 p-5'}>
+          <div className={'flex flex-col gap-5'}>
             <Card className={'!bg-primary-bg-subtle'}>
               <div className={'flex flex-col w-[300px] gap-3'}>
                 <div className={'flex flex-row items-center justify-between'}>
@@ -923,7 +720,6 @@ ${funcString}`;
 
                 {userIndicators.map(indicator => (
                   <div key={indicator.tag} className={'flex flex-row items-center gap-3'}>
-                    <p>Ballee</p>
                     <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
                       <div className={'flex flex-row gap-5 justify-between'}>
                         <div className={'flex flex-col'}>
@@ -1034,7 +830,7 @@ ${funcString}`;
                               setShowEditIndicatorDialog(true);
                             }}
                           >
-                            <GearIcon></GearIcon>
+                            <Pencil1Icon></Pencil1Icon>
                           </IconButton>
                         </div>
                       </div>
@@ -1109,7 +905,7 @@ ${funcString}`;
                               setShowDialog(true);
                             }}
                           >
-                            <GearIcon></GearIcon>
+                            <Pencil1Icon></Pencil1Icon>
                           </IconButton>
                         </div>
                       </div>
@@ -1172,7 +968,7 @@ ${funcString}`;
                               setShowTriggerDialog(true);
                             }}
                           >
-                            <GearIcon></GearIcon>
+                            <Pencil1Icon></Pencil1Icon>
                           </IconButton>
                         </div>
                       </div>
@@ -1227,7 +1023,7 @@ ${funcString}`;
                               setShowOutcomeDialog(true);
                             }}
                           >
-                            <GearIcon></GearIcon>
+                            <Pencil1Icon></Pencil1Icon>
                           </IconButton>
                         </div>
                       </div>
@@ -1238,56 +1034,39 @@ ${funcString}`;
             </Card>
           </div>
 
-          <div className={'flex flex-col flex-auto w-[100%]'}>
-            <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex'}>
-              <div className={'invisible'}>Hidden</div>
-              <div className={'pr-2'}>
-                <Button
-                  variant={'soft'}
-                  size={'1'}
-                  onClick={() => {
-                    setShowAddIndicatorDialog(true);
-                  }}
-                >
-                  Add Indicator
-                  <BarChartIcon />
-                </Button>
-                {/*<IconButton*/}
-                {/*  size={'1'}*/}
-                {/*  onClick={() => {*/}
-                {/*    setShowAddIndicatorDialog(true);*/}
-                {/*  }}*/}
-                {/*>*/}
-                {/*  <PlusIcon />*/}
-                {/*</IconButton>*/}
-              </div>
-            </div>
-            {bottomTab ? (
-              <ResizablePanelGroup direction="vertical">
-                <ResizablePanel
-                  defaultSize={60}
-                  minSize={20}
-                  onResize={() => {
-                    resizeChart();
-                  }}
-                  className={'flex flex-col flex-auto w-full'}
-                >
-                  <ChartPanel />
-                </ResizablePanel>
-                <ResizableHandle className={'w-full !h-[2px] bg-primary-border'}></ResizableHandle>
-                <ResizablePanel defaultSize={40} minSize={20}>
-                  <SecondaryPanel />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            ) : (
-              <div className={'flex flex-col flex-auto w-[100%]'}>
-                <ChartPanel />
-                <div className={'w-full h-[2px] bg-primary-border'}></div>
-                <SecondaryPanel />
-              </div>
-            )}
-
-            {/*Chart area*/}
+          <div className={'w-[100%] h-[500px]'}>
+            <Card className={'w-full h-full !bg-primary-bg-subtle'}>
+              <LightweightChart
+                userSeriesData={userSeriesData}
+                indicatorData={userIndicatorData}
+                candlestickData={candlestickData}
+                seriesMarkers={[
+                  ...triggerMarkers.map(t => ({
+                    ...t,
+                    color: displayMode.mode === 'dark' ? '#D4FF70' : '#8DB654',
+                  })),
+                  ...outcomeMarkers.map(t => ({
+                    ...t,
+                    color:
+                      t.shape === 'arrowUp'
+                        ? displayMode.mode === 'dark'
+                          ? '#1FD8A4'
+                          : '#208368'
+                        : displayMode.mode === 'dark'
+                          ? '#FF977D'
+                          : '#D13415',
+                  })),
+                ].sort((a, b) => (a.time as number) - (b.time as number))}
+                visibleRange={200}
+                // seriesMarkers={triggerMarkers}
+                color={{
+                  background: displayMode.mode === 'dark' ? '#18191B' : '#F9F9FB',
+                  text: displayMode.mode === 'dark' ? '#B0B4BA' : '#60646C',
+                  gridLines: displayMode.mode === 'dark' ? '#363A3F' : '#D9D9E0',
+                  scale: displayMode.mode === 'dark' ? '#5A6169' : '#B9BBC6',
+                }}
+              />
+            </Card>
           </div>
         </div>
       </div>
@@ -1344,13 +1123,12 @@ ${funcString}`;
             setUserIndicators([...userIndicators, dialogIndicator]);
           }
 
-          // setCurrentIndicator(DEFAULT_INDICATOR);
-          setCurrentIndicator(dialogIndicator);
+          setCurrentIndicator(DEFAULT_INDICATOR);
 
           setShowEditIndicatorDialog(false);
         }}
         onCancelClicked={() => {
-          // setCurrentIndicator(DEFAULT_INDICATOR);
+          setCurrentIndicator(DEFAULT_INDICATOR);
           setShowEditIndicatorDialog(false);
         }}
       />
