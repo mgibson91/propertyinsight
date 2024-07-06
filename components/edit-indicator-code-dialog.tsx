@@ -10,20 +10,24 @@ export const EditIndicatorCodeDialog = ({
   show,
   existingIndicators,
   indicator,
-  setIndicator,
+  // setIndicator,
   onSaveClicked,
   onCancelClicked,
 }: {
   show: boolean;
   existingIndicators: Indicator[];
-  indicator: Indicator;
-  setIndicator: (indicator: Indicator) => void;
+  indicator?: Indicator;
+  // setIndicator: (indicator: Indicator) => void;
   onSaveClicked: (funcStr: string) => void;
   onCancelClicked: () => void;
 }) => {
   const [funcStr, setFuncStr] = useState('');
 
   useEffect(() => {
+    if (!indicator) {
+      return;
+    }
+
     setFuncStr(indicator.funcStr);
   }, [indicator]);
 
@@ -48,7 +52,7 @@ export const EditIndicatorCodeDialog = ({
     // It's right through indicators, and for each indicator at all streams
     monaco.languages.typescript.typescriptDefaults.addExtraLib(`
       ${prependSpreadFunctions({
-        funcString: prefixBuiltInFunctions(indicator.funcStr),
+        funcString: prefixBuiltInFunctions(indicator ? indicator.funcStr : ''),
         indicator,
         existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
           indicator.streams.map(stream => ({

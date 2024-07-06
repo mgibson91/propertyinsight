@@ -6,7 +6,7 @@ const traverse = require('@babel/traverse').default;
 export function findUsedVariablesInCode(code: string, variableNames: string[]) {
   const ast = parser.parse(code, {
     sourceType: 'module',
-    plugins: ['jsx'],
+    plugins: ['typescript'],
   });
 
   let usedVariables: string[] = [];

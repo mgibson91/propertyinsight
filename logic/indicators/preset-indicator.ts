@@ -22,9 +22,10 @@ export const PRESET_INDICATOR_SMA: Indicator = {
       value: 'close',
     },
   ],
-  funcStr: `const value = sma($field.slice(0, $length), $length);
-return { value };
-`,
+  funcStr: `function indicator() {
+    const value = sma($$field.slice(0, $$length), $$length);
+    return { value };
+  }`,
   overlay: true,
   streams: [
     {
@@ -34,6 +35,7 @@ return { value };
       color: '#FFFFFF',
     },
   ],
+  properties: ['value'],
 };
 
 export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
@@ -49,10 +51,11 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
       value: 20,
     },
   ],
-  funcStr: `const low_channel = sma(low.slice(0, $length), $length);
-const high_channel = sma(high.slice(0, $length), $length);
-return { low_channel, high_channel };
-`,
+  funcStr: `function indicator() {
+    const low_channel = sma(low.slice(0, $$length), $$length);
+    const high_channel = sma(high.slice(0, $$length), $$length);
+    return { low_channel, high_channel };
+  }`,
   overlay: true,
   streams: [
     {
@@ -68,10 +71,11 @@ return { low_channel, high_channel };
       color: '#00FF00',
     },
   ],
+  properties: ['low_channel', 'high_channel'],
 };
 
 export const PRESET_INDICATOR_EMA: Indicator = {
-  tag: 'value',
+  tag: 'ema',
   label: 'Exponential Moving Average',
   params: [
     {
@@ -91,9 +95,10 @@ export const PRESET_INDICATOR_EMA: Indicator = {
       value: 'close',
     },
   ],
-  funcStr: `const value = ema($field.slice(0, $length), $length);
-return { value };
-`,
+  funcStr: `function indicator() {
+    const value = ema($$field.slice(0, $$length), $$length);
+    return { value };
+  }`,
   overlay: true,
   streams: [
     {
@@ -103,6 +108,7 @@ return { value };
       color: 'yellow',
     },
   ],
+  properties: ['value'],
 };
 
 export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
@@ -126,12 +132,13 @@ export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
       value: 2,
     },
   ],
-  funcStr: `const middle_band = sma(close, $length);
-const std_dev = stddev(close, $length);
-const upper_band = middle_band + std_dev * $stdDevMultiplier;
-const lower_band = middle_band - std_dev * $stdDevMultiplier;
-return { middle_band, upper_band, lower_band };
-`,
+  funcStr: `function indicator() {
+    const middle_band = sma(close, $$length);
+    const std_dev = stddev(close, $$length);
+    const upper_band = middle_band + std_dev * $$stdDevMultiplier;
+    const lower_band = middle_band - std_dev * $$stdDevMultiplier;
+    return { middle_band, upper_band, lower_band };
+  }`,
   overlay: true,
   streams: [
     {
@@ -153,6 +160,26 @@ return { middle_band, upper_band, lower_band };
       color: '#10CAF9', // Lower band in green
     },
   ],
+  properties: ['middle_band', 'upper_band', 'lower_band'],
+};
+
+export const MUCKABOUT: Indicator = {
+  tag: 'muckabout',
+  label: 'Muckabout',
+  params: [],
+  funcStr: `function indicator() {
+    return { line: 40000 };
+  }`,
+  overlay: true,
+  streams: [
+    {
+      tag: 'line',
+      overlay: true,
+      lineWidth: 1,
+      color: '#10CAF9', // Upper band in red
+    },
+  ],
+  properties: ['line'],
 };
 
 export const PRESET_INDICATORS: Indicator[] = [
@@ -161,4 +188,6 @@ export const PRESET_INDICATORS: Indicator[] = [
   PRESET_INDICATOR_SMA_CHANNEL,
   PRESET_INDICATOR_BOLLINGER_BANDS,
   // ... add more presets here
+
+  MUCKABOUT,
 ];

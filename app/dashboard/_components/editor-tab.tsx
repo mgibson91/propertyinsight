@@ -1,26 +1,63 @@
-import { Box, Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextFieldInput } from '@radix-ui/themes';
+import {
+  Box,
+  Button,
+  Code,
+  Dialog,
+  Heading,
+  IconButton,
+  Popover,
+  Select,
+  Tabs,
+  TextFieldInput,
+} from '@radix-ui/themes';
 import { Indicator, IndicatorParam, IndicatorParamType } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
 import { Editor, BeforeMount } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
-import { IndicatorStreamData, prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series';
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
 import { PlusIcon } from '@radix-ui/react-icons';
+import { prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
+
+function parseFunctionReturnKeys(functionString: string) {
+  const functionBodyMatch = functionString.match(/return\s*{([\s\S]*?)}/);
+  if (!functionBodyMatch) {
+    throw new Error('Invalid function string format');
+  }
+
+  const returnObjectString = functionBodyMatch[1].trim();
+  const keys = returnObjectString
+    .split(',')
+    .map(pair => pair.split(':')[0].trim())
+    .filter(key => key !== '');
+
+  return keys;
+}
+
+const DEFAULT_INDICATOR_USER_FUNCTION = `function indicator() {
+  // Replace this example
+  return {
+    value1: 1,
+    value2: 2,
+  };
+}
+`;
 
 export const EditorTab = ({
   existingIndicators,
   indicator,
-  setIndicator,
+  // setIndicator,
   onSaveToChartClicked,
   onSaveToLibraryClicked,
   onSaveToStrategyClicked,
 }: {
   existingIndicators: Indicator[];
-  indicator: Indicator;
-  setIndicator: (indicator: Indicator) => void;
-  onSaveToChartClicked: (input: { funcStr: string; name: string; inputs: IndicatorParam[] }) => void;
-  onSaveToLibraryClicked: (input: { indicatorId?: string; funcStr: string; name: string }) => void;
+  indicator?: Indicator;
+  // setIndicator: (indicator: Indicator) => void;
+  // onSaveToChartClicked: (input: { funcStr: string; name: string; params: IndicatorParam[] }) => void;
+  onSaveToChartClicked: (input: Omit<Indicator, 'overlay'> & { existingTag?: string }) => void;
+  onSaveToLibraryClicked: (input: Omit<Indicator, 'overlay'>) => void;
+  // onSaveToLibraryClicked: (input: { indicatorId?: string; funcStr: string; name: string }) => void;
   onSaveToStrategyClicked: (input: {
     strategyId?: string;
     indicatorId?: string;
@@ -28,22 +65,38 @@ export const EditorTab = ({
     name: string;
   }) => void;
 }) => {
-  const [funcStr, setFuncStr] = useState('');
-  const [name, setName] = useState('');
-  const [inputs, setInputs] = useState<IndicatorParam[]>([]);
+  const [funcStr, setFuncStr] = useState(DEFAULT_INDICATOR_USER_FUNCTION);
+  const [label, setLabel] = useState('');
+  const [tag, setTag] = useState('');
+  const [params, setInputs] = useState<IndicatorParam[]>([]);
+
+  const [functionStartValid, setFunctionValid] = useState(false);
 
   useEffect(() => {
+    if (!indicator) {
+      return;
+    }
     setFuncStr(indicator.funcStr);
-    setName(indicator.label);
+    setLabel(indicator.label);
+    setTag(indicator.tag);
     setInputs(indicator.params);
   }, [indicator]);
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && event.ctrlKey) {
-      event.preventDefault();
-      onSaveToChartClicked({ funcStr, name, inputs });
-    }
-  };
+  // const handleKeyDown = (event: React.KeyboardEvent) => {
+  //   if (event.key === 'Enter' && event.ctrlKey) {
+  //     event.preventDefault();
+  //
+  //
+  //     onSaveToChartClicked({
+  //       funcStr,
+  //       label,
+  //       params,
+  //       // TODO
+  //       tag: '',
+  //       streams: [],
+  //     });
+  //   }
+  // };
 
   // Define global variables before the editor mounts
   const beforeMount: BeforeMount = monaco => {
@@ -52,15 +105,12 @@ export const EditorTab = ({
       allowNonTsExtensions: true,
     });
 
-    // declare var existingIndicators: ${JSON.stringify(existingIndicators)};
-
-    // TODO: Something with prependSpreadFunctions(prefixBuiltInFunctions(indicator.funcStr), indicator, existingIndicatorStreams)
-
     // It's right through indicators, and for each indicator at all streams
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(`
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      `
       ${prependSpreadFunctions({
-        funcString: prefixBuiltInFunctions(indicator.funcStr),
-        indicator,
+        funcString: prefixBuiltInFunctions(indicator ? indicator.funcStr : ''),
+        params: indicator?.params || [],
         existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
           indicator.streams.map(stream => ({
             streamTag: stream.tag,
@@ -68,7 +118,8 @@ export const EditorTab = ({
           }))
         ),
       })}
-      `);
+      `
+    );
 
     monaco.editor.defineTheme('myCustomTheme', {
       base: 'vs-dark', // can also be vs-dark or hc-black
@@ -80,56 +131,126 @@ export const EditorTab = ({
       },
     });
 
+    monaco.editor.onDidChangeMarkers(([uri]) => {
+      const markers = monaco.editor.getModelMarkers({ resource: uri });
+      console.log(markers);
+    });
+
     // Apply the custom theme
     monaco.editor.setTheme('myCustomTheme');
   };
 
-  const FIELD_OPTIONS = [...DEFAULT_FIELDS, ...getIndicatorStreamTags(indicator, existingIndicators)];
+  const FIELD_OPTIONS = [
+    ...DEFAULT_FIELDS,
+    ...(indicator ? getIndicatorStreamTags(indicator, existingIndicators) : []),
+  ];
+
+  useEffect(() => {
+    if (!funcStr.startsWith('function indicator() {')) {
+      setFunctionValid(false);
+      return;
+    }
+    setFunctionValid(true);
+  }, [funcStr]);
 
   return (
-    <div className={'flex flex-col gap-3 p-3'} onKeyDown={handleKeyDown}>
-      <div className={'flex flex-row items-center justify-between'}>
-        <TextFieldInput
-          className={'min-w-[200px]'}
-          placeholder={'Indicator name'}
-          value={name}
-          onInput={e => {
-            setName(e.target.value);
-          }}
-        ></TextFieldInput>
+    //  onKeyDown={handleKeyDown}
+    <div className={'flex flex-col'}>
+      <div className={'flex flex-row items-center justify-between bg-accent-bg h-[36px] px-2'}>
+        <div className={'flex flex-row gap-2 items-center px-1'}>
+          <TextFieldInput
+            size={'1'}
+            className={'min-w-[150px]'}
+            placeholder={'Indicator name'}
+            value={label}
+            onInput={e => {
+              setLabel(e.target.value);
+            }}
+          ></TextFieldInput>
+
+          <TextFieldInput
+            size={'1'}
+            className={'min-w-[150px]'}
+            placeholder={'Indicator tag'}
+            value={tag}
+            onInput={e => {
+              setTag(e.target.value);
+            }}
+          ></TextFieldInput>
+        </div>
+
+        {!functionStartValid && (
+          <Popover.Root>
+            <Popover.Trigger>
+              <Button color="tomato" size={'1'} variant={'solid'}>
+                Syntax Error
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content>
+              <p>Function must start with:</p>
+              <Code className="whitespace-pre-line">{`function indicator() {`}</Code>
+            </Popover.Content>
+          </Popover.Root>
+        )}
 
         <div className={'flex flex-row gap-2 items-center'}>
           <Button
+            size={'1'}
             className={'w-32'}
-            onClick={() =>
+            onClick={() => {
+              const keys = parseFunctionReturnKeys(funcStr);
+              console.log(keys);
+
               onSaveToChartClicked({
                 funcStr,
-                name,
-                inputs,
-              })
-            }
+                label,
+                params,
+                // TODO
+                tag,
+                streams: keys.map(key => ({
+                  tag: key,
+                  overlay: false,
+                  color: 'yellow',
+                  lineWidth: 1,
+                })),
+                properties: keys,
+              });
+            }}
             variant={'outline'}
           >
             Save to library
           </Button>
 
           <Button
+            size={'1'}
             className={'w-32'}
-            onClick={() =>
+            onClick={() => {
+              const keys = parseFunctionReturnKeys(funcStr);
+              console.log(keys);
+
               onSaveToChartClicked({
                 funcStr,
-                name,
-                inputs,
-              })
-            }
+                label,
+                params,
+                // TODO
+                tag,
+                streams: keys.map(key => ({
+                  tag: key,
+                  overlay: true,
+                  color: 'white',
+                  lineWidth: 1,
+                })),
+                properties: keys,
+              });
+            }}
           >
             Save to chart
           </Button>
         </div>
       </div>
-      <div className={'flex flex-row'}>
+      <div className={'flex flex-row p-2'}>
         <div className={'flex flex-col w-[450px]'}>
-          <div className={'flex flex-row items-center justify-between py-1'}>
+          <div className={'flex flex-row items-center justify-between'}>
             <Heading size={'3'} className={'mb-3'}>
               Inputs
             </Heading>
@@ -140,7 +261,7 @@ export const EditorTab = ({
               size={'1'}
               onClick={() => {
                 setInputs([
-                  ...inputs,
+                  ...params,
                   {
                     name: '',
                     type: IndicatorParamType.NUMBER,
@@ -157,7 +278,7 @@ export const EditorTab = ({
           </div>
 
           <div className={'flex flex-col gap-2'}>
-            {inputs.map((param, index) => (
+            {params.map((param, index) => (
               <>
                 {param.name !== 'length' && (
                   <div className={'flex flex-col gap-1'}>
@@ -166,7 +287,7 @@ export const EditorTab = ({
                         value={param.type}
                         onValueChange={(type: IndicatorParamType) => {
                           setInputs(
-                            inputs.map((p, i) => {
+                            params.map((p, i) => {
                               if (i === index) {
                                 return {
                                   ...p,
@@ -197,7 +318,7 @@ export const EditorTab = ({
                         value={param.name}
                         onChange={e =>
                           setInputs(
-                            inputs.map((p, i) => {
+                            params.map((p, i) => {
                               if (i === index) {
                                 return {
                                   ...p,
@@ -216,9 +337,10 @@ export const EditorTab = ({
                           className={'w-[100px]'}
                           type={'number'}
                           value={param.defaultValue as number}
+                          placeholder="Default"
                           onChange={e =>
                             setInputs(
-                              inputs.map((p, i) => {
+                              params.map((p, i) => {
                                 if (i === index) {
                                   return {
                                     ...p,
@@ -235,7 +357,7 @@ export const EditorTab = ({
                           value={param.defaultValue as string}
                           onValueChange={value =>
                             setInputs(
-                              inputs.map((p, i) => {
+                              params.map((p, i) => {
                                 if (i === index) {
                                   return {
                                     ...p,
@@ -265,7 +387,7 @@ export const EditorTab = ({
                           value={param.defaultValue as string}
                           onChange={e =>
                             setInputs(
-                              inputs.map((p, i) => {
+                              params.map((p, i) => {
                                 if (i === index) {
                                   return {
                                     ...p,
@@ -285,7 +407,7 @@ export const EditorTab = ({
                         className={'!rounded-full !m-0 !h-3 !w-3'}
                         size={'1'}
                         onClick={() => {
-                          setInputs(inputs.filter((_, i) => i !== index));
+                          setInputs(params.filter((_, i) => i !== index));
                         }}
                       >
                         <CloseIcon></CloseIcon>

@@ -1,6 +1,6 @@
 import { MatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
-import { UserSeriesData } from "@/app/(logic)/types";
+import { UserSeriesData } from '@/app/(logic)/types';
 
 export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedingCount: number) {
   const consolidatedSnapshotEntries: {
@@ -54,7 +54,7 @@ export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedi
     const consolidatedPrecedingData = getConsolidatedSeries(precedingCandlestickData, precedingUserSeriesData);
     const reversed = [...consolidatedPrecedingData].reverse();
 
-    const result: Record<string, number> = {};
+    const result = {};
 
     // Loop through reversed data and return a single row for preceding count in the format [{ open_1, open_2, open_3 }, .etc ] - dont include 0
     for (let i = 0; i < precedingCount; i++) {

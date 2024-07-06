@@ -5,7 +5,7 @@ import { CandlestickData, LineData, OhlcData, SeriesMarker, UTCTimestamp } from 
 import { fetchCandlesFromMemory } from '@/requests/get-bitcoin-prices';
 import { calculateTriggers } from '@/logic/calculate-triggers';
 import { calculateOutcomes } from '@/logic/calculate-outcomes';
-import { Button, Card, Checkbox, Code, Heading, IconButton } from '@radix-ui/themes';
+import { Button, Card, Checkbox, Code, Heading, IconButton, TextFieldInput } from '@radix-ui/themes';
 import {
   BarChartIcon,
   CodeIcon,
@@ -23,11 +23,11 @@ import { UserTriggerDialog } from '@/components/UserTriggerDialog';
 import { UserOutcomeDialog } from '@/components/UserOutcomeDialog';
 import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
-import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
-import { UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
+// import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
+import { GenericData, UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
 import { Indicator } from '@/logic/indicators/types';
 import { EditIndicatorDialog } from '@/components/edit-indicator-dialog';
-import { PRESET_INDICATOR_EMA, PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
+import { MUCKABOUT, PRESET_INDICATOR_EMA, PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
 import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
 import { Toast } from '@/shared/toast';
@@ -37,6 +37,9 @@ import { EditorTab } from '@/app/dashboard/_components/editor-tab';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useDebounceCallback } from 'usehooks-ts';
 import dynamic from 'next/dynamic';
+import { StrategiesTab } from '@/app/dashboard/_components/strategies-tab';
+import { Strategy } from './types';
+import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-new';
 
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/monokai.css';
@@ -112,7 +115,7 @@ const INITIAL_USER_SERIES: UserSeries[] = [
 
 const INITIAL_USER_TRIGGERS: UserTrigger[] = [
   // {
-  //   tag: '1',
+  //   id: '1',
   //   name: 'sma crossover',
   //   triggerFunctionString: `return data[0].sma20 > data[0].sma50 && data[1].sma20 < data[1].sma50`,
   //   size: 2,
@@ -120,19 +123,19 @@ const INITIAL_USER_TRIGGERS: UserTrigger[] = [
   // },
 ];
 
-// const INITIAL_USER_OUTCOME: UserOutcome = {
-//   tag: '1',
-//   name: '2% either way',
-//   outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
-//     return 'success';
-//   } else if (data[0].low < trigger.value * 0.98) {
-//     return 'failure';
-//   }
-//
-//   return 'uncertain';`,
-//   color: '',
-//   size: 1,
-// };
+const INITIAL_USER_OUTCOME: UserOutcome = {
+  id: '1',
+  name: '2% either way',
+  outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
+    return 'success';
+  } else if (data[0].low < trigger.value * 0.98) {
+    return 'failure';
+  }
+
+  return 'uncertain';`,
+  color: '',
+  size: 1,
+};
 
 function convertStreamsToChartSeries(
   streamDataMap: Record<string, LineData<UTCTimestamp>[]>,
@@ -170,6 +173,34 @@ function convertStreamsToChartSeries(
   });
 }
 
+const DEFAULT_STRATEGY: Strategy = {
+  id: '',
+  name: '',
+  indicators: [PRESET_INDICATOR_SMA],
+  triggers: [
+    {
+      id: '1',
+      name: 'sma crossover',
+      triggerFunctionString: `return data[0].sma20 > data[0].sma50 && data[1].sma20 < data[1].sma50`,
+      size: 2,
+      color: '#ffffff',
+    },
+  ],
+  outcome: {
+    id: '1',
+    name: '2% either way',
+    outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
+    return 'success';
+  } else if (data[0].low < trigger.value * 0.98) {
+    return 'failure';
+  }
+
+  return 'uncertain';`,
+    color: '',
+    size: 1,
+  },
+};
+
 type Size = {
   width?: number;
   height?: number;
@@ -206,17 +237,29 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
-  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([PRESET_INDICATOR_SMA, PRESET_INDICATOR_EMA]);
+
+  // Displayed - these need to change on current indicator <-> strategy switch
+  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([
+    PRESET_INDICATOR_SMA,
+    PRESET_INDICATOR_EMA,
+    MUCKABOUT,
+  ]);
   const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
   const [userOutcome, setUserOutcome] = useState<UserOutcome | null>(null);
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
+
+  // Caches current strategy edits for user experimentation - no need for save to chart
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [currentStrategy, setCurrentStrategy] = useState<Strategy | null>(null);
 
   const [markerSnapshots, setMarkerSnapshots] = useMatchingSnapshot();
 
   const [displayMode] = useDisplayMode();
 
   const [tabResetKey, setTabResetKey] = useState<number>(0);
+
+  // We display
   const [bottomTab, setBottomTab] = useState<'editor' | 'strategies' | undefined>();
 
   // const [markerSnapshots, setMarkerSnapshots] = useState<
@@ -242,7 +285,9 @@ const App = () => {
     winPerc: number;
   } | null>(null);
 
+  // TODO: Make this dialog indicator
   const [currentIndicator, setCurrentIndicator] = useState<Indicator>(DEFAULT_INDICATOR);
+  const [editorIndicator, setEditorIndicator] = useState<Indicator | undefined>(undefined);
   const [currentSeries, setCurrentSeries] = useState<UserSeries>(DEFAULT_USER_SERIES);
   const [currentTrigger, setCurrentTrigger] = useState<UserTrigger>({
     id: '',
@@ -291,9 +336,11 @@ const App = () => {
 
   useEffect(() => {
     setUserSeries(INITIAL_USER_SERIES);
-    setUserTriggers(INITIAL_USER_TRIGGERS);
+    // setUserTriggers(INITIAL_USER_TRIGGERS);
     // setUserOutcome(INITIAL_USER_OUTCOME);
-  }, []);
+
+    // setUserSeries(currentStrategy?.indicators || []);
+  }, [currentStrategy]);
 
   useEffect(() => {
     handleFetchClick();
@@ -356,215 +403,247 @@ ${funcString}`;
         return adjustedFunc;
       }
 
-      // Calculate indicators
-      const newUserSeriesData = userSeries.map(series => {
-        const func = new Function(
-          'data',
-          // 'period',
-          // series.seriesFunctionString
-          prependAccessorFunctions(series.seriesFunctionString)
-        );
+      // // Calculate indicators
+      // const newUserSeriesData = userIndicators.map(indicator => {
+      //   const func = new Function(
+      //     'data',
+      //     // 'period',
+      //     // series.seriesFunctionString
+      //     prependAccessorFunctions(indicator.funcStr)
+      //   );
+      //
+      //   const seriesData = func(formattedCandles);
+      //   return {
+      //     name: indicator.label,
+      //     overlay: indicator.overlay,
+      //     data: seriesData,
+      //     color: 'red', // TODO: Each stream as configured
+      //     lineWidth: 1, // TODO: Each stream as configured
+      //   };
+      // });
 
-        const seriesData = func(formattedCandles);
-        return {
-          name: series.name,
-          overlay: series.overlay,
-          data: seriesData,
-          color: series.color,
-          lineWidth: series.lineWidth,
-        };
-      });
+      // PRevious
+      // const newUserSeriesData = userSeries.map(series => {
+      //   const func = new Function(
+      //     'data',
+      //     // 'period',
+      //     // series.seriesFunctionString
+      //     prependAccessorFunctions(series.seriesFunctionString)
+      //   );
+      //
+      //   const seriesData = func(formattedCandles);
+      //   return {
+      //     name: series.name,
+      //     overlay: series.overlay,
+      //     data: seriesData,
+      //     color: series.color,
+      //     lineWidth: series.lineWidth,
+      //   };
+      // });
 
-      setUserSeriesData(newUserSeriesData);
+      // setUserSeriesData(newUserSeriesData);
       setCandlestickData(formattedCandles);
 
-      // 1. The consolidated input series
-      const { consolidatedSeries, indicatorStreams } = getConsolidatedSeries(
-        formattedCandles,
-        newUserSeriesData,
-        userIndicators
-      );
-
-      const indicatorSeriesMap: Record<string, LineData<UTCTimestamp>[]> = {};
-
-      for (const stream of indicatorStreams) {
-        indicatorSeriesMap[`${stream.indicatorTag}.${stream.tag}`] = stream.data;
-      }
-
-      setIndicatorSeriesMap(indicatorSeriesMap);
-
-      /**
-       * Get Consolidated series
-       * Instantiate user marker trigger function
-       * It rate through consolidated series array
-       * At each point, Iterate through trigger functions
-       * If trigger function returns true, add marker to array
-       */
-
-      const markerFunctionMap = new Map<
-        string,
-        {
-          lookback: number;
-          func: Function; // (data: ConsolidatedLineData[]) => boolean;
-        }
-      >();
-
-      for (const trigger of userTriggers) {
-        markerFunctionMap.set(trigger.name, {
-          // TODO: Consider this - should in theory be the min required but hardcoded for display ease
-          // lookback: HISTORICAL_VALUE_COUNT,
-          lookback: 50,
-          func: new Function('data', trigger.triggerFunctionString),
-        });
-      }
-      /*
-         return (
-              data[0].close > data[0].sma &&
-              data[1].close <= data[1].sma &&
-              data[2].close < data[2].sma
-            );
-         */
-
-      // // Set manually for now
-      // markerFunctionMap.set('close above ma', {
-      //   lookback: 20,
-      //   // func: (data: ConsolidatedLineData[]) => {
-      //   //   return (
-      //   //     data[0].close > data[0].sma &&
-      //   //     data[1].close <= data[1].sma &&
-      //   //     data[2].close < data[2].sma
-      //   //   );
-      //   // },
-      //   func: new Function(
-      //     'data',
-      //     series.seriesFunctionString
-      //   );
-      // });
+      // // // 1. The consolidated input series
+      // // const { consolidatedSeries, indicatorStreams } = getConsolidatedSeries(
+      // //   formattedCandles,
+      // //   newUserSeriesData,
+      // //   userIndicators
+      // // );
       //
-
-      // const triggerMarkerSeries: {
-      //   name: string;
-      //   data: SeriesMarker<UTCTimestamp>[];
-      // }[] = [
-      //   {
-      //     name: 'close above ma',
-      //     data: [
-      //       {
-      //         time: formattedCandles[40].time,
-      //         position: 'belowBar',
-      //         color: '#D1FE77E4',
-      //         shape: 'arrowUp',
-      //         size: 3,
-      //       },
-      //     ],
+      // const indicatorInputMap = userIndicators.reduce(
+      //   (acc, indicator) => {
+      //     const inputs: Record<string, unknown> = {};
+      //     for (const param of indicator.params) {
+      //       inputs[param.name] = param.value ?? param.defaultValue;
+      //     }
+      //     acc[indicator.tag] = indicator.params;
+      //     return acc;
       //   },
-      // ];
+      //   {} as Record<string, any>
+      // );
 
-      // 2. matchingMarkers is ready to go
-      const { matchingMarkers, conditionMarkers } = calculateTriggers(
-        markerFunctionMap,
-        consolidatedSeries,
-        newUserSeriesData,
-        displayMode.mode === 'dark'
-      );
+      const indicatorInputMap: Record<string, Record<string, unknown>> = {};
+      for (const indicator of userIndicators) {
+        // Input object for this indicator
+        const indicatorInput: Record<string, unknown> = {};
 
-      let calculatedOutcomeMarkers: {
-        marker: SeriesMarker<UTCTimestamp>;
-        outcome: { time: number; offset: number; value: number };
+        // Add all params to the input object
+        for (const param of indicator.params) {
+          indicatorInput[param.name] = param.value ?? param.defaultValue;
+        }
+
+        indicatorInputMap[indicator.tag] = indicatorInput;
+      }
+
+      const consolidatedSeries = getConsolidatedSeriesNew({
+        data: formattedCandles as unknown as GenericData[],
+        indicators: userIndicators,
+        defaultFields: ['open', 'high', 'low', 'close'],
+        indicatorInputMap,
+      });
+
+      const localIndicatorData: {
+        overlay: boolean;
+        data: LineData<UTCTimestamp>[];
+        color: string;
+        lineWidth: 1 | 2 | 3 | 4;
       }[] = [];
 
-      if (userOutcome) {
-        const outcomeUserFunc = new Function('data', 'trigger', userOutcome.outcomeFunctionString);
+      // Ignoring <defaultFields> and 'time', create an array of LineData for each indicator
+      for (const indicator of userIndicators) {
+        for (const property of indicator.properties) {
+          const indicatorData = consolidatedSeries
+            .map(data => {
+              return {
+                time: data.time,
+                value: data[`${indicator.tag}_${property}`] || null,
+              };
+            })
+            .filter(data => data.value !== null);
 
-        // 3. calculate outcomes
-        const { outcomes, summary } = calculateOutcomes({
-          consolidatedSeries,
-          triggers: conditionMarkers.map(condition => {
-            // triggers: [conditionMarkers[0]].map((condition) => {
-            return {
-              time: condition.marker.time as number,
-              offset: consolidatedSeries.findIndex(c => c.time === condition.marker.time),
-              text: condition.marker.text || '?',
-            };
-          }),
-          outcomeFunc: outcomeUserFunc,
-          // outcomeFunc: (
-          //   data: ConsolidatedLineData[],
-          //   trigger: { value: number }
-          // ) => {
-          //   if (data[0].high > trigger.value * 1.02) {
-          //     return 'success';
-          //   } else if (data[0].low < trigger.value * 0.98) {
-          //     return 'failure';
-          //   }
-          //
-          //   return 'uncertain';
-          // },
-        });
-
-        // Convert outcomes to markers
-        calculatedOutcomeMarkers = outcomes.map(outcome => {
-          return {
-            marker: {
-              time: outcome.outcome.time,
-              position: outcome.type === 'success' ? 'belowBar' : 'aboveBar', // 'inBar',
-              color:
-                outcome.type === 'success'
-                  ? displayMode.mode === 'dark'
-                    ? '#1FD8A4'
-                    : '#208368'
-                  : displayMode.mode === 'dark'
-                    ? '#FF977D'
-                    : '#D13415',
-              shape: outcome.type === 'success' ? 'arrowUp' : 'arrowDown',
-              size: 2,
-              text: outcome.text,
-            } as SeriesMarker<UTCTimestamp>,
-            outcome: outcome.outcome,
-          };
-        });
-
-        setOutcomeMarkers(calculatedOutcomeMarkers.map(outcome => outcome.marker));
-        setOutcomeSummary({
-          failCount: summary.failCount,
-          successCount: summary.successCount,
-          winPerc: (summary.successCount / (summary.successCount + summary.failCount)) * 100,
-        });
+          localIndicatorData.push({
+            overlay: indicator.overlay,
+            data: indicatorData as LineData<UTCTimestamp>[],
+            color: 'red', // TODO: Each stream as configured
+            lineWidth: 1, // TODO: Each stream as configured
+          });
+        }
       }
 
-      setTriggerMarkers(matchingMarkers);
-      setMarkerSnapshots(
-        conditionMarkers.map(marker => {
-          const result: {
-            marker: SeriesMarker<UTCTimestamp>;
-            candlestickData: OhlcData<UTCTimestamp>[];
-            userSeriesData: UserSeriesData[];
-            outcome?: {
-              outcomeDetails: {
-                offset: number;
-                value: number;
-                text: string;
-              };
-              marker: SeriesMarker<UTCTimestamp>;
-            };
-            historicalCandles: number;
-          } = marker;
+      setUserIndicatorData(localIndicatorData);
 
-          const outcome = calculatedOutcomeMarkers.find(outcome => outcome.marker.text === marker.marker.text);
-          if (outcome) {
-            result.outcome = {
-              outcomeDetails: {
-                offset: outcome.outcome.offset,
-                value: outcome.outcome.value,
-                text: outcome.marker.text || 'N/A',
-              },
-              marker: outcome.marker,
-            };
-          }
-
-          return result;
-        })
-      );
+      //
+      // /**
+      //  * Get Consolidated series
+      //  * Instantiate user marker trigger function
+      //  * It rate through consolidated series array
+      //  * At each point, Iterate through trigger functions
+      //  * If trigger function returns true, add marker to array
+      //  */
+      //
+      // const markerFunctionMap = new Map<
+      //   string,
+      //   {
+      //     lookback: number;
+      //     func: Function; // (data: ConsolidatedLineData[]) => boolean;
+      //   }
+      // >();
+      //
+      // for (const trigger of userTriggers) {
+      //   markerFunctionMap.set(trigger.name, {
+      //     // TODO: Consider this - should in theory be the min required but hardcoded for display ease
+      //     // lookback: HISTORICAL_VALUE_COUNT,
+      //     lookback: 50,
+      //     func: new Function('data', trigger.triggerFunctionString),
+      //   });
+      // }
+      //
+      // // 2. matchingMarkers is ready to go
+      // const { matchingMarkers, conditionMarkers } = calculateTriggers(
+      //   markerFunctionMap,
+      //   consolidatedSeries,
+      //   newUserSeriesData as UserSeriesData[],
+      //   displayMode.mode === 'dark'
+      // );
+      //
+      // let calculatedOutcomeMarkers: {
+      //   marker: SeriesMarker<UTCTimestamp>;
+      //   outcome: { time: number; offset: number; value: number };
+      // }[] = [];
+      //
+      // if (userOutcome) {
+      //   const outcomeUserFunc = new Function('data', 'trigger', userOutcome.outcomeFunctionString);
+      //
+      //   // 3. calculate outcomes
+      //   const { outcomes, summary } = calculateOutcomes({
+      //     consolidatedSeries,
+      //     triggers: conditionMarkers.map(condition => {
+      //       // triggers: [conditionMarkers[0]].map((condition) => {
+      //       return {
+      //         time: condition.marker.time as number,
+      //         offset: consolidatedSeries.findIndex(c => c.time === condition.marker.time),
+      //         text: condition.marker.text || '?',
+      //       };
+      //     }),
+      //     outcomeFunc: outcomeUserFunc,
+      //     // outcomeFunc: (
+      //     //   data: ConsolidatedLineData[],
+      //     //   trigger: { value: number }
+      //     // ) => {
+      //     //   if (data[0].high > trigger.value * 1.02) {
+      //     //     return 'success';
+      //     //   } else if (data[0].low < trigger.value * 0.98) {
+      //     //     return 'failure';
+      //     //   }
+      //     //
+      //     //   return 'uncertain';
+      //     // },
+      //   });
+      //
+      //   // Convert outcomes to markers
+      //   calculatedOutcomeMarkers = outcomes.map(outcome => {
+      //     return {
+      //       marker: {
+      //         time: outcome.outcome.time,
+      //         position: outcome.type === 'success' ? 'belowBar' : 'aboveBar', // 'inBar',
+      //         color:
+      //           outcome.type === 'success'
+      //             ? displayMode.mode === 'dark'
+      //               ? '#1FD8A4'
+      //               : '#208368'
+      //             : displayMode.mode === 'dark'
+      //               ? '#FF977D'
+      //               : '#D13415',
+      //         shape: outcome.type === 'success' ? 'arrowUp' : 'arrowDown',
+      //         size: 2,
+      //         text: outcome.text,
+      //       } as SeriesMarker<UTCTimestamp>,
+      //       outcome: outcome.outcome,
+      //     };
+      //   });
+      //
+      //   setOutcomeMarkers(calculatedOutcomeMarkers.map(outcome => outcome.marker));
+      //   setOutcomeSummary({
+      //     failCount: summary.failCount,
+      //     successCount: summary.successCount,
+      //     winPerc: (summary.successCount / (summary.successCount + summary.failCount)) * 100,
+      //   });
+      // }
+      //
+      // setTriggerMarkers(matchingMarkers);
+      // setMarkerSnapshots(
+      //   conditionMarkers.map(marker => {
+      //     const result: {
+      //       marker: SeriesMarker<UTCTimestamp>;
+      //       candlestickData: OhlcData<UTCTimestamp>[];
+      //       userSeriesData: UserSeriesData[];
+      //       outcome?: {
+      //         outcomeDetails: {
+      //           offset: number;
+      //           value: number;
+      //           text: string;
+      //         };
+      //         marker: SeriesMarker<UTCTimestamp>;
+      //       };
+      //       historicalCandles: number;
+      //     } = marker;
+      //
+      //     const outcome = calculatedOutcomeMarkers.find(outcome => outcome.marker.text === marker.marker.text);
+      //     if (outcome) {
+      //       result.outcome = {
+      //         outcomeDetails: {
+      //           offset: outcome.outcome.offset,
+      //           value: outcome.outcome.value,
+      //           text: outcome.marker.text || 'N/A',
+      //         },
+      //         marker: outcome.marker,
+      //       };
+      //     }
+      //
+      //     return result;
+      //   })
+      // );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
@@ -603,7 +682,7 @@ ${funcString}`;
   // };
 
   useEffect(() => {
-    const handleKeyDown = event => {
+    const handleKeyDown = (event: any) => {
       console.log('KEYDOWN', event.key);
       if ((event.key === 'i' && event.ctrlKey) || (event.key === 'i' && event.metaKey)) {
         event.preventDefault();
@@ -646,7 +725,7 @@ ${funcString}`;
                       variant={'ghost'}
                       size={'1'}
                       onClick={() => {
-                        setCurrentIndicator(indicator);
+                        setEditorIndicator(indicator);
                         // setShowEditIndicatorCodeDialog(true);
                         setBottomTab('editor');
                       }}
@@ -687,7 +766,7 @@ ${funcString}`;
 
         <LightweightChart
           ref={chartRef}
-          userSeriesData={userSeriesData}
+          userSeriesData={[]}
           indicatorData={userIndicatorData}
           candlestickData={candlestickData}
           seriesMarkers={[
@@ -761,37 +840,55 @@ ${funcString}`;
         <TabsContent value="editor">
           <EditorTab
             existingIndicators={userIndicators}
-            indicator={currentIndicator}
-            setIndicator={setCurrentIndicator}
-            onSaveToChartClicked={({ funcStr, name, inputs }) => {
-              const dialogIndicator: Indicator = {
-                ...currentIndicator,
-                funcStr,
-                label: name,
-                params: inputs,
-              };
-
-              const index = userIndicators.findIndex(i => i.tag === currentIndicator.tag);
+            indicator={editorIndicator}
+            // setIndicator={setCurrentIndicator}
+            onSaveToChartClicked={({ existingTag, funcStr, label, tag, streams, properties, params }) => {
+              const index = userIndicators.findIndex(i => i.tag === existingTag);
 
               if (index !== -1) {
                 // Update existing indicator
-                const newIndicators = [...userIndicators];
-                newIndicators[index] = dialogIndicator;
+                const newIndicators = userIndicators.map((indicator, i) => {
+                  if (i === index) {
+                    return {
+                      ...indicator,
+                      funcStr,
+                      label,
+                      params,
+                      tag,
+                      streams,
+                      properties,
+                    };
+                  }
+
+                  return indicator;
+                });
 
                 setUserIndicators(newIndicators);
               } else {
                 // Add dialog indicator
-                setUserIndicators([...userIndicators, dialogIndicator]);
+                const newIndicator: Indicator = {
+                  tag,
+                  label,
+                  funcStr,
+                  params,
+                  streams,
+                  overlay: true,
+                  properties,
+                };
+
+                setUserIndicators([...userIndicators, newIndicator]);
               }
 
-              setCurrentIndicator(dialogIndicator);
+              // setCurrentIndicator(dialogIndicator);
               // setShowEditIndicatorCodeDialog(false);
             }}
-            onSaveToLibraryClicked={({ indicatorId, funcStr, name }) => {}}
-            onSaveToStrategyClicked={({ indicatorId, strategyId, funcStr, name }) => {}}
+            onSaveToLibraryClicked={input => {}}
+            onSaveToStrategyClicked={input => {}}
           />
         </TabsContent>
-        <TabsContent value="strategies">Change your password here.</TabsContent>
+        <TabsContent value="strategies">
+          <StrategiesTab />
+        </TabsContent>
       </Tabs>
     );
   }
@@ -923,7 +1020,6 @@ ${funcString}`;
 
                 {userIndicators.map(indicator => (
                   <div key={indicator.tag} className={'flex flex-row items-center gap-3'}>
-                    <p>Ballee</p>
                     <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
                       <div className={'flex flex-row gap-5 justify-between'}>
                         <div className={'flex flex-col'}>
@@ -1167,7 +1263,7 @@ ${funcString}`;
                                 size: trigger.size,
                                 name: trigger.name,
                                 triggerFunctionString: trigger.triggerFunctionString,
-                                tag: trigger.tag,
+                                id: trigger.id,
                               });
                               setShowTriggerDialog(true);
                             }}
@@ -1240,6 +1336,29 @@ ${funcString}`;
 
           <div className={'flex flex-col flex-auto w-[100%]'}>
             <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex'}>
+              <div className={'flex flex-row items-center gap-3 px-2'}>
+                <div className={'flex items-center gap-2'}>
+                  <label>Start Time</label>
+                  {/*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*/}
+                  {/*Change to use normal html input date*/}
+                  <TextFieldInput
+                    size="1"
+                    type="date"
+                    value={startDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
+                    onChange={e => setStartDate(new Date(e.target.value))}
+                  />
+                </div>
+
+                <div className={'flex items-center gap-2'}>
+                  <label>End Time</label>
+                  <TextFieldInput
+                    size="1"
+                    type="date"
+                    value={endDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
+                    onChange={e => setEndDate(new Date(e.target.value))}
+                  />
+                </div>
+              </div>
               <div className={'invisible'}>Hidden</div>
               <div className={'pr-2'}>
                 <Button
@@ -1295,17 +1414,17 @@ ${funcString}`;
         show={showAddIndicatorDialog}
         onIndicatorSelected={(indicator: Indicator) => {
           // Check how many of this indicator type already exist
-          const existingIndicators = userIndicators.filter(i => i.type === indicator.type);
+          const existingIndicators = userIndicators.filter(i => i.tag === indicator.tag);
           const indicatorCount = existingIndicators.length;
 
           const newIndicator: Indicator = {
             tag: indicatorCount ? `${indicator.tag}${indicatorCount + 1}` : indicator.tag,
             funcStr: indicator.funcStr,
-            type: indicator.type,
             params: indicator.params,
             label: indicator.label,
             overlay: indicator.overlay,
             streams: indicator.streams,
+            properties: indicator.properties,
           };
 
           setUserIndicators([...userIndicators, newIndicator]);
@@ -1324,10 +1443,10 @@ ${funcString}`;
           const dialogIndicator: Indicator = {
             tag: currentIndicator.tag,
             funcStr: currentIndicator.funcStr,
-            type: currentIndicator.type,
             params: currentIndicator.params,
             label: currentIndicator.label,
             overlay: currentIndicator.overlay,
+            properties: currentIndicator.properties,
             streams: currentIndicator.streams,
           };
 
@@ -1358,8 +1477,8 @@ ${funcString}`;
       <EditIndicatorCodeDialog
         show={showEditIndicatorCodeDialog}
         existingIndicators={userIndicators}
-        indicator={currentIndicator}
-        setIndicator={setCurrentIndicator}
+        indicator={editorIndicator}
+        // setIndicator={setEditorIndicator}
         onSaveClicked={(funcStr: string) => {
           const dialogIndicator: Indicator = {
             ...currentIndicator,
@@ -1429,7 +1548,7 @@ ${funcString}`;
         setTrigger={setCurrentTrigger}
         onSaveClicked={() => {
           const updatedTriggers = [...userTriggers];
-          const triggerIndex = updatedTriggers.findIndex(t => t.tag === currentTrigger.tag);
+          const triggerIndex = updatedTriggers.findIndex(t => t.id === currentTrigger.id);
 
           if (triggerIndex !== -1) {
             // Update existing trigger
@@ -1438,7 +1557,7 @@ ${funcString}`;
             // Add new trigger
             updatedTriggers.push({
               ...currentTrigger,
-              tag: Date.now().toString(),
+              id: Date.now().toString(),
             });
           }
 
@@ -1532,8 +1651,8 @@ return pivotData.filter(item => item !== null);
   lineWidth: 1,
 };
 
-const DEFAULT_USER_TRIGGER = {
-  tag: '',
+const DEFAULT_USER_TRIGGER: UserTrigger = {
+  id: '',
   name: '',
   triggerFunctionString: `
   // Crossing about the 'sma' series after being below for at two candles
@@ -1548,7 +1667,7 @@ const DEFAULT_USER_TRIGGER = {
 };
 
 const DEFAULT_USER_OUTCOME: UserOutcome = {
-  tag: '',
+  id: '',
   name: '',
   outcomeFunctionString: `
   if (data[0].high > trigger.value * 1.02) {

@@ -20,7 +20,7 @@ export interface IndicatorParam {
   label: string;
   required: boolean;
   value?: unknown;
-  defaultValue?: unknown;
+  defaultValue?: unknown; // TODO -> Just "default" and leave value to provided elsewhere as user input - should be IndicatorParamConfig instead
 }
 
 // Represent everything either configured by or displayed to the user
@@ -30,6 +30,7 @@ export interface Indicator {
   funcStr: string;
   params: IndicatorParam[];
   overlay: boolean;
+  properties: string[]; // Derived outputs from an indicator
   streams: {
     tag: string;
     overlay: boolean;
