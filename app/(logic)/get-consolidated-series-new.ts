@@ -165,7 +165,8 @@ function buildIndicatorStreamVariables(existingIndicatorStreams: IndicatorStream
 
   for (const indicatorStream of existingIndicatorStreams) {
     lines.push(
-      `const ${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => (d && d.${indicatorStream.indicatorTag} && d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag}) ? d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag} : null);`
+      // `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => (d && d.${indicatorStream.indicatorTag} && d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag}) ? d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag} : null);`
+      `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => d.${indicatorStream.indicatorTag}_${indicatorStream.streamTag} ?? null);`
     );
   }
 

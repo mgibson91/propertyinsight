@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { Editor, BeforeMount } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
-import { PlusIcon } from '@radix-ui/react-icons';
+import { PlusIcon, ReloadIcon, ResetIcon } from '@radix-ui/react-icons';
 import { prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
 
 function parseFunctionReturnKeys(functionString: string) {
@@ -55,8 +55,8 @@ export const EditorTab = ({
   indicator?: Indicator;
   // setIndicator: (indicator: Indicator) => void;
   // onSaveToChartClicked: (input: { funcStr: string; name: string; params: IndicatorParam[] }) => void;
-  onSaveToChartClicked: (input: Omit<Indicator, 'overlay'> & { existingTag?: string }) => void;
-  onSaveToLibraryClicked: (input: Omit<Indicator, 'overlay'>) => void;
+  onSaveToChartClicked: (input: Omit<Indicator, 'overlay' | 'id'>) => void;
+  onSaveToLibraryClicked: (input: Omit<Indicator, 'overlay' | 'id'>) => void; // TODO: Probs need id
   // onSaveToLibraryClicked: (input: { indicatorId?: string; funcStr: string; name: string }) => void;
   onSaveToStrategyClicked: (input: {
     strategyId?: string;
@@ -177,6 +177,18 @@ export const EditorTab = ({
               setTag(e.target.value);
             }}
           ></TextFieldInput>
+
+          <IconButton
+            variant={'ghost'}
+            onClick={() => {
+              setFuncStr(DEFAULT_INDICATOR_USER_FUNCTION);
+              setLabel('');
+              setTag('');
+              setInputs([]);
+            }}
+          >
+            <ReloadIcon></ReloadIcon>
+          </IconButton>
         </div>
 
         {!functionStartValid && (
@@ -195,6 +207,7 @@ export const EditorTab = ({
 
         <div className={'flex flex-row gap-2 items-center'}>
           <Button
+            disabled={true}
             size={'1'}
             className={'w-32'}
             onClick={() => {

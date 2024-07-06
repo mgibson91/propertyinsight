@@ -5,6 +5,7 @@ import { CandlestickData, LineData, OhlcData, SeriesMarker, UTCTimestamp } from 
 import { fetchCandlesFromMemory } from '@/requests/get-bitcoin-prices';
 import { calculateTriggers } from '@/logic/calculate-triggers';
 import { calculateOutcomes } from '@/logic/calculate-outcomes';
+import { v4 as uuid } from 'uuid';
 import { Button, Card, Checkbox, Code, Heading, IconButton, TextFieldInput } from '@radix-ui/themes';
 import {
   BarChartIcon,
@@ -41,78 +42,6 @@ import { StrategiesTab } from '@/app/dashboard/_components/strategies-tab';
 import { Strategy } from './types';
 import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-new';
 
-// import 'codemirror/keymap/sublime';
-// import 'codemirror/theme/monokai.css';
-// Manually loading the language resources here
-// import 'codemirror/mode/javascript/javascript';
-
-const INITIAL_USER_SERIES: UserSeries[] = [
-  // {
-  //   name: 'sma20',
-  //   // seriesFunctionString: `
-  //   // return data.map(d => ({ time: d.time, value: d.close }));
-  //   // `,
-  //   seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
-  //
-  // const smaData = data.map((current, index) => {
-  //   if (index >= windowSize - 1) {
-  //     // Calculate SMA only when there are enough preceding data points
-  //     let sum = 0;
-  //     // Sum the closing prices of the last 'windowSize' days
-  //     for (let i = index - windowSize + 1; i <= index; i++) {
-  //       sum += data[i].close;
-  //     }
-  //     let average = sum / windowSize;
-  //     return { time: current.time, value: average };
-  //   } else {
-  //     return null;  // Not enough data to calculate SMA
-  //   }
-  // });
-  //
-  // // Filter out the null entries, similar to your offset example
-  // return smaData.filter(item => item !== null);`,
-  //   overlay: true,
-  //   color: '#E54D2E',
-  //   lineWidth: 1,
-  // },
-  // {
-  //   name: 'sma50',
-  //   // seriesFunctionString: `
-  //   // return data.map(d => ({ time: d.time, value: d.close }));
-  //   // `,
-  //   seriesFunctionString: `const windowSize = 50;  // Setting the period for SMA
-  //
-  // const smaData = data.map((current, index) => {
-  //   if (index >= windowSize - 1) {
-  //     // Calculate SMA only when there are enough preceding data points
-  //     let sum = 0;
-  //     // Sum the closing prices of the last 'windowSize' days
-  //     for (let i = index - windowSize + 1; i <= index; i++) {
-  //       sum += data[i].close;
-  //     }
-  //     let average = sum / windowSize;
-  //     return { time: current.time, value: average };
-  //   } else {
-  //     return null;  // Not enough data to calculate SMA
-  //   }
-  // });
-  //
-  // // Filter out the null entries, similar to your offset example
-  // return smaData.filter(item => item !== null);`,
-  //   overlay: true,
-  //   color: '#29A383',
-  //   lineWidth: 1,
-  // },
-];
-
-/**
- * return (
- *     data[0].close > data[0].sma &&
- *     data[1].close <= data[1].sma &&
- *     data[2].close < data[2].sma
- *   );
- */
-
 const INITIAL_USER_TRIGGERS: UserTrigger[] = [
   // {
   //   id: '1',
@@ -146,7 +75,6 @@ function convertStreamsToChartSeries(
   color: string;
   lineWidth: 1 | 2 | 3 | 4;
 }[] {
-  console.log('AAAAA');
   return Object.keys(streamDataMap || {}).map(key => {
     const indicator = indicators.find(indicator =>
       indicator.streams.find(stream => `${indicator.tag}.${stream.tag}` === key)
@@ -335,10 +263,9 @@ const App = () => {
   }, [indicatorSeriesMap, userIndicators]);
 
   useEffect(() => {
-    setUserSeries(INITIAL_USER_SERIES);
+    // setUserSeries(INITIAL_USER_SERIES);
     // setUserTriggers(INITIAL_USER_TRIGGERS);
     // setUserOutcome(INITIAL_USER_OUTCOME);
-
     // setUserSeries(currentStrategy?.indicators || []);
   }, [currentStrategy]);
 
@@ -470,7 +397,8 @@ ${funcString}`;
 
         // Add all params to the input object
         for (const param of indicator.params) {
-          indicatorInput[param.name] = param.value ?? param.defaultValue;
+          // TODO: Store indicator inputs elsewhere?
+          indicatorInput[param.name] = param.value == null || param.value === '' ? param.defaultValue : param.value;
         }
 
         indicatorInputMap[indicator.tag] = indicatorInput;
@@ -492,12 +420,12 @@ ${funcString}`;
 
       // Ignoring <defaultFields> and 'time', create an array of LineData for each indicator
       for (const indicator of userIndicators) {
-        for (const property of indicator.properties) {
+        for (const stream of indicator.streams) {
           const indicatorData = consolidatedSeries
             .map(data => {
               return {
                 time: data.time,
-                value: data[`${indicator.tag}_${property}`] || null,
+                value: data[`${indicator.tag}_${stream.tag}`] || null,
               };
             })
             .filter(data => data.value !== null);
@@ -505,8 +433,8 @@ ${funcString}`;
           localIndicatorData.push({
             overlay: indicator.overlay,
             data: indicatorData as LineData<UTCTimestamp>[],
-            color: 'red', // TODO: Each stream as configured
-            lineWidth: 1, // TODO: Each stream as configured
+            color: stream.color, // TODO: Each stream as configured
+            lineWidth: stream.lineWidth, // TODO: Each stream as configured
           });
         }
       }
@@ -842,8 +770,8 @@ ${funcString}`;
             existingIndicators={userIndicators}
             indicator={editorIndicator}
             // setIndicator={setCurrentIndicator}
-            onSaveToChartClicked={({ existingTag, funcStr, label, tag, streams, properties, params }) => {
-              const index = userIndicators.findIndex(i => i.tag === existingTag);
+            onSaveToChartClicked={({ funcStr, label, tag, streams, properties, params }) => {
+              const index = userIndicators.findIndex(i => i.tag === tag);
 
               if (index !== -1) {
                 // Update existing indicator
@@ -867,6 +795,7 @@ ${funcString}`;
               } else {
                 // Add dialog indicator
                 const newIndicator: Indicator = {
+                  id: uuid(),
                   tag,
                   label,
                   funcStr,
@@ -1418,6 +1347,7 @@ ${funcString}`;
           const indicatorCount = existingIndicators.length;
 
           const newIndicator: Indicator = {
+            id: uuid(),
             tag: indicatorCount ? `${indicator.tag}${indicatorCount + 1}` : indicator.tag,
             funcStr: indicator.funcStr,
             params: indicator.params,
@@ -1440,7 +1370,7 @@ ${funcString}`;
         indicator={currentIndicator}
         setIndicator={setCurrentIndicator}
         onSaveClicked={() => {
-          const dialogIndicator: Indicator = {
+          const dialogIndicator: Omit<Indicator, 'id'> = {
             tag: currentIndicator.tag,
             funcStr: currentIndicator.funcStr,
             params: currentIndicator.params,
@@ -1455,16 +1385,20 @@ ${funcString}`;
           if (index !== -1) {
             // Update existing indicator
             const newIndicators = [...userIndicators];
-            newIndicators[index] = dialogIndicator;
+            newIndicators[index] = {
+              ...newIndicators[index],
+              ...dialogIndicator,
+            };
 
             setUserIndicators(newIndicators);
-          } else {
-            // Add dialog indicator
-            setUserIndicators([...userIndicators, dialogIndicator]);
           }
+          // else {
+          //   // Add dialog indicator
+          //   setUserIndicators([...userIndicators, dialogIndicator]);
+          // }
 
           // setCurrentIndicator(DEFAULT_INDICATOR);
-          setCurrentIndicator(dialogIndicator);
+          // setCurrentIndicator(dialogIndicator);
 
           setShowEditIndicatorDialog(false);
         }}

@@ -25,7 +25,8 @@ export interface IndicatorParam {
 
 // Represent everything either configured by or displayed to the user
 export interface Indicator {
-  tag: string;
+  id: string;
+  tag: string; // reference
   label: string;
   funcStr: string;
   params: IndicatorParam[];
