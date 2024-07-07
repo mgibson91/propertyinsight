@@ -108,7 +108,7 @@ function augmentDataWithIndicatorStreams({
     // let cache = {};
 
     for (let i = offset; i < augmentedData.length; i++) {
-      const batch = augmentedData.slice(i, i + resolvedIndicator.length);
+      const batch = augmentedData.slice(i - resolvedIndicator.length, i);
 
       // TODO: Add inputs here
       // indicatorFunc({ data: batch }, cache);

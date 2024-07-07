@@ -1,9 +1,12 @@
+'use client';
+
 import IndicatorSearchView from '@/components/indicators/add-indicator';
 import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
 import DemoComponent from '@/app/playground/DemoComponent';
 import SlideToggle from '@/app/playground/SlideToggle';
-import React from 'react';
+import React, { useState } from 'react';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
+import { EditTrigger } from '@/components/triggers/edit-trigger';
 
 // Mock data array
 // const indicators: Indicator[] = [
@@ -41,40 +44,112 @@ import SlideToggle2 from '@/shared/layout/slide-toggle2';
 // ];
 
 export default function Page() {
+  const [trigger, setTrigger] = useState({
+    name: 'Hello',
+    conditions: [
+      {
+        fieldA: {
+          property: 'sma20',
+          offset: 0,
+        },
+        operator: '>',
+        fieldB: {
+          property: 'sma50',
+          offset: 0,
+        },
+      },
+      {
+        fieldA: {
+          property: 'sma20',
+          offset: 1,
+        },
+        operator: '>',
+        fieldB: {
+          property: 'sma50',
+          offset: 1,
+        },
+      },
+    ],
+  });
+
   return (
-    <div className={'w-full h-full'}>
+    <div className={'w-full h-full flex items-center justify-center'}>
       {/*<IndicatorSearchView indicators={PRESET_INDICATORS}></IndicatorSearchView>*/}
-      <DemoComponent />
-      {/*<SlideToggle*/}
+      {/*<DemoComponent />*/}
+      {/*/!*<SlideToggle*!/*/}
+      {/*/!*  trigger={*!/*/}
+      {/*/!*    <button className="z-2 px-4 py-2 bg-blue-500 text-white cursor-pointer font-semibold rounded hover:bg-blue-700 transition duration-300">*!/*/}
+      {/*/!*      Toggle Content*!/*/}
+      {/*/!*    </button>*!/*/}
+      {/*/!*  }*!/*/}
+      {/*/!*>*!/*/}
+      {/*/!*  <div className="p-4 border border-gray-200 shadow rounded bg-white h-[300px]">*!/*/}
+      {/*/!*    This is the content that slides into view directly below the button. This is the content that slides into view*!/*/}
+      {/*/!*    directly below the button. This is the content that slides into view directly below the button. This is the*!/*/}
+      {/*/!*    content that slides into view directly below the button. This is the content that slides into view directly*!/*/}
+      {/*/!*    below the button. This is the content that slides into view directly below the button.*!/*/}
+      {/*/!*  </div>*!/*/}
+      {/*/!*</SlideToggle>*!/*/}
+
+      {/*<SlideToggle2*/}
+      {/*  heightClass="h-50px"*/}
       {/*  trigger={*/}
       {/*    <button className="z-2 px-4 py-2 bg-blue-500 text-white cursor-pointer font-semibold rounded hover:bg-blue-700 transition duration-300">*/}
       {/*      Toggle Content*/}
       {/*    </button>*/}
       {/*  }*/}
       {/*>*/}
-      {/*  <div className="p-4 border border-gray-200 shadow rounded bg-white h-[300px]">*/}
+      {/*  <div className="p-4 border border-gray-200 shadow bg-white rounded h-full">*/}
       {/*    This is the content that slides into view directly below the button. This is the content that slides into view*/}
       {/*    directly below the button. This is the content that slides into view directly below the button. This is the*/}
       {/*    content that slides into view directly below the button. This is the content that slides into view directly*/}
       {/*    below the button. This is the content that slides into view directly below the button.*/}
       {/*  </div>*/}
-      {/*</SlideToggle>*/}
+      {/*</SlideToggle2>*/}
 
-      <SlideToggle2
-        heightClass="h-50px"
-        trigger={
-          <button className="z-2 px-4 py-2 bg-blue-500 text-white cursor-pointer font-semibold rounded hover:bg-blue-700 transition duration-300">
-            Toggle Content
-          </button>
-        }
-      >
-        <div className="p-4 border border-gray-200 shadow bg-white rounded h-full">
-          This is the content that slides into view directly below the button. This is the content that slides into view
-          directly below the button. This is the content that slides into view directly below the button. This is the
-          content that slides into view directly below the button. This is the content that slides into view directly
-          below the button. This is the content that slides into view directly below the button.
-        </div>
-      </SlideToggle2>
+      <div className="!w-1/2 !h-1/2">
+        <EditTrigger
+          trigger={trigger}
+          updateTrigger={newTrigger => {
+            setTrigger(newTrigger);
+          }}
+          properties={{
+            default: ['close', 'open', 'high', 'low'],
+            indicator: [
+              {
+                indicatorTag: 'sma20',
+                streamTag: ['value'],
+              },
+              {
+                indicatorTag: 'sma50',
+                streamTag: ['value'],
+              },
+            ],
+          }}
+          operators={[
+            {
+              label: '=',
+              func: '(a,b) => a === b',
+            },
+            {
+              label: '>',
+              func: '(a,b) => a > b',
+            },
+            {
+              label: '<',
+              func: '(a,b) => a < b',
+            },
+            {
+              label: '>=',
+              func: '(a,b) => a >= b',
+            },
+            {
+              label: '<=',
+              func: '(a,b) => a <= b',
+            },
+          ]}
+        />
+      </div>
     </div>
   );
 }

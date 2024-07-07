@@ -17,8 +17,8 @@ import * as monaco from 'monaco-editor';
 import { Indicator } from '@/logic/indicators/types';
 import IndicatorSearchView from '@/components/indicators/add-indicator';
 import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
-import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React from 'react';
+import { Cross2Icon } from '@radix-ui/react-icons';
 
 export const AddIndicatorDialog = ({
   show,
@@ -43,7 +43,7 @@ export const AddIndicatorDialog = ({
                 onClose();
               }}
             >
-              <CloseIcon></CloseIcon>
+              <Cross2Icon className="h-6 w-6"></Cross2Icon>
             </IconButton>
           </div>
           <IndicatorSearchView

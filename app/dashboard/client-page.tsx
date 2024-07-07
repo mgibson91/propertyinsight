@@ -1,20 +1,36 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CandlestickData, LineData, OhlcData, SeriesMarker, UTCTimestamp } from 'lightweight-charts';
 import { fetchCandlesFromMemory } from '@/requests/get-bitcoin-prices';
 import { calculateTriggers } from '@/logic/calculate-triggers';
 import { calculateOutcomes } from '@/logic/calculate-outcomes';
 import { v4 as uuid } from 'uuid';
-import { Button, Card, Checkbox, Code, Heading, IconButton, TextFieldInput } from '@radix-ui/themes';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Code,
+  Dialog,
+  Heading,
+  IconButton,
+  Popover,
+  Select,
+  TextFieldInput,
+} from '@radix-ui/themes';
 import {
   BarChartIcon,
+  CheckboxIcon,
   CodeIcon,
   CopyIcon,
   Cross1Icon,
+  Cross2Icon,
   EyeNoneIcon,
   EyeOpenIcon,
   GearIcon,
+  LightningBoltIcon,
+  Pencil1Icon,
+  Pencil2Icon,
   PlusIcon,
   TrashIcon,
 } from '@radix-ui/react-icons';
@@ -26,9 +42,13 @@ import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 // import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 import { GenericData, UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
-import { Indicator } from '@/logic/indicators/types';
 import { EditIndicatorDialog } from '@/components/edit-indicator-dialog';
-import { MUCKABOUT, PRESET_INDICATOR_EMA, PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
+import {
+  generateSmaPreset,
+  MUCKABOUT,
+  PRESET_INDICATOR_EMA,
+  PRESET_INDICATOR_SMA,
+} from '@/logic/indicators/preset-indicator';
 import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
 import { Toast } from '@/shared/toast';
@@ -39,8 +59,51 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useDebounceCallback } from 'usehooks-ts';
 import dynamic from 'next/dynamic';
 import { StrategiesTab } from '@/app/dashboard/_components/strategies-tab';
-import { Strategy } from './types';
 import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-new';
+import * as z from 'zod';
+import { Indicator, IndicatorSchema } from '@/logic/indicators/types';
+import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
+import { EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
+import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
+
+// const IndicatorSchema = z.object({
+//   id: z.string(),
+//   tag: z.string(),
+//   label: z.string(),
+//   funcStr: z.string(),
+//   params: z.array(
+//     z.object({
+//       name: z.string(),
+//       type: z.string(),
+//       label: z.string(),
+//       required: z.boolean(),
+//       value: z.any(),
+//       defaultValue: z.any(),
+//     })
+//   ),
+//   overlay: z.boolean(),
+//   properties: z.array(z.string()),
+//   streams: z.array(
+//     z.object({
+//       tag: z.string(),
+//       overlay: z.boolean(),
+//       color: z.string(),
+//       lineWidth: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+//     })
+//   ),
+// });
+//
+// type Indicator = z.infer<typeof IndicatorSchema>;
+
+const StrategySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  indicators: z.array(IndicatorSchema),
+  triggers: z.array(z.any()),
+  outcomes: z.array(z.any()),
+});
+
+type Strategy = z.infer<typeof StrategySchema>;
 
 const INITIAL_USER_TRIGGERS: UserTrigger[] = [
   // {
@@ -114,25 +177,50 @@ const DEFAULT_STRATEGY: Strategy = {
       color: '#ffffff',
     },
   ],
-  outcome: {
-    id: '1',
-    name: '2% either way',
-    outcomeFunctionString: `if (data[0].high > trigger.value * 1.02) {
-    return 'success';
-  } else if (data[0].low < trigger.value * 0.98) {
-    return 'failure';
-  }
-
-  return 'uncertain';`,
-    color: '',
-    size: 1,
-  },
+  outcomes: [],
 };
 
 type Size = {
   width?: number;
   height?: number;
 };
+
+// Load strategies from local storage and TODO: do a Zod validation to make sure it's all good
+async function loadStrategies(): Promise<Strategy[]> {
+  const strategies = localStorage.getItem('strategies');
+  if (strategies) {
+    const json = JSON.parse(strategies);
+    const parsed = z.array(StrategySchema).parse(json);
+    return parsed;
+  }
+
+  return [];
+}
+
+async function saveStrategies(strategies: Strategy[]) {
+  localStorage.setItem('strategies', JSON.stringify(strategies));
+}
+
+const generateEmptyStrategy = (name?: string): Strategy => ({
+  id: uuid(),
+  name: name || 'Default',
+  indicators: [
+    generateSmaPreset({
+      tag: 'sma20',
+      series: 'close',
+      length: 20,
+      color: '#FF0000',
+    }),
+    generateSmaPreset({
+      tag: 'sma50',
+      series: 'close',
+      length: 50,
+      color: '#00FF00',
+    }),
+  ],
+  triggers: [],
+  outcomes: [],
+});
 
 const App = () => {
   const chartRef = useRef(null);
@@ -172,14 +260,26 @@ const App = () => {
     PRESET_INDICATOR_EMA,
     MUCKABOUT,
   ]);
+
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+
+  // TODO: REmove
   const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
-  const [userOutcome, setUserOutcome] = useState<UserOutcome | null>(null);
+  const [userOutcome, setUserOutcome] = useState<UserOutcome[]>([]);
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
 
   // Caches current strategy edits for user experimentation - no need for save to chart
   const [strategies, setStrategies] = useState<Strategy[]>([]);
-  const [currentStrategy, setCurrentStrategy] = useState<Strategy | null>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>({
+    id: '1234',
+    name: 'Default',
+    indicators: [PRESET_INDICATOR_SMA],
+    triggers: [],
+    outcomes: [],
+  });
+
+  const [newStrategyName, setNewStrategyName] = useState<string>('');
 
   const [markerSnapshots, setMarkerSnapshots] = useMatchingSnapshot();
 
@@ -216,7 +316,6 @@ const App = () => {
   // TODO: Make this dialog indicator
   const [currentIndicator, setCurrentIndicator] = useState<Indicator>(DEFAULT_INDICATOR);
   const [editorIndicator, setEditorIndicator] = useState<Indicator | undefined>(undefined);
-  const [currentSeries, setCurrentSeries] = useState<UserSeries>(DEFAULT_USER_SERIES);
   const [currentTrigger, setCurrentTrigger] = useState<UserTrigger>({
     id: '',
     name: '',
@@ -233,12 +332,110 @@ const App = () => {
   });
   const [showDialog, setShowDialog] = useState(false);
   const [showAddIndicatorDialog, setShowAddIndicatorDialog] = useState(false);
+  const [showAddTriggerDialog, setShowAddTriggerDialog] = useState(false);
   const [showEditIndicatorDialog, setShowEditIndicatorDialog] = useState(false);
   const [showEditIndicatorCodeDialog, setShowEditIndicatorCodeDialog] = useState(false);
   const [showTriggerDialog, setShowTriggerDialog] = useState(false);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [candlesPerSecond, setCandlesPerSecond] = useState<number>(1);
+
+  // Load strategies from local storage
+  useEffect(() => {
+    const asyncLoadStrategies = async () => {
+      const strategies = await loadStrategies();
+
+      let activeStrategy: Strategy;
+
+      if (strategies.length === 0) {
+        const defaultStrategy = generateEmptyStrategy();
+        setStrategies([defaultStrategy]);
+        activeStrategy = defaultStrategy;
+      } else {
+        setStrategies(strategies);
+        activeStrategy = strategies[0];
+      }
+
+      setSelectedStrategy(activeStrategy);
+
+      // Set local yokes for speed
+      setUserIndicators(activeStrategy.indicators);
+    };
+
+    asyncLoadStrategies();
+  }, []);
+
+  // Add new indicator
+  const centralAddIndicator = async (indicator: Indicator) => {
+    const newIndicators = [...userIndicators, indicator];
+
+    // Local updates for rapidity
+    setUserIndicators(newIndicators);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          indicators: newIndicators,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
+
+  // Add new indicator
+  const centralEditIndicator = async (indicator: Indicator) => {
+    // Local updates for rapidity
+    const newIndicators = userIndicators.map(i => {
+      if (i.tag === indicator.tag) {
+        return indicator;
+      }
+
+      return i;
+    });
+
+    // Local updates for rapidity
+    setUserIndicators(newIndicators);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          indicators: newIndicators,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
+
+  const centralDeleteIndicator = async (tag: string) => {
+    const newIndicators = userIndicators.filter(i => i.tag !== tag);
+
+    // Local updates for rapidity
+    setUserIndicators(newIndicators);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          indicators: newIndicators,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
 
   const resizeChart = useDebounceCallback(() => {
     if (chartRef.current) {
@@ -263,45 +460,24 @@ const App = () => {
   }, [indicatorSeriesMap, userIndicators]);
 
   useEffect(() => {
+    const strategyIndicators = selectedStrategy?.indicators || [];
+
+    setUserIndicators(strategyIndicators);
+
     // setUserSeries(INITIAL_USER_SERIES);
     // setUserTriggers(INITIAL_USER_TRIGGERS);
     // setUserOutcome(INITIAL_USER_OUTCOME);
-    // setUserSeries(currentStrategy?.indicators || []);
-  }, [currentStrategy]);
+    // setUserSeries(selectedStrategy?.indicators || []);
+  }, [selectedStrategy]);
 
   useEffect(() => {
     handleFetchClick();
   }, [ticker, timeframe, startDate, endDate, userSeries, userTriggers, userOutcome, userIndicators]);
 
-  // // Change the user data on change of config
-  // useEffect(() => {
-  //   const newIndicatorData: Record<string, LineData<UTCTimestamp>[]> = {};
-  //   // Update indicator data
-  //   const newIndicatorData = userIndicators.map(indicator => {
-  //     return {
-  //       tag: indicator.tag,
-  //       data: getIndicatorChartData(indicator.tag),
-  //       overlay: indicator.overlay,
-  //       streams: indicator.streams,
-  //     };
-  //   });
-  //
-  //   // Update indicator data
-  //   setIndicatorSeriesMap(newIndicatorData);
-  // }, [userIndicators]);
-
   const handleFetchClick = async () => {
     setLoading(true);
     setError(null);
     try {
-      // // Fetch candlestick data from the API
-      // const rawData = await fetchCandles(
-      //   ticker,
-      //   timeframe,
-      //   startDate.getTime(),
-      //   endDate.getTime()
-      // );
-
       const rawData = await fetchCandlesFromMemory(ticker, timeframe, startDate.getTime(), endDate.getTime());
 
       // Map the raw data to the format expected by the LightweightChart
@@ -317,78 +493,7 @@ const App = () => {
           }) as OhlcData<UTCTimestamp>
       );
 
-      function prependAccessorFunctions(funcString: string): string {
-        const adjustedFunc = `
-const _open = index => data[index].open;
-const _high = index => data[index].high;
-const _low = index => data[index].low;
-const _close = index => data[index].close;
-
-//--- USER DEFINED ---
-${funcString}`;
-
-        return adjustedFunc;
-      }
-
-      // // Calculate indicators
-      // const newUserSeriesData = userIndicators.map(indicator => {
-      //   const func = new Function(
-      //     'data',
-      //     // 'period',
-      //     // series.seriesFunctionString
-      //     prependAccessorFunctions(indicator.funcStr)
-      //   );
-      //
-      //   const seriesData = func(formattedCandles);
-      //   return {
-      //     name: indicator.label,
-      //     overlay: indicator.overlay,
-      //     data: seriesData,
-      //     color: 'red', // TODO: Each stream as configured
-      //     lineWidth: 1, // TODO: Each stream as configured
-      //   };
-      // });
-
-      // PRevious
-      // const newUserSeriesData = userSeries.map(series => {
-      //   const func = new Function(
-      //     'data',
-      //     // 'period',
-      //     // series.seriesFunctionString
-      //     prependAccessorFunctions(series.seriesFunctionString)
-      //   );
-      //
-      //   const seriesData = func(formattedCandles);
-      //   return {
-      //     name: series.name,
-      //     overlay: series.overlay,
-      //     data: seriesData,
-      //     color: series.color,
-      //     lineWidth: series.lineWidth,
-      //   };
-      // });
-
-      // setUserSeriesData(newUserSeriesData);
       setCandlestickData(formattedCandles);
-
-      // // // 1. The consolidated input series
-      // // const { consolidatedSeries, indicatorStreams } = getConsolidatedSeries(
-      // //   formattedCandles,
-      // //   newUserSeriesData,
-      // //   userIndicators
-      // // );
-      //
-      // const indicatorInputMap = userIndicators.reduce(
-      //   (acc, indicator) => {
-      //     const inputs: Record<string, unknown> = {};
-      //     for (const param of indicator.params) {
-      //       inputs[param.name] = param.value ?? param.defaultValue;
-      //     }
-      //     acc[indicator.tag] = indicator.params;
-      //     return acc;
-      //   },
-      //   {} as Record<string, any>
-      // );
 
       const indicatorInputMap: Record<string, Record<string, unknown>> = {};
       for (const indicator of userIndicators) {
@@ -398,7 +503,8 @@ ${funcString}`;
         // Add all params to the input object
         for (const param of indicator.params) {
           // TODO: Store indicator inputs elsewhere?
-          indicatorInput[param.name] = param.value == null || param.value === '' ? param.defaultValue : param.value;
+          indicatorInput[param.name] =
+            param.value == null || param.value === '' || isNaN(param.value) ? param.defaultValue : param.value;
         }
 
         indicatorInputMap[indicator.tag] = indicatorInput;
@@ -407,7 +513,7 @@ ${funcString}`;
       const consolidatedSeries = getConsolidatedSeriesNew({
         data: formattedCandles as unknown as GenericData[],
         indicators: userIndicators,
-        defaultFields: ['open', 'high', 'low', 'close'],
+        defaultFields: DEFAULT_FIELDS,
         indicatorInputMap,
       });
 
@@ -590,24 +696,7 @@ ${funcString}`;
 
     // // TODO: Better sync between config and data!!!!
     setUserIndicators(newIndicators);
-    //
-    // // Update indicatorData
-    // const newIndicatorData = indicatorSeriesMap.map(indicator => {
-    //   if (indicator.id === indicatorId) {
-    //     indicator.overlay = newOverlay;
-    //   }
-    //   return indicator;
-    // });
-    // setIndicatorSeriesMap(newIndicatorData);
   };
-
-  // const handleKeyDown = (event: React.KeyboardEvent) => {
-  //   console.log('KEYDOWN', event.key);
-  //   if (event.key === 'i') {
-  //     event.preventDefault();
-  //     setShowAddIndicatorDialog(true);
-  //   }
-  // };
 
   useEffect(() => {
     const handleKeyDown = (event: any) => {
@@ -640,7 +729,19 @@ ${funcString}`;
                 }
               >
                 <div className={'flex flex-row gap-3 justify-between group'}>
-                  <label className={'font-medium text-sm'}>{indicator.label}</label>
+                  <div className={'flex flex-row items-center gap-2'}>
+                    <label className={'font-medium text-sm'}>{indicator.label}</label>
+                    <Code className="!text-[10px]">{indicator.tag}</Code>
+                    {Boolean(indicator.params.length) && (
+                      <p className="text-xs">
+                        (
+                        {indicator.params
+                          .map(i => (i.value == null || i.value === '' ? i.defaultValue : i.value))
+                          .join(', ')}
+                        )
+                      </p>
+                    )}
+                  </div>
                   <div className={'flex-row items-center gap-2 hidden group-hover:flex'}>
                     <div className={'flex flex-row items-center gap-2'}>
                       <IconButton variant={'ghost'} size={'1'} onClick={() => toggleIndicatorOverlay(indicator.tag)}>
@@ -676,11 +777,13 @@ ${funcString}`;
                       color={'tomato'}
                       variant={'ghost'}
                       size={'1'}
-                      onClick={() => {
-                        const index = userIndicators.findIndex(i => i.tag === indicator.tag);
-                        const newIndicators = [...userIndicators];
-                        newIndicators.splice(index, 1);
-                        setUserIndicators(newIndicators);
+                      onClick={async () => {
+                        await centralDeleteIndicator(indicator.tag);
+
+                        // const index = userIndicators.findIndex(i => i.tag === indicator.tag);
+                        // const newIndicators = [...userIndicators];
+                        // newIndicators.splice(index, 1);
+                        // setUserIndicators(newIndicators);
                       }}
                     >
                       <Cross1Icon color="tomato"></Cross1Icon>
@@ -770,28 +873,28 @@ ${funcString}`;
             existingIndicators={userIndicators}
             indicator={editorIndicator}
             // setIndicator={setCurrentIndicator}
-            onSaveToChartClicked={({ funcStr, label, tag, streams, properties, params }) => {
+            onSaveToChartClicked={async partialIndicator => {
+              const { tag, label, funcStr, params, streams, properties } = partialIndicator;
               const index = userIndicators.findIndex(i => i.tag === tag);
 
               if (index !== -1) {
-                // Update existing indicator
-                const newIndicators = userIndicators.map((indicator, i) => {
-                  if (i === index) {
-                    return {
-                      ...indicator,
-                      funcStr,
-                      label,
-                      params,
-                      tag,
-                      streams,
-                      properties,
-                    };
-                  }
+                // // Update existing indicator
+                // const newIndicators = userIndicators.map((indicator, i) => {
+                //   if (i === index) {
+                //     return {
+                //       ...indicator,
+                //       ...partialIndicator,
+                //     };
+                //   }
+                //
+                //   return indicator;
+                // });
 
-                  return indicator;
+                await centralEditIndicator({
+                  ...userIndicators[index],
+                  ...partialIndicator,
                 });
-
-                setUserIndicators(newIndicators);
+                // setUserIndicators(newIndicators);
               } else {
                 // Add dialog indicator
                 const newIndicator: Indicator = {
@@ -806,6 +909,8 @@ ${funcString}`;
                 };
 
                 setUserIndicators([...userIndicators, newIndicator]);
+
+                await centralAddIndicator(newIndicator);
               }
 
               // setCurrentIndicator(dialogIndicator);
@@ -931,19 +1036,6 @@ ${funcString}`;
                     >
                       <PlusIcon />
                     </IconButton>
-
-                    {/*<Sheet>*/}
-                    {/*  <SheetTrigger>Open</SheetTrigger>*/}
-                    {/*  <SheetContent>*/}
-                    {/*    <SheetHeader>*/}
-                    {/*      <SheetTitle>Are you absolutely sure?</SheetTitle>*/}
-                    {/*      <SheetDescription>*/}
-                    {/*        This action cannot be undone. This will permanently delete your account and remove your data*/}
-                    {/*        from our servers.*/}
-                    {/*      </SheetDescription>*/}
-                    {/*    </SheetHeader>*/}
-                    {/*  </SheetContent>*/}
-                    {/*</Sheet>*/}
                   </div>
                 </div>
 
@@ -987,31 +1079,6 @@ ${funcString}`;
                               ))}
                             </div>
                           </SlideToggle2>
-
-                          {/*{indicator.streams.map((stream, i) => (*/}
-                          {/*  <div className={'flex flex-row'}>*/}
-                          {/*    <HoverCard.Root openDelay={300}>*/}
-                          {/*      <HoverCard.Trigger>*/}
-                          {/*        <Code*/}
-                          {/*          className={'!text-[8px] cursor-pointer'}*/}
-                          {/*          onClick={() => {*/}
-                          {/*            navigator.clipboard.writeText(`${indicator.tag}.${stream.tag}`);*/}
-                          {/*          }}*/}
-                          {/*        >*/}
-                          {/*          {stream.tag}*/}
-                          {/*        </Code>*/}
-                          {/*      </HoverCard.Trigger>*/}
-                          {/*      <HoverCard.Content>*/}
-                          {/*        Reference in code using{' '}*/}
-                          {/*        <Code className={''}>*/}
-                          {/*          {indicator.tag}.{stream.tag}*/}
-                          {/*        </Code>*/}
-                          {/*      </HoverCard.Content>*/}
-                          {/*    </HoverCard.Root>*/}
-
-                          {/*    {i === indicator.streams.length - 1 ? '' : '·'}*/}
-                          {/*  </div>*/}
-                          {/*))}*/}
                         </div>
 
                         <div className={'flex flex-row items-start gap-3'}>
@@ -1057,81 +1124,6 @@ ${funcString}`;
                             onClick={() => {
                               setCurrentIndicator(indicator);
                               setShowEditIndicatorDialog(true);
-                            }}
-                          >
-                            <GearIcon></GearIcon>
-                          </IconButton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className={'!bg-primary-bg-subtle'}>
-              <div className={'flex flex-col w-[300px] gap-3'}>
-                <div className={'flex flex-row items-center justify-between'}>
-                  <Heading size={'5'} className={'text-primary-text-contrast'}>
-                    User series
-                  </Heading>
-
-                  <IconButton
-                    onClick={() => {
-                      setShowDialog(true);
-                    }}
-                    size={'1'}
-                  >
-                    <PlusIcon />
-                  </IconButton>
-                </div>
-
-                {userSeries.map(series => (
-                  <div key={series.name} className={'flex flex-row items-center gap-3'}>
-                    <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
-                      <div className={'flex flex-row gap-5 justify-between'}>
-                        <label className={'font-bold'}>{series.name}</label>
-
-                        <div className={'flex flex-row items-center gap-2'}>
-                          <label>Overlay</label>
-                          <Checkbox
-                            variant={'soft'}
-                            color={'jade'}
-                            className="border border-primary-border !cursor-pointer"
-                            checked={series.overlay}
-                            onClick={() => {
-                              const index = userSeries.findIndex(s => s.name === series.name);
-                              const newSeries = [...userSeries];
-                              newSeries[index].overlay = !newSeries[index].overlay;
-                              setUserSeries(newSeries);
-                            }}
-                          />
-                        </div>
-
-                        <div className={'flex flex-row items-center gap-3'}>
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              const index = userSeries.findIndex(s => s.name === series.name);
-                              const newSeries = [...userSeries];
-                              newSeries.splice(index, 1);
-                              setUserSeries(newSeries);
-                            }}
-                          >
-                            <TrashIcon color="tomato"></TrashIcon>
-                          </IconButton>
-
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              setCurrentSeries({
-                                color: series.color,
-                                lineWidth: series.lineWidth,
-                                name: series.name,
-                                overlay: series.overlay,
-                                seriesFunctionString: series.seriesFunctionString,
-                              });
-                              setShowDialog(true);
                             }}
                           >
                             <GearIcon></GearIcon>
@@ -1228,46 +1220,46 @@ ${funcString}`;
                   </IconButton>
                 </div>
 
-                {userOutcome && (
-                  <div key={userOutcome.name} className={'flex flex-row items-center gap-3'}>
-                    <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
-                      <div className={'flex flex-row gap-5 justify-between'}>
-                        <label className={'font-bold'}>{userOutcome.name}</label>
+                {/*{userOutcome && (*/}
+                {/*  <div key={userOutcome.name} className={'flex flex-row items-center gap-3'}>*/}
+                {/*    <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>*/}
+                {/*      <div className={'flex flex-row gap-5 justify-between'}>*/}
+                {/*        <label className={'font-bold'}>{userOutcome.name}</label>*/}
 
-                        <div className={'flex flex-row items-center gap-3'}>
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              setUserOutcome(null);
-                              setOutcomeMarkers([]);
-                            }}
-                          >
-                            <TrashIcon color="tomato"></TrashIcon>
-                          </IconButton>
+                {/*        <div className={'flex flex-row items-center gap-3'}>*/}
+                {/*          <IconButton*/}
+                {/*            variant={'ghost'}*/}
+                {/*            onClick={() => {*/}
+                {/*              setUserOutcome(null);*/}
+                {/*              setOutcomeMarkers([]);*/}
+                {/*            }}*/}
+                {/*          >*/}
+                {/*            <TrashIcon color="tomato"></TrashIcon>*/}
+                {/*          </IconButton>*/}
 
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              setCurrentOutcome(userOutcome);
-                              setShowOutcomeDialog(true);
-                            }}
-                          >
-                            <GearIcon></GearIcon>
-                          </IconButton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/*          <IconButton*/}
+                {/*            variant={'ghost'}*/}
+                {/*            onClick={() => {*/}
+                {/*              setCurrentOutcome(userOutcome);*/}
+                {/*              setShowOutcomeDialog(true);*/}
+                {/*            }}*/}
+                {/*          >*/}
+                {/*            <GearIcon></GearIcon>*/}
+                {/*          </IconButton>*/}
+                {/*        </div>*/}
+                {/*      </div>*/}
+                {/*    </div>*/}
+                {/*  </div>*/}
+                {/*)}*/}
               </div>
             </Card>
           </div>
 
           <div className={'flex flex-col flex-auto w-[100%]'}>
-            <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex'}>
-              <div className={'flex flex-row items-center gap-3 px-2'}>
+            <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex px-3'}>
+              <div className={'flex flex-row items-center gap-3'}>
                 <div className={'flex items-center gap-2'}>
-                  <label>Start Time</label>
+                  <p className="text-xs">From</p>
                   {/*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*/}
                   {/*Change to use normal html input date*/}
                   <TextFieldInput
@@ -1279,7 +1271,7 @@ ${funcString}`;
                 </div>
 
                 <div className={'flex items-center gap-2'}>
-                  <label>End Time</label>
+                  <p className="text-xs">To</p>
                   <TextFieldInput
                     size="1"
                     type="date"
@@ -1289,25 +1281,168 @@ ${funcString}`;
                 </div>
               </div>
               <div className={'invisible'}>Hidden</div>
-              <div className={'pr-2'}>
-                <Button
-                  variant={'soft'}
-                  size={'1'}
-                  onClick={() => {
-                    setShowAddIndicatorDialog(true);
-                  }}
-                >
-                  Add Indicator
-                  <BarChartIcon />
-                </Button>
-                {/*<IconButton*/}
-                {/*  size={'1'}*/}
-                {/*  onClick={() => {*/}
-                {/*    setShowAddIndicatorDialog(true);*/}
-                {/*  }}*/}
-                {/*>*/}
-                {/*  <PlusIcon />*/}
-                {/*</IconButton>*/}
+              <div className={'flex gap-5 items-center'}>
+                <div className={'flex flex-row gap-2'}>
+                  <Button
+                    variant={'soft'}
+                    size={'1'}
+                    onClick={() => {
+                      setShowAddIndicatorDialog(true);
+                    }}
+                  >
+                    <p className="hidden xl:block">Add Indicator</p>
+                    <BarChartIcon />
+                  </Button>
+
+                  <Button
+                    variant={'soft'}
+                    size={'1'}
+                    onClick={() => {
+                      setShowAddTriggerDialog(true);
+                    }}
+                  >
+                    <p className="hidden xl:block">Add Trigger</p>
+                    <LightningBoltIcon />
+                  </Button>
+
+                  <Button
+                    variant={'soft'}
+                    disabled={true}
+                    size={'1'}
+                    onClick={() => {
+                      // setShowAddIndicatorDialog(true);
+                    }}
+                  >
+                    <p className="hidden xl:block">Add Outcome</p>
+                    <CheckboxIcon />
+                  </Button>
+                </div>
+
+                <div className={'flex flex-row gap-2 items-center'}>
+                  <h3 className="text-sm">Strategy</h3>
+                  <Select.Root
+                    size={'1'}
+                    value={selectedStrategy.id}
+                    onValueChange={value => {
+                      const selected = strategies.find(s => s.id === value);
+                      if (selected) {
+                        setSelectedStrategy(selected);
+                      }
+                    }}
+                  >
+                    <Select.Trigger placeholder="" className={'!w-[150px]'}></Select.Trigger>
+                    <Select.Content>
+                      {strategies.map(strategy => (
+                        <Select.Item key={strategy.id} value={strategy.id}>
+                          {strategy.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+
+                  <Popover.Root>
+                    <Popover.Trigger>
+                      <IconButton
+                        size={'1'}
+                        variant={'ghost'}
+                        className=""
+                        onClick={() => {
+                          setNewStrategyName(selectedStrategy.name);
+                        }}
+                      >
+                        <Pencil1Icon />
+                      </IconButton>
+                    </Popover.Trigger>
+
+                    <Popover.Content>
+                      <div className={'flex flex-col gap-3'}>
+                        <Heading size={'3'}>Edit Strategy</Heading>
+                        <TextFieldInput
+                          size="1"
+                          value={newStrategyName}
+                          onChange={e => setNewStrategyName(e.target.value)}
+                        />
+                        <Popover.Close>
+                          <div className={'flex flex-row justify-between'}>
+                            <Button
+                              size="1"
+                              color={'gray'}
+                              onClick={() => {
+                                setNewStrategyName('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+
+                            <Button
+                              size={'1'}
+                              onClick={() => {
+                                const updatedStrategies = strategies.map(s => {
+                                  if (s.id === selectedStrategy.id) {
+                                    return {
+                                      ...s,
+                                      name: newStrategyName,
+                                    };
+                                  }
+
+                                  return s;
+                                });
+
+                                setStrategies(updatedStrategies);
+                                saveStrategies(updatedStrategies);
+                                setNewStrategyName('');
+                              }}
+                            >
+                              Update
+                            </Button>
+                          </div>
+                        </Popover.Close>
+                      </div>
+                    </Popover.Content>
+                  </Popover.Root>
+
+                  <Popover.Root>
+                    <Popover.Trigger>
+                      <IconButton size={'1'}>
+                        <PlusIcon />
+                      </IconButton>
+                    </Popover.Trigger>
+
+                    <Popover.Content>
+                      <div className={'flex flex-col gap-3'}>
+                        <Heading size={'3'}>Strategy Name</Heading>
+                        <TextFieldInput
+                          size="1"
+                          value={newStrategyName}
+                          onChange={e => setNewStrategyName(e.target.value)}
+                        />
+                        <div className={'flex flex-row justify-between'}>
+                          <Popover.Close>
+                            <>
+                              <Button size="1" color={'gray'}>
+                                Cancel
+                              </Button>
+
+                              <Button
+                                size={'1'}
+                                onClick={() => {
+                                  const newStrategy = generateEmptyStrategy(newStrategyName);
+
+                                  const updatedStrategies = [...strategies, newStrategy];
+                                  setStrategies(updatedStrategies);
+                                  saveStrategies(updatedStrategies);
+                                  setNewStrategyName('');
+                                }}
+                              >
+                                Create
+                              </Button>
+                            </>
+                          </Popover.Close>
+                        </div>
+                      </div>
+                    </Popover.Content>
+                  </Popover.Root>
+                </div>
               </div>
             </div>
             {bottomTab ? (
@@ -1341,7 +1476,7 @@ ${funcString}`;
       </div>
       <AddIndicatorDialog
         show={showAddIndicatorDialog}
-        onIndicatorSelected={(indicator: Indicator) => {
+        onIndicatorSelected={async (indicator: Indicator) => {
           // Check how many of this indicator type already exist
           const existingIndicators = userIndicators.filter(i => i.tag === indicator.tag);
           const indicatorCount = existingIndicators.length;
@@ -1354,10 +1489,12 @@ ${funcString}`;
             label: indicator.label,
             overlay: indicator.overlay,
             streams: indicator.streams,
-            properties: indicator.properties,
+            // properties: indicator.properties,
+            properties: parseFunctionReturnKeys(indicator.funcStr),
           };
 
-          setUserIndicators([...userIndicators, newIndicator]);
+          await centralAddIndicator(newIndicator);
+          // setUserIndicators([...userIndicators, newIndicator]);
           setShowAddIndicatorDialog(false);
         }}
         onClose={() => {
@@ -1369,7 +1506,7 @@ ${funcString}`;
         existingIndicators={userIndicators}
         indicator={currentIndicator}
         setIndicator={setCurrentIndicator}
-        onSaveClicked={() => {
+        onSaveClicked={async () => {
           const dialogIndicator: Omit<Indicator, 'id'> = {
             tag: currentIndicator.tag,
             funcStr: currentIndicator.funcStr,
@@ -1382,28 +1519,25 @@ ${funcString}`;
 
           const index = userIndicators.findIndex(i => i.tag === currentIndicator.tag);
 
-          if (index !== -1) {
-            // Update existing indicator
-            const newIndicators = [...userIndicators];
-            newIndicators[index] = {
-              ...newIndicators[index],
-              ...dialogIndicator,
-            };
+          await centralEditIndicator({
+            ...userIndicators[index],
+            ...dialogIndicator,
+          });
 
-            setUserIndicators(newIndicators);
-          }
-          // else {
-          //   // Add dialog indicator
-          //   setUserIndicators([...userIndicators, dialogIndicator]);
+          // if (index !== -1) {
+          //   // Update existing indicator
+          //   const newIndicators = [...userIndicators];
+          //   newIndicators[index] = {
+          //     ...newIndicators[index],
+          //     ...dialogIndicator,
+          //   };
+          //
+          //   setUserIndicators(newIndicators);
           // }
-
-          // setCurrentIndicator(DEFAULT_INDICATOR);
-          // setCurrentIndicator(dialogIndicator);
 
           setShowEditIndicatorDialog(false);
         }}
         onCancelClicked={() => {
-          // setCurrentIndicator(DEFAULT_INDICATOR);
           setShowEditIndicatorDialog(false);
         }}
       />
@@ -1441,41 +1575,6 @@ ${funcString}`;
         }}
       />
 
-      <UserSeriesDialog
-        show={showDialog}
-        series={currentSeries}
-        setSeries={setCurrentSeries}
-        onSaveClicked={() => {
-          const dialogSeries = {
-            name: currentSeries.name,
-            seriesFunctionString: currentSeries.seriesFunctionString,
-            overlay: currentSeries.overlay,
-            color: currentSeries.color,
-            lineWidth: currentSeries.lineWidth,
-          };
-
-          const index = userSeries.findIndex(s => s.name === currentSeries.name);
-
-          if (index !== -1) {
-            // Update existing series
-            const newSeries = [...userSeries];
-            newSeries[index] = dialogSeries;
-
-            setUserSeries(newSeries);
-          } else {
-            // Add dialog series
-            setUserSeries([...userSeries, dialogSeries]);
-          }
-
-          setCurrentSeries(DEFAULT_USER_SERIES);
-
-          setShowDialog(false);
-        }}
-        onCancelClicked={() => {
-          setCurrentSeries(DEFAULT_USER_SERIES);
-          setShowDialog(false);
-        }}
-      />
       <UserTriggerDialog
         show={showTriggerDialog}
         trigger={currentTrigger}
@@ -1503,19 +1602,74 @@ ${funcString}`;
           setShowTriggerDialog(false);
         }}
       />
-      <UserOutcomeDialog
-        show={showOutcomeDialog}
-        outcome={currentOutcome}
-        setOutcome={setCurrentOutcome}
-        onSaveClicked={() => {
-          setUserOutcome(currentOutcome);
-          setShowOutcomeDialog(false); // Close the dialog
-        }}
-        onCancelClicked={() => {
-          setCurrentOutcome(DEFAULT_USER_OUTCOME);
-          setShowOutcomeDialog(false);
-        }}
-      />
+
+      <Dialog.Root open={showAddTriggerDialog}>
+        <Dialog.Content>
+          <EditTrigger
+            saveTrigger={(trigger: Trigger) => {
+              setTriggers([...triggers, trigger]);
+              setShowAddTriggerDialog(false);
+              // TODO: Save to strategy
+            }}
+            topRightSlot={
+              <IconButton
+                variant={'ghost'}
+                className={'!rounded-full'}
+                size={'1'}
+                onClick={() => {
+                  setShowAddTriggerDialog(false);
+                }}
+              >
+                <Cross2Icon className="h-6 w-6"></Cross2Icon>
+              </IconButton>
+            }
+            properties={{
+              default: DEFAULT_FIELDS,
+              indicator: userIndicators.map(i => ({
+                indicatorTag: i.tag,
+                streamTag: i.streams.map(s => s.tag),
+              })),
+            }}
+            // TODO: DO I need to make operators funcs array based?
+            operators={[
+              {
+                label: '=',
+                func: '(a,b) => a === b',
+              },
+              {
+                label: '>',
+                func: '(a,b) => a > b',
+              },
+              {
+                label: '<',
+                func: '(a,b) => a < b',
+              },
+              {
+                label: '>=',
+                func: '(a,b) => a >= b',
+              },
+              {
+                label: '<=',
+                func: '(a,b) => a <= b',
+              },
+            ]}
+          />
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/*<UserOutcomeDialog*/}
+      {/*  show={showOutcomeDialog}*/}
+      {/*  outcome={currentOutcome}*/}
+      {/*  setOutcome={setCurrentOutcome}*/}
+      {/*  onSaveClicked={() => {*/}
+      {/*    setUserOutcome(currentOutcome);*/}
+      {/*    setShowOutcomeDialog(false); // Close the dialog*/}
+      {/*  }}*/}
+      {/*  onCancelClicked={() => {*/}
+      {/*    setCurrentOutcome(DEFAULT_USER_OUTCOME);*/}
+      {/*    setShowOutcomeDialog(false);*/}
+      {/*  }}*/}
+      {/*/>*/}
     </>
   );
 };

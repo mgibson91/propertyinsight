@@ -16,6 +16,7 @@ const INCREMENTING_CANDLE_DATA = new Array(10).fill(0).map(
 
 const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
   {
+    id: '1',
     tag: 'sma',
     funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);
@@ -44,6 +45,7 @@ const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
     properties: ['value'],
   },
   {
+    id: '2',
     tag: 'channel',
     funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);
@@ -87,7 +89,7 @@ describe('full process', () => {
         },
         channel: {
           length: 5,
-          field: 'sma_value',
+          field: '$sma_value',
         },
       },
       indicators: TEST_INDICATORS,

@@ -18,21 +18,7 @@ import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
 import { PlusIcon, ReloadIcon, ResetIcon } from '@radix-ui/react-icons';
 import { prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
-
-function parseFunctionReturnKeys(functionString: string) {
-  const functionBodyMatch = functionString.match(/return\s*{([\s\S]*?)}/);
-  if (!functionBodyMatch) {
-    throw new Error('Invalid function string format');
-  }
-
-  const returnObjectString = functionBodyMatch[1].trim();
-  const keys = returnObjectString
-    .split(',')
-    .map(pair => pair.split(':')[0].trim())
-    .filter(key => key !== '');
-
-  return keys;
-}
+import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 
 const DEFAULT_INDICATOR_USER_FUNCTION = `function indicator() {
   // Replace this example
@@ -293,49 +279,70 @@ export const EditorTab = ({
           <div className={'flex flex-col gap-2'}>
             {params.map((param, index) => (
               <>
-                {param.name !== 'length' && (
-                  <div className={'flex flex-col gap-1'}>
-                    <div className={'flex flex-row gap-2 items-center'}>
-                      <Select.Root
-                        value={param.type}
-                        onValueChange={(type: IndicatorParamType) => {
-                          setInputs(
-                            params.map((p, i) => {
-                              if (i === index) {
-                                return {
-                                  ...p,
-                                  type,
-                                };
-                              }
-                              return p;
-                            })
-                          );
-                        }}
-                      >
-                        <Select.Trigger
-                          placeholder="Type"
-                          className={'bg-primary-bg-subtle w-[100px]'}
-                          variant={'soft'}
-                        />
-                        <Select.Content>
-                          {Object.values(IndicatorParamType).map(type => (
-                            <Select.Item key={type} value={type}>
-                              {type}
-                            </Select.Item>
-                          ))}
-                        </Select.Content>
-                      </Select.Root>
+                <div className={'flex flex-col gap-1'}>
+                  <div className={'flex flex-row gap-2 items-center'}>
+                    <Select.Root
+                      value={param.type}
+                      onValueChange={(type: IndicatorParamType) => {
+                        setInputs(
+                          params.map((p, i) => {
+                            if (i === index) {
+                              return {
+                                ...p,
+                                type,
+                              };
+                            }
+                            return p;
+                          })
+                        );
+                      }}
+                    >
+                      <Select.Trigger
+                        placeholder="Type"
+                        className={'bg-primary-bg-subtle w-[100px]'}
+                        variant={'soft'}
+                      />
+                      <Select.Content>
+                        {Object.values(IndicatorParamType).map(type => (
+                          <Select.Item key={type} value={type}>
+                            {type}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Root>
 
+                    <TextFieldInput
+                      className={'w-[100px]'}
+                      value={param.name}
+                      onChange={e =>
+                        setInputs(
+                          params.map((p, i) => {
+                            if (i === index) {
+                              return {
+                                ...p,
+                                name: e.target.value,
+                              };
+                            }
+                            return p;
+                          })
+                        )
+                      }
+                    />
+
+                    {/* Default value*/}
+                    {param.type === IndicatorParamType.NUMBER ? (
                       <TextFieldInput
                         className={'w-[100px]'}
-                        value={param.name}
+                        type={'number'}
+                        value={param.defaultValue as number}
+                        placeholder="Default"
                         onChange={e =>
                           setInputs(
                             params.map((p, i) => {
                               if (i === index) {
                                 return {
                                   ...p,
-                                  name: e.target.value,
+                                  defaultValue: parseInt(e.target.value),
                                 };
                               }
                               return p;
@@ -343,91 +350,68 @@ export const EditorTab = ({
                           )
                         }
                       />
-
-                      {/* Default value*/}
-                      {param.type === IndicatorParamType.NUMBER ? (
-                        <TextFieldInput
-                          className={'w-[100px]'}
-                          type={'number'}
-                          value={param.defaultValue as number}
-                          placeholder="Default"
-                          onChange={e =>
-                            setInputs(
-                              params.map((p, i) => {
-                                if (i === index) {
-                                  return {
-                                    ...p,
-                                    defaultValue: parseInt(e.target.value),
-                                  };
-                                }
-                                return p;
-                              })
-                            )
-                          }
-                        />
-                      ) : param.type === IndicatorParamType.FIELD ? (
-                        <Select.Root
-                          value={param.defaultValue as string}
-                          onValueChange={value =>
-                            setInputs(
-                              params.map((p, i) => {
-                                if (i === index) {
-                                  return {
-                                    ...p,
-                                    defaultValue: value,
-                                  };
-                                }
-                                return p;
-                              })
-                            )
-                          }
-                        >
-                          <Select.Trigger
-                            placeholder="Select ticker"
-                            className={'bg-primary-bg-subtle h-[32px] w-[100px]'}
-                          />
-                          <Select.Content>
-                            {FIELD_OPTIONS.map(option => (
-                              <Select.Item key={option} value={option}>
-                                {option}
-                              </Select.Item>
-                            ))}
-                          </Select.Content>
-                        </Select.Root>
-                      ) : (
-                        <TextFieldInput
-                          className={'w-[100px]'}
-                          value={param.defaultValue as string}
-                          onChange={e =>
-                            setInputs(
-                              params.map((p, i) => {
-                                if (i === index) {
-                                  return {
-                                    ...p,
-                                    defaultValue: e.target.value,
-                                  };
-                                }
-                                return p;
-                              })
-                            )
-                          }
-                        />
-                      )}
-
-                      <IconButton
-                        variant={'ghost'}
-                        color="tomato"
-                        className={'!rounded-full !m-0 !h-3 !w-3'}
-                        size={'1'}
-                        onClick={() => {
-                          setInputs(params.filter((_, i) => i !== index));
-                        }}
+                    ) : param.type === IndicatorParamType.FIELD ? (
+                      <Select.Root
+                        value={param.defaultValue as string}
+                        onValueChange={value =>
+                          setInputs(
+                            params.map((p, i) => {
+                              if (i === index) {
+                                return {
+                                  ...p,
+                                  defaultValue: value,
+                                };
+                              }
+                              return p;
+                            })
+                          )
+                        }
                       >
-                        <CloseIcon></CloseIcon>
-                      </IconButton>
-                    </div>
+                        <Select.Trigger
+                          placeholder="Select ticker"
+                          className={'bg-primary-bg-subtle h-[32px] w-[100px]'}
+                        />
+                        <Select.Content>
+                          {FIELD_OPTIONS.map(option => (
+                            <Select.Item key={option} value={option}>
+                              {option}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    ) : (
+                      <TextFieldInput
+                        className={'w-[100px]'}
+                        value={param.defaultValue as string}
+                        onChange={e =>
+                          setInputs(
+                            params.map((p, i) => {
+                              if (i === index) {
+                                return {
+                                  ...p,
+                                  defaultValue: e.target.value,
+                                };
+                              }
+                              return p;
+                            })
+                          )
+                        }
+                      />
+                    )}
+
+                    <IconButton
+                      variant={'ghost'}
+                      color="tomato"
+                      className={'!rounded-full !m-0 !h-3 !w-3'}
+                      size={'1'}
+                      onClick={() => {
+                        setInputs(params.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <CloseIcon></CloseIcon>
+                    </IconButton>
                   </div>
-                )}
+                </div>
               </>
             ))}
           </div>

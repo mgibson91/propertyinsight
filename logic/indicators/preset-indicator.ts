@@ -1,44 +1,52 @@
 import { Indicator, IndicatorParamType, IndicatorParamWidget, IndicatorType } from '@/logic/indicators/types';
+import { v4 as uuid } from 'uuid';
 
-export const PRESET_INDICATOR_SMA: Indicator = {
-  tag: 'sma',
+export function generateSmaPreset(input: { tag: string; series: string; length: number; color: string }): Indicator {
+  const { tag, series, length, color } = input;
+  return {
+    id: uuid(),
+    tag,
 
-  label: 'Simple Moving Average',
-  params: [
-    {
-      name: 'length',
-      type: IndicatorParamType.NUMBER,
-      label: 'Length',
-      required: true,
-      defaultValue: 20,
-      value: 20,
-    },
-    {
-      name: 'field',
-      type: IndicatorParamType.FIELD,
-      label: 'Field',
-      required: true,
-      defaultValue: 'close',
-      value: 'close',
-    },
-  ],
-  funcStr: `function indicator() {
-    const value = sma($$field.slice(0, $$length), $$length);
-    return { value };
-  }`,
-  overlay: true,
-  streams: [
-    {
-      tag: 'value',
-      overlay: true,
-      lineWidth: 1,
-      color: '#FFFFFF',
-    },
-  ],
-  properties: ['value'],
-};
+    label: 'Simple Moving Average',
+    params: [
+      {
+        name: 'length',
+        type: IndicatorParamType.NUMBER,
+        label: 'Length',
+        required: true,
+        defaultValue: length,
+        value: length,
+      },
+      {
+        name: 'field',
+        type: IndicatorParamType.FIELD,
+        label: 'Field',
+        required: true,
+        defaultValue: 'close',
+        value: series,
+      },
+    ],
+    funcStr: `function indicator() {
+      const value = sma($$field.slice(0, $$length), $$length);
+      return { value };
+    }`,
+    overlay: true,
+    streams: [
+      {
+        tag: 'value',
+        overlay: true,
+        lineWidth: 1,
+        color,
+      },
+    ],
+    properties: ['value'],
+  };
+}
+
+export const PRESET_INDICATOR_SMA = generateSmaPreset('close', 20);
 
 export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
+  id: uuid(),
   tag: 'sma_channel',
   label: 'Simple Moving Average Channel',
   params: [
@@ -75,6 +83,7 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
 };
 
 export const PRESET_INDICATOR_EMA: Indicator = {
+  id: uuid(),
   tag: 'ema',
   label: 'Exponential Moving Average',
   params: [
@@ -112,6 +121,7 @@ export const PRESET_INDICATOR_EMA: Indicator = {
 };
 
 export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
+  id: uuid(),
   tag: 'bollinger_bands',
   label: 'Bollinger Bands',
   params: [
@@ -164,6 +174,7 @@ export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
 };
 
 export const MUCKABOUT: Indicator = {
+  id: uuid(),
   tag: 'muckabout',
   label: 'Muckabout',
   params: [],

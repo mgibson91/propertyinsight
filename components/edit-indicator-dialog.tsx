@@ -73,15 +73,21 @@ export const EditIndicatorDialog = ({
                           <TextFieldInput
                             className={'!w-32'}
                             type={param.type === 'number' ? 'number' : 'text'}
-                            value={indicator.params[index].value ?? indicator.params[index].defaultValue}
+                            value={indicator.params[index].value}
                             onChange={e =>
                               setIndicator({
                                 ...indicator,
                                 params: indicator.params.map((p, i) => {
                                   if (i === index) {
+                                    let value: string | number | null = e.target.value;
+                                    if (param.type === 'number') {
+                                      const parsed = parseInt(e.target.value);
+                                      value = isNaN(parsed) ? null : parsed;
+                                    }
+
                                     return {
                                       ...p,
-                                      value: param.type === 'number' ? parseInt(e.target.value) : e.target.value,
+                                      value,
                                     };
                                   }
                                   return p;
