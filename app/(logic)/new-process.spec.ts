@@ -20,8 +20,12 @@ const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
     tag: 'sma',
     funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);
+  
+  cache.incrementer = (cache.incrementer ?? -1) + 1;
+  
   return {
     value,
+    line: cache.incrementer,
   };
 }`,
     params: [

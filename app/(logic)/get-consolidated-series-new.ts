@@ -98,21 +98,17 @@ function augmentDataWithIndicatorStreams({
       existingIndicatorMetadata,
     });
 
-    const indicatorFunc = new Function(
-      'data',
-      // 'cache',
-      evaluatedFunc
-    );
+    const indicatorFunc = new Function('data', 'cache', evaluatedFunc);
 
     // TODO: Cache?
-    // let cache = {};
+    let cache = {};
 
     for (let i = offset; i < augmentedData.length; i++) {
       const batch = augmentedData.slice(i - resolvedIndicator.length, i);
 
       // TODO: Add inputs here
       // indicatorFunc({ data: batch }, cache);
-      const result = indicatorFunc({ data: batch });
+      const result = indicatorFunc({ data: batch }, cache);
 
       for (const streamTag of resolvedIndicator.outputStreamTags) {
         augmentedData[i][`${resolvedIndicator.tag}_${streamTag}`] = result[streamTag];
@@ -142,7 +138,7 @@ export function prependSpreadFunctions({
   existingIndicatorMetadata: { streamTag: string; indicatorTag: string }[];
 }): string {
   let adjustedFunc = `
-const inputData = data.data;  
+const inputData = data.data;
 const open = inputData.map(d => d.open);
 const high = inputData.map(d => d.high);
 const low = inputData.map(d => d.low);

@@ -63,7 +63,7 @@ import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-
 import * as z from 'zod';
 import { Indicator, IndicatorSchema } from '@/logic/indicators/types';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
-import { EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
+import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
 
 // const IndicatorSchema = z.object({
@@ -330,9 +330,14 @@ const App = () => {
     color: '',
     size: 0,
   });
-  const [showDialog, setShowDialog] = useState(false);
   const [showAddIndicatorDialog, setShowAddIndicatorDialog] = useState(false);
-  const [showAddTriggerDialog, setShowAddTriggerDialog] = useState(false);
+  const [editTrigger, setEditTrigger] = useState<{
+    trigger?: Trigger;
+    display: boolean;
+  }>({
+    trigger: undefined,
+    display: false,
+  });
   const [showEditIndicatorDialog, setShowEditIndicatorDialog] = useState(false);
   const [showEditIndicatorCodeDialog, setShowEditIndicatorCodeDialog] = useState(false);
   const [showTriggerDialog, setShowTriggerDialog] = useState(false);
@@ -388,6 +393,28 @@ const App = () => {
   };
 
   // Add new indicator
+  const centralAddTrigger = async (trigger: Trigger) => {
+    const newTriggers = [...triggers, trigger];
+
+    // Local updates for rapidity
+    setTriggers(newTriggers);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          triggers: newTriggers,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
+
+  // Add new indicator
   const centralEditIndicator = async (indicator: Indicator) => {
     // Local updates for rapidity
     const newIndicators = userIndicators.map(i => {
@@ -416,6 +443,35 @@ const App = () => {
     await saveStrategies(newStrategies);
   };
 
+  // Add new indicator
+  const centralEditTrigger = async (trigger: Trigger) => {
+    // Local updates for rapidity
+    const newTriggers = triggers.map(t => {
+      if (t.id === trigger.id) {
+        return trigger;
+      }
+
+      return t;
+    });
+
+    // Local updates for rapidity
+    setTriggers(newTriggers);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          triggers: newTriggers,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
+
   const centralDeleteIndicator = async (tag: string) => {
     const newIndicators = userIndicators.filter(i => i.tag !== tag);
 
@@ -427,6 +483,27 @@ const App = () => {
         return {
           ...strategy,
           indicators: newIndicators,
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies);
+  };
+
+  const centralDeleteTrigger = async (id: string) => {
+    const newTriggers = triggers.filter(i => i.id !== id);
+
+    // Local updates for rapidity
+    setTriggers(newTriggers);
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          triggers: newTriggers,
         };
       }
 
@@ -460,9 +537,8 @@ const App = () => {
   }, [indicatorSeriesMap, userIndicators]);
 
   useEffect(() => {
-    const strategyIndicators = selectedStrategy?.indicators || [];
-
-    setUserIndicators(strategyIndicators);
+    setUserIndicators(selectedStrategy?.indicators || []);
+    setTriggers(selectedStrategy?.triggers || []);
 
     // setUserSeries(INITIAL_USER_SERIES);
     // setUserTriggers(INITIAL_USER_TRIGGERS);
@@ -730,6 +806,7 @@ const App = () => {
               >
                 <div className={'flex flex-row gap-3 justify-between group'}>
                   <div className={'flex flex-row items-center gap-2'}>
+                    <BarChartIcon className={'w-3 h-3'} />
                     <label className={'font-medium text-sm'}>{indicator.label}</label>
                     <Code className="!text-[10px]">{indicator.tag}</Code>
                     {Boolean(indicator.params.length) && (
@@ -780,6 +857,103 @@ const App = () => {
                       onClick={async () => {
                         await centralDeleteIndicator(indicator.tag);
 
+                        // const index = userIndicators.findIndex(i => i.tag === indicator.tag);
+                        // const newIndicators = [...userIndicators];
+                        // newIndicators.splice(index, 1);
+                        // setUserIndicators(newIndicators);
+                      }}
+                    >
+                      <Cross1Icon color="tomato"></Cross1Icon>
+                    </IconButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {triggers.map(trigger => (
+            <div key={trigger.name} className={'flex flex-row items-center gap-3'}>
+              <div
+                className={
+                  'flex flex-col flex-auto bg-transparent hover:bg-primary-bg hover:ring-[1px] hover:ring-inset hover:ring-primary-border p-1 rounded-md'
+                }
+              >
+                <div className={'flex flex-row gap-3 justify-between group'}>
+                  <div className={'flex flex-row items-center gap-2'}>
+                    <LightningBoltIcon className={'w-3 h-3'} />
+                    <label className={'font-medium text-sm'}>{trigger.name}</label>
+                    {/*<Code className="!text-[10px]">{indicator.tag}</Code>*/}
+                    {/*{Boolean(indicator.params.length) && (*/}
+                    {/*  <p className="text-xs">*/}
+                    {/*    (*/}
+                    {/*    {indicator.params*/}
+                    {/*      .map(i => (i.value == null || i.value === '' ? i.defaultValue : i.value))*/}
+                    {/*      .join(', ')}*/}
+                    {/*    )*/}
+                    {/*  </p>*/}
+                    {/*)}*/}
+                  </div>
+                  <div className={'flex-row items-center gap-2 hidden group-hover:flex'}>
+                    <div className={'flex flex-row items-center gap-2'}>
+                      <IconButton
+                        variant={'ghost'}
+                        size={'1'}
+                        onClick={() => {
+                          // TODO: Central edit trigger
+                          const newTriggers = triggers.map(t => {
+                            if (t.name === trigger.name) {
+                              return {
+                                ...t,
+                                enabled: !t.enabled,
+                              };
+                            }
+
+                            return t;
+                          });
+
+                          setTriggers(newTriggers);
+                        }}
+                      >
+                        {trigger.enabled ? <EyeOpenIcon /> : <EyeNoneIcon />}
+                      </IconButton>
+                    </div>
+
+                    {/*TODO: View and edit code - override if edited*/}
+                    <IconButton
+                      color={'gray'}
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={() => {
+                        // TODO: Trigger code edit
+                        setEditTrigger({
+                          trigger,
+                          display: true,
+                        });
+                      }}
+                    >
+                      <CodeIcon color="gray"></CodeIcon>
+                    </IconButton>
+
+                    <IconButton
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={() => {
+                        setEditTrigger({
+                          trigger,
+                          display: true,
+                        });
+                      }}
+                    >
+                      <GearIcon></GearIcon>
+                    </IconButton>
+
+                    <IconButton
+                      color={'tomato'}
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={async () => {
+                        await centralDeleteTrigger(trigger.id);
+                        // await centralDeleteIndicator(indicator.tag);
                         // const index = userIndicators.findIndex(i => i.tag === indicator.tag);
                         // const newIndicators = [...userIndicators];
                         // newIndicators.splice(index, 1);
@@ -865,7 +1039,7 @@ const App = () => {
               }
             }}
           >
-            Strategies
+            Strategy Performance
           </TabsTrigger>
         </TabsList>
         <TabsContent value="editor">
@@ -1298,7 +1472,10 @@ const App = () => {
                     variant={'soft'}
                     size={'1'}
                     onClick={() => {
-                      setShowAddTriggerDialog(true);
+                      setEditTrigger({
+                        display: true,
+                        trigger: undefined,
+                      });
                     }}
                   >
                     <p className="hidden xl:block">Add Trigger</p>
@@ -1603,13 +1780,24 @@ const App = () => {
         }}
       />
 
-      <Dialog.Root open={showAddTriggerDialog}>
+      <Dialog.Root open={editTrigger.display}>
         <Dialog.Content>
           <EditTrigger
-            saveTrigger={(trigger: Trigger) => {
-              setTriggers([...triggers, trigger]);
-              setShowAddTriggerDialog(false);
-              // TODO: Save to strategy
+            trigger={editTrigger.trigger}
+            saveTrigger={async (trigger: Trigger) => {
+              if (editTrigger.trigger) {
+                await centralEditTrigger({
+                  ...(editTrigger.trigger || {}),
+                  ...trigger,
+                });
+              } else {
+                await centralAddTrigger({ ...trigger, enabled: true });
+              }
+
+              setEditTrigger({
+                display: false,
+                trigger: undefined,
+              });
             }}
             topRightSlot={
               <IconButton
@@ -1617,7 +1805,10 @@ const App = () => {
                 className={'!rounded-full'}
                 size={'1'}
                 onClick={() => {
-                  setShowAddTriggerDialog(false);
+                  setEditTrigger({
+                    display: false,
+                    trigger: undefined,
+                  });
                 }}
               >
                 <Cross2Icon className="h-6 w-6"></Cross2Icon>
@@ -1631,28 +1822,7 @@ const App = () => {
               })),
             }}
             // TODO: DO I need to make operators funcs array based?
-            operators={[
-              {
-                label: '=',
-                func: '(a,b) => a === b',
-              },
-              {
-                label: '>',
-                func: '(a,b) => a > b',
-              },
-              {
-                label: '<',
-                func: '(a,b) => a < b',
-              },
-              {
-                label: '>=',
-                func: '(a,b) => a >= b',
-              },
-              {
-                label: '<=',
-                func: '(a,b) => a <= b',
-              },
-            ]}
+            operators={DEFAULT_OPERATORS}
           />
         </Dialog.Content>
       </Dialog.Root>

@@ -6,7 +6,7 @@ import DemoComponent from '@/app/playground/DemoComponent';
 import SlideToggle from '@/app/playground/SlideToggle';
 import React, { useState } from 'react';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
-import { EditTrigger } from '@/components/triggers/edit-trigger';
+import { DEFAULT_OPERATORS, EditTrigger } from '@/components/triggers/edit-trigger';
 
 // Mock data array
 // const indicators: Indicator[] = [
@@ -110,7 +110,7 @@ export default function Page() {
       <div className="!w-1/2 !h-1/2">
         <EditTrigger
           trigger={trigger}
-          updateTrigger={newTrigger => {
+          saveTrigger={newTrigger => {
             setTrigger(newTrigger);
           }}
           properties={{
@@ -126,28 +126,7 @@ export default function Page() {
               },
             ],
           }}
-          operators={[
-            {
-              label: '=',
-              func: '(a,b) => a === b',
-            },
-            {
-              label: '>',
-              func: '(a,b) => a > b',
-            },
-            {
-              label: '<',
-              func: '(a,b) => a < b',
-            },
-            {
-              label: '>=',
-              func: '(a,b) => a >= b',
-            },
-            {
-              label: '<=',
-              func: '(a,b) => a <= b',
-            },
-          ]}
+          operators={DEFAULT_OPERATORS}
         />
       </div>
     </div>
