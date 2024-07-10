@@ -640,12 +640,12 @@ const App = () => {
       //   }
       // >();
       //
-      // for (const trigger of userTriggers) {
+      // for (const trigger of triggers) {
       //   markerFunctionMap.set(trigger.name, {
       //     // TODO: Consider this - should in theory be the min required but hardcoded for display ease
       //     // lookback: HISTORICAL_VALUE_COUNT,
       //     lookback: 50,
-      //     func: new Function('data', trigger.triggerFunctionString),
+      //     func: new Function('data', trigger.),
       //   });
       // }
       //

@@ -128,13 +128,9 @@ function augmentDataWithIndicatorStreams({
 
 export function prependSpreadFunctions({
   funcString,
-  params,
-  existingIndicatorStreams = [],
   existingIndicatorMetadata,
 }: {
   funcString: string;
-  params?: IndicatorParam[]; // TODO: REmove
-  existingIndicatorStreams?: IndicatorStreamData[];
   existingIndicatorMetadata: { streamTag: string; indicatorTag: string }[];
 }): string {
   let adjustedFunc = `
@@ -156,7 +152,7 @@ return indicator();
   return adjustedFunc;
 }
 
-function buildIndicatorStreamVariables(existingIndicatorStreams: IndicatorStreamMetadata[]): string {
+export function buildIndicatorStreamVariables(existingIndicatorStreams: IndicatorStreamMetadata[]): string {
   let lines: string[] = [];
 
   for (const indicatorStream of existingIndicatorStreams) {

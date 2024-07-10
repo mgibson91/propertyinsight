@@ -38,7 +38,7 @@ interface TriggerField {
   offset: number;
 }
 
-interface TriggerCondition {
+export interface TriggerCondition {
   fieldA: TriggerField;
   operator: string;
   fieldB: TriggerField;
@@ -173,6 +173,7 @@ export const EditTrigger = (props: {
 
       <div className={'flex flex-col'}>
         <Heading size={'4'}>Name</Heading>
+        <p>{JSON.stringify(conditions || {})}</p>
         <TextFieldInput value={name} onChange={e => setName(e.target.value)} />
       </div>
 
