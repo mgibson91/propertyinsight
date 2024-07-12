@@ -4,7 +4,7 @@ import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/interna
 import React, { useEffect, useState } from 'react';
 import { Editor, BeforeMount } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
-import { prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
+import { prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 
 export const EditIndicatorCodeDialog = ({
   show,

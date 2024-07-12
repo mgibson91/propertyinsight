@@ -6,7 +6,7 @@
  * 4. Look at dynamically detecting function length
  */
 import { Trigger, TriggerCondition } from '@/components/triggers/edit-trigger';
-import { buildIndicatorStreamVariables } from '@/app/(logic)/get-consolidated-series-new';
+import { buildIndicatorStreamVariables } from '@/logic/get-consolidated-series-new';
 import { IndicatorTag } from '@/logic/indicators/types';
 
 export function buildFullTriggerFunc({

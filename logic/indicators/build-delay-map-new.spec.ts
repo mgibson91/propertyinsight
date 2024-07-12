@@ -1,5 +1,5 @@
-import { buildDelayMapNew } from '@/app/(logic)/build-delay-map-new';
-import { ResolvedIndicator } from '@/app/(logic)/resolve-indicator';
+import { buildDelayMapNew } from '@/logic/indicators/build-delay-map-new';
+import { ResolvedIndicator } from '@/logic/indicators/resolve-indicator';
 
 const TEST_RESOLVED_INDICATORS: ResolvedIndicator[] = [
   {

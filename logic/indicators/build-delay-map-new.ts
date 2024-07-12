@@ -1,4 +1,4 @@
-import { ResolvedIndicator } from '@/app/(logic)/resolve-indicator';
+import { ResolvedIndicator } from '@/logic/indicators/resolve-indicator';
 import { IndicatorTag } from '@/logic/indicators/types';
 
 export function buildDelayMapNew(resolvedIndicators: ResolvedIndicator[]): Record<IndicatorTag, number> {

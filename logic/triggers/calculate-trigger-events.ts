@@ -1,8 +1,8 @@
 import { GenericData } from '@/app/(logic)/types';
-import { IndicatorStreamMetadata, prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
+import { IndicatorStreamMetadata, prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { Trigger, TriggerId } from '@/components/triggers/edit-trigger';
 import { UTCTimestamp } from 'lightweight-charts';
-import { buildTriggerFunc } from '@/app/(logic)/build-trigger-functions';
+import { buildTriggerFunc } from '@/logic/triggers/build-trigger-functions';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 
 const OPERATOR_LOOKBACK_MAP: Record<string, number> = {

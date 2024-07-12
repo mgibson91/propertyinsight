@@ -59,13 +59,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useDebounceCallback } from 'usehooks-ts';
 import dynamic from 'next/dynamic';
 import { StrategiesTab } from '@/app/dashboard/_components/strategies-tab';
-import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-new';
+import { getConsolidatedSeriesNew } from '@/logic/get-consolidated-series-new';
 import * as z from 'zod';
 import { Indicator, IndicatorSchema } from '@/logic/indicators/types';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
-import { calculateTriggerEvents } from '@/app/(logic)/calculate-trigger-events';
+import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
 
 // const IndicatorSchema = z.object({
 //   id: z.string(),
@@ -632,7 +632,7 @@ const App = () => {
       });
 
       // Convert trigger markers to chart
-      const newTriggerMarkers = Object.values(triggerEvents || {}).flatMap(time => {
+      const newTriggerMarkers: SeriesMarker<UTCTimestamp>[] = Object.values(triggerEvents || {}).flatMap(time => {
         return time.map(time => {
           return {
             time,
@@ -994,7 +994,7 @@ const App = () => {
         </div>
 
         <LightweightChart
-          ref={chartRef}
+          // ref={chartRef}
           userSeriesData={[]}
           indicatorData={userIndicatorData}
           candlestickData={candlestickData}

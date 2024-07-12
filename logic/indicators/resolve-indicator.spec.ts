@@ -1,5 +1,5 @@
 import { Indicator, IndicatorParamType } from '@/logic/indicators/types';
-import { ResolvedIndicator, resolveIndicator } from '@/app/(logic)/resolve-indicator';
+import { ResolvedIndicator, resolveIndicator } from '@/logic/indicators/resolve-indicator';
 
 const TEST_INDICATOR: Indicator = {
   tag: 'sma',

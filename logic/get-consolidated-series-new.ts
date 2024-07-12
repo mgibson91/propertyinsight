@@ -2,9 +2,9 @@ import { GenericData } from '@/app/(logic)/types';
 import { Indicator, IndicatorParam, IndicatorTag } from '@/logic/indicators/types';
 import { LineData, UTCTimestamp } from 'lightweight-charts';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
-import { ResolvedIndicator, resolveIndicator } from '@/app/(logic)/resolve-indicator';
+import { ResolvedIndicator, resolveIndicator } from '@/logic/indicators/resolve-indicator';
 import { resolveAllIndicatorStreamTags } from '@/app/(logic)/resolve-all-indicator-stream-tags';
-import { buildDelayMapNew } from '@/app/(logic)/build-delay-map-new';
+import { buildDelayMapNew } from '@/logic/indicators/build-delay-map-new';
 
 export interface IndicatorStreamData {
   indicator: Indicator;
@@ -20,7 +20,7 @@ export interface IndicatorStreamMetadata {
 export function getConsolidatedSeriesNew(input: {
   data: GenericData[];
   defaultFields: string[];
-  indicatorInputMap: Record<string, object>;
+  indicatorInputMap?: Record<string, object>;
   indicators: Omit<Indicator, 'streams' | 'overlay' | 'label'>[];
 }): {
   streams: IndicatorStreamMetadata[];
@@ -37,7 +37,7 @@ export function getConsolidatedSeriesNew(input: {
   const resolvedIndicators = indicators.map((indicator, index) => {
     return resolveIndicator({
       indicator,
-      inputs: indicatorInputMap[indicator.tag],
+      inputs: indicatorInputMap?.[indicator.tag] || {},
       allStreamTags,
     });
   });

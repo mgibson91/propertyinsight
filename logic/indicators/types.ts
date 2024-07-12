@@ -58,7 +58,7 @@ export const IndicatorSchema = z.object({
 });
 
 export type IndicatorTag = Brand<string, 'IndicatorTag'>;
-export type Indicator = z.infer<typeof IndicatorSchema>;
+export type Indicator = z.infer<typeof IndicatorSchema> & { tag: IndicatorTag };
 
 // // Represent everything either configured by or displayed to the user
 // export interface Indicator {

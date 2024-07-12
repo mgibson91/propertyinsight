@@ -17,7 +17,7 @@ import { Editor, BeforeMount } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
 import { PlusIcon, ReloadIcon, ResetIcon } from '@radix-ui/react-icons';
-import { prependSpreadFunctions } from '@/app/(logic)/get-consolidated-series-new';
+import { prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 
 const DEFAULT_INDICATOR_USER_FUNCTION = `function indicator() {
