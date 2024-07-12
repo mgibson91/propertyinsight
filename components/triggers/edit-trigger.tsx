@@ -4,6 +4,7 @@ import { Button, Card, Heading, IconButton, Popover, Select, TextFieldInput, Tex
 import { useEffect, useState } from 'react';
 import { ArrowDownIcon, Cross1Icon, Pencil1Icon, Pencil2Icon, PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { v4 as uuid } from 'uuid';
+import { Brand } from '@/utils/brand';
 
 // const DEFAULT_OPERATORS = [
 //   {
@@ -44,8 +45,10 @@ export interface TriggerCondition {
   fieldB: TriggerField;
 }
 
+export type TriggerId = Brand<string, 'TriggerId'>;
+
 export interface Trigger {
-  id: string;
+  id: TriggerId;
   name: string;
   enabled: boolean;
   conditions: TriggerCondition[];
@@ -173,7 +176,6 @@ export const EditTrigger = (props: {
 
       <div className={'flex flex-col'}>
         <Heading size={'4'}>Name</Heading>
-        <p>{JSON.stringify(conditions || {})}</p>
         <TextFieldInput value={name} onChange={e => setName(e.target.value)} />
       </div>
 
@@ -396,7 +398,7 @@ export const EditTrigger = (props: {
                 <div className={'flex flex-col gap-1 overflow-auto'}>
                   {conditions.map((condition, index) => {
                     return (
-                      <div className={'flex flex-row gap-2 items-center justify-between py-2'}>
+                      <div key={index} className={'flex flex-row gap-2 items-center justify-between py-2'}>
                         <p>{getConditionString(condition)}</p>
 
                         <div className={'flex flex-row items-center gap-3'}>
@@ -440,7 +442,7 @@ export const EditTrigger = (props: {
           disabled={conditions.length === 0 || !name}
           onClick={() => {
             saveTrigger({
-              id: trigger?.id || uuid(),
+              id: trigger?.id || (uuid() as TriggerId),
               name,
               conditions,
               enabled: trigger?.enabled == null ? true : trigger.enabled,

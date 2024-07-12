@@ -7,7 +7,9 @@
     "start": "next start",
     "gen-types:local": "DATABASE_URL=postgres://postgres:postgres@localhost:54322/postgres kysely-codegen --out-file=repository/kysely-types.ts",
     "test-int": "NODE_ENV=test jest --config jest.integration.config.ts",
-    "recreate-db": "supabase db reset && node test/create-roadmap.js"
+    "recreate-db": "supabase db reset && node test/create-roadmap.js",
+    "postinstall": "husky install",
+    "prepare": "husky"
   },
   "dependencies": {
     "@babel/parser": "^7.24.0",
@@ -71,6 +73,7 @@
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "husky": "^9.0.11",
     "kysely-codegen": "^0.11.0",
     "prettier": "^3.1.1",
     "ts-jest": "^29.1.1",

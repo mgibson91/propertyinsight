@@ -7,13 +7,14 @@
  */
 import { Trigger, TriggerCondition } from '@/components/triggers/edit-trigger';
 import { buildIndicatorStreamVariables } from '@/app/(logic)/get-consolidated-series-new';
+import { IndicatorTag } from '@/logic/indicators/types';
 
 export function buildFullTriggerFunc({
   triggerFuncStr,
   existingIndicatorMetadata,
 }: {
   triggerFuncStr: string;
-  existingIndicatorMetadata: { streamTag: string; indicatorTag: string }[];
+  existingIndicatorMetadata: { streamTag: string; indicatorTag: IndicatorTag }[];
 }): string {
   let adjustedFunc = `
 const inputData = data.data;
@@ -37,18 +38,30 @@ return trigger(a, b);
   return adjustedFunc;
 }
 
-// export function buildTriggerFunc(trigger: Trigger): string {
-//   const components = buildFunctionComponents(trigger);
-//
-//   const declarations = components.funcStrs.join('\n  ');
-//   const logic = `return(${components.names.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
-//
-//   const funcStr = `const trigger = (a, b) => {
-//   ${declarations}
-//   ${logic}
-// }`;
-//   return funcStr;
-// }
+export function buildTriggerFunc({
+  trigger,
+  delayMap,
+}: {
+  trigger: Trigger;
+  delayMap: Record<IndicatorTag, number>;
+}): string {
+  const components = buildFunctionComponents(trigger);
+
+  const declarations = components.inputDeclarations.join('\n');
+
+  // const logic = `return(${components.funcStrs.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
+  // const logic = `return(${components.funcStrs.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
+  const logic = `return(${components.funcStrs.map((_, i) => `condition${i}(a${i}, b${i})`).join(' &&\n  ')});`;
+
+  const funcStr = `const trigger = () => {
+${declarations}
+
+${components.funcStrs.join('\n')}
+
+${logic}
+}`;
+  return funcStr;
+}
 
 export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: string[]; funcStrs: string[] } {
   const result: { inputDeclarations: string[]; funcStrs: string[] } = {
@@ -71,10 +84,10 @@ export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: 
 
     // TODO: Support if property === 'value', then fixed
     result.inputDeclarations.push(
-      `const ${fieldAName} = index => data[index].${condition.fieldA.property}.slice(${condition.fieldA.offset});`
+      `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
     result.inputDeclarations.push(
-      `const ${fieldBName} = index => data[index].${condition.fieldB.property}.slice(${condition.fieldB.offset});`
+      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property};`
     );
 
     // TODO: Factor in index here and also return unique condition variable accessor functions
@@ -105,8 +118,29 @@ function buildConditionFuncStr({
   let funcStr = `const ${funcName} = (${fieldA}, ${fieldB}) => {
 `;
 
-  if (condition.operator === 'crossover') {
-    funcStr += `  return ${fieldA}[0] > ${fieldB}[0] && ((${fieldA}[1] < ${fieldB}[1]) || (${fieldA}[1] === ${fieldB}[1] && ${fieldA}[2] < ${fieldB}[2]));`;
+  switch (condition.operator) {
+    case 'crossunder':
+      funcStr += `  return ${fieldA}(0) < ${fieldB}(0) && ((${fieldA}(1) > ${fieldB}(1)) || (${fieldA}(1) === ${fieldB}(1) && ${fieldA}(2) > ${fieldB}(2)));`;
+      break;
+    case 'crossover':
+      funcStr += `  return ${fieldA}(0) > ${fieldB}(0) && ((${fieldA}(1) < ${fieldB}(1)) || (${fieldA}(1) === ${fieldB}(1) && ${fieldA}(2) < ${fieldB}(2)));`;
+      break;
+
+    case '>':
+      funcStr += `  return ${fieldA}(0) > ${fieldB}(0);`;
+      break;
+    case '<':
+      funcStr += `  return ${fieldA}(0) < ${fieldB}(0);`;
+      break;
+    case '>=':
+      funcStr += `  return ${fieldA}(0) >= ${fieldB}(0);`;
+      break;
+    case '<=':
+      funcStr += `  return ${fieldA}(0) <= ${fieldB}(0);`;
+      break;
+    case '==':
+      funcStr += `  return ${fieldA}(0) === ${fieldB}(0);`;
+      break;
   }
 
   funcStr += `

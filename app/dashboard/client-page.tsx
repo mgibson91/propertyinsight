@@ -65,6 +65,7 @@ import { Indicator, IndicatorSchema } from '@/logic/indicators/types';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
+import { calculateTriggerEvents } from '@/app/(logic)/calculate-trigger-events';
 
 // const IndicatorSchema = z.object({
 //   id: z.string(),
@@ -548,7 +549,7 @@ const App = () => {
 
   useEffect(() => {
     handleFetchClick();
-  }, [ticker, timeframe, startDate, endDate, userSeries, userTriggers, userOutcome, userIndicators]);
+  }, [ticker, timeframe, startDate, endDate, userSeries, triggers, userOutcome, userIndicators]);
 
   const handleFetchClick = async () => {
     setLoading(true);
@@ -603,7 +604,7 @@ const App = () => {
       // Ignoring <defaultFields> and 'time', create an array of LineData for each indicator
       for (const indicator of userIndicators) {
         for (const stream of indicator.streams) {
-          const indicatorData = consolidatedSeries
+          const indicatorData = consolidatedSeries.data
             .map(data => {
               return {
                 time: data.time,
@@ -622,6 +623,29 @@ const App = () => {
       }
 
       setUserIndicatorData(localIndicatorData);
+
+      const triggerEvents = calculateTriggerEvents({
+        data: consolidatedSeries.data,
+        triggers,
+        delayMap: consolidatedSeries.delayMap,
+        streams: consolidatedSeries.streams,
+      });
+
+      // Convert trigger markers to chart
+      const newTriggerMarkers = Object.values(triggerEvents || {}).flatMap(time => {
+        return time.map(time => {
+          return {
+            time,
+            text: '',
+            position: 'belowBar',
+            color: displayMode.mode === 'dark' ? '#BDE56C' : '#5C7C2F',
+            shape: 'arrowUp',
+            size: 3,
+          };
+        });
+      });
+
+      setTriggerMarkers(newTriggerMarkers);
 
       //
       // /**

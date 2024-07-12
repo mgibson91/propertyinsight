@@ -1,6 +1,6 @@
 import { MatchingSnapshot } from '@/app/matching-snapshot-provider';
-import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 import { UserSeriesData } from '@/app/(logic)/types';
+import { getConsolidatedSeriesNew } from '@/app/(logic)/get-consolidated-series-new';
 
 export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedingCount: number) {
   const consolidatedSnapshotEntries: {
@@ -14,9 +14,12 @@ export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedi
       return;
     }
 
-    const consolidatedSeries = getConsolidatedSeries(matchingSnapshot.candlestickData, matchingSnapshot.userSeriesData);
+    const consolidatedSeries = getConsolidatedSeriesNew(
+      matchingSnapshot.candlestickData,
+      matchingSnapshot.userSeriesData
+    );
 
-    Object.keys(consolidatedSeries[0]).map(key => keys.add(key));
+    Object.keys(consolidatedSeries.data[consolidatedSeries.data.length - 1]).map(key => keys.add(key));
     keys.delete('time');
 
     consolidatedSnapshotEntries.push({
@@ -51,10 +54,10 @@ export function prepareCsvContent(matchingSnapshots: MatchingSnapshot[], precedi
       };
     });
 
-    const consolidatedPrecedingData = getConsolidatedSeries(precedingCandlestickData, precedingUserSeriesData);
-    const reversed = [...consolidatedPrecedingData].reverse();
+    const consolidatedPrecedingData = getConsolidatedSeriesNew(precedingCandlestickData, precedingUserSeriesData);
+    const reversed = [...consolidatedPrecedingData.data].reverse();
 
-    const result = {};
+    const result: any = {}; // TODO: Tighten up types
 
     // Loop through reversed data and return a single row for preceding count in the format [{ open_1, open_2, open_3 }, .etc ] - dont include 0
     for (let i = 0; i < precedingCount; i++) {

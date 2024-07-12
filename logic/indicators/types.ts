@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { Brand } from '@/utils/brand';
 
 export enum IndicatorType {
   SIMPLE_MOVING_AVERAGE = 'simple-moving-average',
@@ -56,6 +57,7 @@ export const IndicatorSchema = z.object({
   ),
 });
 
+export type IndicatorTag = Brand<string, 'IndicatorTag'>;
 export type Indicator = z.infer<typeof IndicatorSchema>;
 
 // // Represent everything either configured by or displayed to the user

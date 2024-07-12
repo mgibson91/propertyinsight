@@ -1,5 +1,5 @@
 import { GenericData } from '@/app/(logic)/types';
-import { Indicator, IndicatorParam } from '@/logic/indicators/types';
+import { Indicator, IndicatorParam, IndicatorTag } from '@/logic/indicators/types';
 import { LineData, UTCTimestamp } from 'lightweight-charts';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { ResolvedIndicator, resolveIndicator } from '@/app/(logic)/resolve-indicator';
@@ -14,7 +14,7 @@ export interface IndicatorStreamData {
 
 export interface IndicatorStreamMetadata {
   streamTag: string;
-  indicatorTag: string;
+  indicatorTag: IndicatorTag;
 }
 
 export function getConsolidatedSeriesNew(input: {
@@ -22,7 +22,12 @@ export function getConsolidatedSeriesNew(input: {
   defaultFields: string[];
   indicatorInputMap: Record<string, object>;
   indicators: Omit<Indicator, 'streams' | 'overlay' | 'label'>[];
-}): GenericData[] {
+}): {
+  streams: IndicatorStreamMetadata[];
+  data: GenericData[];
+  delayMap: Record<string, number>;
+  defaultFields: string[];
+} {
   const { data, defaultFields, indicators, indicatorInputMap } = input;
 
   // Step 1: Resolve all stream tags so we can determine calculator order
@@ -60,13 +65,13 @@ export function getConsolidatedSeriesNew(input: {
   }
 
   // Step 5: Calculate indicator data for each given their 'offset' and 'length'
-  const indicatorAugmentedData = augmentDataWithIndicatorStreams({
+  const { streams, data: indicatorAugmentedData } = augmentDataWithIndicatorStreams({
     data: consolidatedSeries,
     delayMap,
     resolvedIndicators,
   });
 
-  return indicatorAugmentedData;
+  return { data: indicatorAugmentedData, streams, defaultFields, delayMap };
 }
 
 function augmentDataWithIndicatorStreams({
@@ -77,7 +82,7 @@ function augmentDataWithIndicatorStreams({
   data: GenericData[];
   delayMap: Record<string, number>;
   resolvedIndicators: ResolvedIndicator[];
-}): GenericData[] {
+}): { streams: IndicatorStreamMetadata[]; data: GenericData[] } {
   const augmentedData = [...data];
 
   const existingIndicatorMetadata: IndicatorStreamMetadata[] = [];
@@ -94,7 +99,10 @@ function augmentDataWithIndicatorStreams({
     const offset = delayMap[resolvedIndicator.tag] || 0;
 
     const evaluatedFunc = prependSpreadFunctions({
-      funcString: prefixBuiltInFunctions(resolvedIndicator.funcStr),
+      funcString: `${prefixBuiltInFunctions(resolvedIndicator.funcStr)}
+
+// Call the user provided function
+return indicator();`,
       existingIndicatorMetadata,
     });
 
@@ -123,7 +131,10 @@ function augmentDataWithIndicatorStreams({
     });
   }
 
-  return augmentedData;
+  return {
+    streams: existingIndicatorMetadata,
+    data: augmentedData,
+  };
 }
 
 export function prependSpreadFunctions({
@@ -131,7 +142,7 @@ export function prependSpreadFunctions({
   existingIndicatorMetadata,
 }: {
   funcString: string;
-  existingIndicatorMetadata: { streamTag: string; indicatorTag: string }[];
+  existingIndicatorMetadata: { streamTag: string; indicatorTag: IndicatorTag }[];
 }): string {
   let adjustedFunc = `
 const inputData = data.data;
@@ -144,9 +155,6 @@ ${buildIndicatorStreamVariables(existingIndicatorMetadata)}
 
 //--- USER DEFINED - must have indicator() ---
 ${funcString}
-
-// Call the user provided function
-return indicator(); 
 `;
 
   return adjustedFunc;

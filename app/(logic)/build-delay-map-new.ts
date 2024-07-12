@@ -1,7 +1,8 @@
 import { ResolvedIndicator } from '@/app/(logic)/resolve-indicator';
+import { IndicatorTag } from '@/logic/indicators/types';
 
-export function buildDelayMapNew(resolvedIndicators: ResolvedIndicator[]): Record<string, number> {
-  const delayMap: Record<string, number> = {};
+export function buildDelayMapNew(resolvedIndicators: ResolvedIndicator[]): Record<IndicatorTag, number> {
+  const delayMap: Record<IndicatorTag, number> = {};
 
   // Iterate through resolved indicators
   resolvedIndicators.forEach(indicator => {

@@ -79,7 +79,7 @@ return smaData;`;
 
     const seriesData = func(INITIAL_SERIES);
 
-    console.log(seriesData);
+    expect(seriesData).toBeDefined();
   });
 });
 
@@ -111,6 +111,6 @@ describe.only('calc', () => {
   test('all', () => {
     const seriesData = calculate(INITIAL_SERIES);
 
-    console.log(seriesData);
+    expect(seriesData).toBeDefined();
   });
 });

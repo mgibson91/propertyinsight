@@ -1,11 +1,11 @@
-import { Indicator, IndicatorParam, IndicatorParamType } from '@/logic/indicators/types';
+import { Indicator, IndicatorParam, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { findUsedVariablesInCode } from '@/app/(logic)/find-used-variables-in-code';
 
 export interface ResolvedIndicator {
-  tag: string;
+  tag: IndicatorTag;
   length: number;
   funcStr: string; // Must be substituted with params
-  dependsOnIndicatorTags: string[]; // e.g. ['sma_20_value'] - no need to specify 'close' as it's always present
+  dependsOnIndicatorTags: IndicatorTag[]; // e.g. ['sma_20'] - no need to specify 'close' as it's always present
   outputStreamTags: string[]; // e.g. ['top_band', 'bottom_band'] referenced as ['bollinger_bands_top_band', 'bollinger_bands_bottom_band']
 }
 
@@ -47,11 +47,11 @@ export function resolveIndicator({
   });
 
   // Map dependsOnStreamTags to indicator tags
-  const dependsOnIndicatorTags = new Set<string>();
+  const dependsOnIndicatorTags = new Set<IndicatorTag>();
   for (const streamTag of dependsOnStreamTags) {
     const indicatorTag = allStreamTags.find(({ streamTag: tag }) => tag === streamTag)?.indicatorTag;
     if (indicatorTag) {
-      dependsOnIndicatorTags.add(indicatorTag);
+      dependsOnIndicatorTags.add(indicatorTag as IndicatorTag);
     }
   }
 
@@ -65,7 +65,7 @@ export function resolveIndicator({
   }
 
   return {
-    tag: indicator.tag, // Purpose for this?
+    tag: indicator.tag as IndicatorTag, // Purpose for this?
     length,
     funcStr: substitutedFuncStr,
     dependsOnIndicatorTags: Array.from(dependsOnIndicatorTags),
@@ -86,7 +86,7 @@ function substituteIndicatorParams({
 
   // Perform substitutions for each parameter in the user's function string
   for (const param of params) {
-    funcString = funcString.replaceAll(`$$${param.name}`, `${inputs[param.name] ?? param.defaultValue}` || '');
+    funcString = funcString.replaceAll(`$$${param.name}`, `${inputs?.[param.name] ?? param.defaultValue}` || '');
   }
 
   return funcString;
