@@ -5,6 +5,7 @@ import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/
 import { ResolvedIndicator, resolveIndicator } from '@/logic/indicators/resolve-indicator';
 import { resolveAllIndicatorStreamTags } from '@/app/(logic)/resolve-all-indicator-stream-tags';
 import { buildDelayMapNew } from '@/logic/indicators/build-delay-map-new';
+import { determineExecutionOrder } from '@/logic/indicators/determine-indicator-order';
 
 export interface IndicatorStreamData {
   indicator: Indicator;
@@ -87,14 +88,16 @@ function augmentDataWithIndicatorStreams({
 
   const existingIndicatorMetadata: IndicatorStreamMetadata[] = [];
 
+  const order = determineExecutionOrder({ indicators: resolvedIndicators });
+
   // Step 5: Calculate indicator data for each given their 'offset' and 'length'
-  for (const resolvedIndicator of resolvedIndicators) {
-    /**
-     * Get offset
-     * Create function from resolvedIndicator.funcStr
-     * From offset -> end pass batch to function
-     * Add result to data (for each output stream)
-     */
+  for (const indicatorTag of order) {
+    const resolvedIndicator = resolvedIndicators.find(indicator => indicator.tag === indicatorTag);
+
+    if (!resolvedIndicator) {
+      console.error(`Indicator ${indicatorTag} not found in resolvedIndicators`);
+      continue;
+    }
 
     const offset = delayMap[resolvedIndicator.tag] || 0;
 
@@ -112,7 +115,8 @@ return indicator();`,
     let cache = {};
 
     for (let i = offset; i < augmentedData.length; i++) {
-      const batch = augmentedData.slice(i - resolvedIndicator.length, i);
+      const batch =
+        resolvedIndicator.length === 0 ? [augmentedData[i]] : augmentedData.slice(i - resolvedIndicator.length, i);
 
       // TODO: Add inputs here
       // indicatorFunc({ data: batch }, cache);
@@ -130,6 +134,18 @@ return indicator();`,
       });
     });
   }
+
+  // // Step 5: Calculate indicator data for each given their 'offset' and 'length'
+  // for (const resolvedIndicator of resolvedIndicators) {
+  //   /**
+  //    * Get offset
+  //    * Create function from resolvedIndicator.funcStr
+  //    * From offset -> end pass batch to function
+  //    * Add result to data (for each output stream)
+  //    */
+  //
+  //
+  // }
 
   return {
     streams: existingIndicatorMetadata,

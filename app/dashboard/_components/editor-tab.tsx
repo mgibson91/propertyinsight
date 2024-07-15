@@ -203,7 +203,10 @@ export const EditorTab = ({
               onSaveToChartClicked({
                 funcStr,
                 label,
-                params,
+                params: params.map(param => ({
+                  ...param,
+                  name: param.name.toLowerCase(),
+                })),
                 // TODO
                 tag,
                 streams: keys.map(key => ({
@@ -230,7 +233,10 @@ export const EditorTab = ({
               onSaveToChartClicked({
                 funcStr,
                 label,
-                params,
+                params: params.map(param => ({
+                  ...param,
+                  name: param.name.toLowerCase(),
+                })),
                 // TODO
                 tag,
                 streams: keys.map(key => ({

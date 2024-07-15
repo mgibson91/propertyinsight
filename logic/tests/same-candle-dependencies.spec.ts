@@ -1,9 +1,7 @@
-import { Indicator, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
+import { Indicator, IndicatorTag } from '@/logic/indicators/types';
 import { OhlcData, UTCTimestamp } from 'lightweight-charts';
 import { GenericData } from '@/app/(logic)/types';
 import { getConsolidatedSeriesNew } from '../get-consolidated-series-new';
-import { TriggerId } from '@/components/triggers/edit-trigger';
-import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
 
 const INCREMENTING_CANDLE_DATA = new Array(2).fill(10).map(
   (val, i) =>

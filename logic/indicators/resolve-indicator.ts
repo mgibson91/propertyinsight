@@ -55,7 +55,7 @@ export function resolveIndicator({
     }
   }
 
-  let length = 20;
+  let length = 0;
   if (inputs?.length) {
     length = Number(inputs.length);
   } else {
