@@ -5,52 +5,14 @@
  *    - For now, expect trigger code to only operate on valid data (if (close[0])
  * 4. Look at dynamically detecting function length
  */
-import { Trigger, TriggerCondition } from '@/components/triggers/edit-trigger';
-import { buildIndicatorStreamVariables } from '@/logic/get-consolidated-series-new';
-import { IndicatorTag } from '@/logic/indicators/types';
+import { Trigger } from '@/components/triggers/edit-trigger';
+import { buildConditionFuncStr } from '@/logic/conditions/build-condition-func-str';
 
-export function buildFullTriggerFunc({
-  triggerFuncStr,
-  existingIndicatorMetadata,
-}: {
-  triggerFuncStr: string;
-  existingIndicatorMetadata: { streamTag: string; indicatorTag: IndicatorTag }[];
-}): string {
-  let adjustedFunc = `
-const inputData = data.data;
-const open = inputData.map(d => d.open);
-const high = inputData.map(d => d.high);
-const low = inputData.map(d => d.low);
-const close = inputData.map(d => d.close);
-
-${buildIndicatorStreamVariables(existingIndicatorMetadata)}
-
-// TODO: Add trigger variable selection
-const a =
-
-//--- USER DEFINED - must have trigger() ---
-${triggerFuncStr}
-
-// Call the user provided function
-return trigger(a, b); 
-`;
-
-  return adjustedFunc;
-}
-
-export function buildTriggerFunc({
-  trigger,
-  delayMap,
-}: {
-  trigger: Trigger;
-  delayMap: Record<IndicatorTag, number>;
-}): string {
+export function buildTriggerFunc({ trigger }: { trigger: Trigger }): string {
   const components = buildFunctionComponents(trigger);
 
   const declarations = components.inputDeclarations.join('\n');
 
-  // const logic = `return(${components.funcStrs.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
-  // const logic = `return(${components.funcStrs.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
   const logic = `return(${components.funcStrs.map((_, i) => `condition${i}(a${i}, b${i})`).join(' &&\n  ')});`;
 
   const funcStr = `const trigger = () => {
@@ -70,13 +32,6 @@ export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: 
   };
 
   for (let i = 0; i < trigger.conditions.length; i++) {
-    // `return(${components.names.map(name => `${name}(a, b)`).join(' &&\n    ')});`;
-    /**
-     * Return condition1(a1,b1) & const a1 = close.slice(0); b1 = close.slice(1);
-     *
-     *
-     */
-
     const condition = trigger.conditions[i];
 
     const fieldAName = `a${i}`;
@@ -102,50 +57,4 @@ export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: 
   }
 
   return result;
-}
-
-function buildConditionFuncStr({
-  fieldA,
-  fieldB,
-  funcName,
-  condition,
-}: {
-  fieldA: string;
-  fieldB: string;
-  funcName: string;
-  condition: TriggerCondition;
-}): string {
-  let funcStr = `const ${funcName} = (${fieldA}, ${fieldB}) => {
-`;
-
-  switch (condition.operator) {
-    case 'crossunder':
-      funcStr += `  return ${fieldA}(0) < ${fieldB}(0) && ((${fieldA}(1) > ${fieldB}(1)) || (${fieldA}(1) === ${fieldB}(1) && ${fieldA}(2) > ${fieldB}(2)));`;
-      break;
-    case 'crossover':
-      funcStr += `  return ${fieldA}(0) > ${fieldB}(0) && ((${fieldA}(1) < ${fieldB}(1)) || (${fieldA}(1) === ${fieldB}(1) && ${fieldA}(2) < ${fieldB}(2)));`;
-      break;
-
-    case '>':
-      funcStr += `  return ${fieldA}(0) > ${fieldB}(0);`;
-      break;
-    case '<':
-      funcStr += `  return ${fieldA}(0) < ${fieldB}(0);`;
-      break;
-    case '>=':
-      funcStr += `  return ${fieldA}(0) >= ${fieldB}(0);`;
-      break;
-    case '<=':
-      funcStr += `  return ${fieldA}(0) <= ${fieldB}(0);`;
-      break;
-    case '==':
-      funcStr += `  return ${fieldA}(0) === ${fieldB}(0);`;
-      break;
-  }
-
-  funcStr += `
-}`;
-
-  // TODO: Add support for user defined functions
-  return funcStr;
 }

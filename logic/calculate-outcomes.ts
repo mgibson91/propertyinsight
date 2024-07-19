@@ -101,12 +101,12 @@ export function calculateOutcome(input: {
         type: result,
         trigger: {
           time: triggerTime,
-          offset: triggerOffset,
+          offsetBetweenTriggerAndOutcome: triggerOffset,
           value: triggerValue,
         },
         outcome: {
           time: outcomeTime,
-          offset: i - 1,
+          offsetBetweenTriggerAndOutcome: i - 1,
           value: outcomeValue,
         },
       };

@@ -13,7 +13,7 @@
 // import { UserSeriesDialog } from '@/components/UserSeriesDialog';
 // import { UserTriggerDialog } from '@/components/UserTriggerDialog';
 // import { UserOutcomeDialog } from '@/components/UserOutcomeDialog';
-// import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+// import { useDisplaySnapshot } from '@/app/display-snapshot-provider';
 // import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 // // import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 // import { UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
@@ -193,7 +193,7 @@
 //   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
 //   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
 //
-//   const [markerSnapshots, setMarkerSnapshots] = useMatchingSnapshot();
+//   const [markerSnapshots, setMarkerSnapshots] = useDisplaySnapshot();
 //
 //   const [displayMode] = useDisplayMode();
 //
@@ -657,28 +657,30 @@
 //             {error && <div>Error fetching data: {error}</div>}
 //           </div>
 //
-//           {outcomeSummary && (
-//             <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>
-//               <div className={'flex flex-col'}>
-//                 <div className={'flex flex-row'}>
-//                   <span className={'font-bold w-20'}>Wins:&nbsp;</span>
-//                   <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>
-//                 </div>
+// {
+//   outcomeSummary && (
+//     <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>
+//       <div className={'flex flex-col'}>
+//         <div className={'flex flex-row'}>
+//           <span className={'font-bold w-20'}>Wins:&nbsp;</span>
+//           <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>
+//         </div>
 //
-//                 <div className={'flex flex-row'}>
-//                   <span className={'font-bold w-20'}>Losses:&nbsp;</span>
-//                   <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>
-//                 </div>
+//         <div className={'flex flex-row'}>
+//           <span className={'font-bold w-20'}>Losses:&nbsp;</span>
+//           <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>
+//         </div>
 //
-//                 <div className={'flex flex-row'}>
-//                   <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>
-//                   <span className={'text-[var(--slate-11)] font-bold'}>
-//                     {isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%
-//                   </span>
-//                 </div>
-//               </div>
-//             </Card>
-//           )}
+//         <div className={'flex flex-row'}>
+//           <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>
+//           <span className={'text-[var(--slate-11)] font-bold'}>
+//             {isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%
+//           </span>
+//         </div>
+//       </div>
+//     </Card>
+//   );
+// }
 //         </div>
 //
 //         <div className={'flex flex-row w-[100%] flex-auto gap-5 p-5'}>

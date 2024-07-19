@@ -1,36 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { LightweightChart } from './LightweightChart';
 import { CandlestickData, LineData, SeriesMarker, Time } from 'lightweight-charts';
+import { DisplaySnapshot } from '@/logic/snapshots/build-display-snapshot';
 
 export function BacktestChart({
   autoplay = false,
   candlesPerSecond = 1,
-  candlestickData,
-  userSeriesData,
-  conditionMarker,
-  outcome,
+  displaySnapshot,
   futureValueCount,
   minDatapointsRequiredForAllSeries,
   color,
 }: {
   autoplay: boolean;
   candlesPerSecond?: number;
-  candlestickData: CandlestickData<Time>[];
-  userSeriesData: {
-    overlay: boolean;
-    color: string;
-    lineWidth: 1 | 2 | 3 | 4;
-    data: LineData<Time>[];
-  }[];
-  conditionMarker: SeriesMarker<Time>;
-  outcome?: {
-    outcomeDetails: {
-      offset: number;
-      value: number;
-      text: string;
-    };
-    marker: SeriesMarker<Time>;
-  };
+  displaySnapshot: DisplaySnapshot;
   futureValueCount: number;
   updateIntervalMs?: number;
   minDatapointsRequiredForAllSeries: number;
@@ -59,13 +42,13 @@ export function BacktestChart({
     if (autoplay) {
       // Setup the interval
       intervalRef.current = setInterval(() => {
-        console.log('Interval running', positionRef.current, futureValueCount);
-        if (positionRef.current >= futureValueCount) {
+        console.log('Interval running', positionRef.current, displaySnapshot.candlestickData.length - 1);
+        if (positionRef.current >= displaySnapshot.candlestickData.length - 1) {
           clearExistingInterval();
         } else {
           // Update position using the ref's current value
           const newPosition = positionRef.current + 1;
-          if (newPosition < futureValueCount) {
+          if (newPosition < displaySnapshot.candlestickData.length - 1) {
             positionRef.current = newPosition;
           } else {
             // Clear interval if the futureValueCount is reached
@@ -91,7 +74,23 @@ export function BacktestChart({
     // For example: positionRef.current = 0;
     positionRef.current = 0;
     setRenderKey(0);
-  }, [candlestickData, userSeriesData, conditionMarker]);
+  }, [displaySnapshot]);
+
+  const candlestickChartData = displaySnapshot.candlestickData.slice(
+    0,
+    minDatapointsRequiredForAllSeries + positionRef.current + 1
+  );
+
+  const latestTime = candlestickChartData[candlestickChartData.length - 1].time;
+
+  const userSeriesChartData = displaySnapshot.userSeriesData.map(series => {
+    const latestIndex = series.data.findIndex(data => data.time === latestTime);
+    const data = series.data.slice(0, latestIndex + 1);
+    return {
+      ...series,
+      data,
+    };
+  });
 
   return (
     <LightweightChart
@@ -99,15 +98,15 @@ export function BacktestChart({
       visibleRange={200}
       futureValues={100}
       indicatorData={[]}
-      userSeriesData={userSeriesData.map(series => ({
-        ...series,
-        data: series.data.slice(0, minDatapointsRequiredForAllSeries + positionRef.current),
-      }))}
-      candlestickData={candlestickData.slice(0, minDatapointsRequiredForAllSeries + positionRef.current)}
+      userSeriesData={userSeriesChartData}
+      candlestickData={candlestickChartData}
       // seriesMarkers={[conditionMarker, ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : [])]}
       seriesMarkers={[
-        conditionMarker,
-        ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : []),
+        displaySnapshot.conditionMarker,
+        // outcomeMarker,
+        // outcome.marker,
+        // ...(outcome?.outcomeDetails && positionRef.current >= outcome.outcomeDetails.offset ? [outcome.marker] : []),
+        ...(positionRef.current >= displaySnapshot.outcomeOffset - 1 ? [displaySnapshot.outcomeMarker] : []),
       ]}
       // seriesMarkers={[conditionMarker, ...(outcome?.outcomeDetails ? [outcome.marker] : [])]}
       color={color}

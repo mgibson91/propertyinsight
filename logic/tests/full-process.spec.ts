@@ -1,9 +1,11 @@
-import { Indicator, IndicatorParamType } from '@/logic/indicators/types';
+import { Indicator, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { OhlcData, UTCTimestamp } from 'lightweight-charts';
 import { GenericData } from '@/app/(logic)/types';
 import { getConsolidatedSeriesNew } from '../get-consolidated-series-new';
 import { TriggerId } from '@/components/triggers/edit-trigger';
 import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
+import { calculateOutcomeEvents } from '@/logic/outcomes/calculate-outcome-events';
+import { OutcomeId } from '@/logic/outcomes/types';
 
 const INCREMENTING_CANDLE_DATA = new Array(20).fill(10).map(
   (val, i) =>
@@ -19,7 +21,7 @@ const INCREMENTING_CANDLE_DATA = new Array(20).fill(10).map(
 const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
   {
     id: '1',
-    tag: 'sma',
+    tag: 'sma' as IndicatorTag,
     funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);
   
@@ -52,9 +54,31 @@ const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
   },
   {
     id: '1a',
-    tag: 'steep',
+    tag: 'steep' as IndicatorTag,
     funcStr: `function indicator() {
-  cache.level = cache.level != null ? cache.level + 2 : -5; // start -5 to intercept test data
+  cache.level = cache.level != null ? cache.level + 2 : -2; // start -5 to intercept test data
+
+  return {
+    level: cache.level,
+  };
+}`,
+    properties: ['level'],
+    params: [
+      {
+        name: 'length',
+        type: IndicatorParamType.NUMBER,
+        label: 'Length',
+        required: true,
+        defaultValue: 1,
+        value: 1,
+      },
+    ],
+  },
+  {
+    id: '1b',
+    tag: 'super_steep' as IndicatorTag,
+    funcStr: `function indicator() {
+  cache.level = cache.level != null ? cache.level + 3 : -23;
 
   return {
     level: cache.level,
@@ -74,7 +98,7 @@ const TEST_INDICATORS: Omit<Indicator, 'streams' | 'overlay' | 'label'>[] = [
   },
   {
     id: '2',
-    tag: 'channel',
+    tag: 'channel' as IndicatorTag,
     funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);
   return {
@@ -135,12 +159,12 @@ describe('full process', () => {
             {
               fieldA: {
                 property: 'steep_level',
-                offset: 0,
+                offsetBetweenTriggerAndOutcome: 0,
               },
               operator: 'crossover',
               fieldB: {
                 property: 'sma_value',
-                offset: 0,
+                offsetBetweenTriggerAndOutcome: 0,
               },
             },
           ],
@@ -149,5 +173,34 @@ describe('full process', () => {
       ],
     });
     expect(Object.keys(triggerEvents)).toEqual(['1']);
+
+    const outcomes = calculateOutcomeEvents({
+      data,
+      streams,
+      triggerEvents,
+      outcomeConfigs: [
+        {
+          id: '1' as OutcomeId,
+          name: 'Test Outcome',
+          enabled: true,
+          successConditions: [
+            {
+              fieldA: {
+                property: 'super_steep_level',
+                offsetBetweenTriggerAndOutcome: 0,
+              },
+              operator: 'crossover',
+              fieldB: {
+                property: 'sma_value',
+                offsetBetweenTriggerAndOutcome: 0,
+              },
+            },
+          ],
+          failureConditions: [],
+        },
+      ],
+    });
+
+    expect(Object.keys(outcomes)).toHaveLength(1);
   });
 });

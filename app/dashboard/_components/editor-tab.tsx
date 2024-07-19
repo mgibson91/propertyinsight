@@ -10,7 +10,7 @@ import {
   Tabs,
   TextFieldInput,
 } from '@radix-ui/themes';
-import { Indicator, IndicatorParam, IndicatorParamType } from '@/logic/indicators/types';
+import { Indicator, IndicatorParam, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
 import { Editor, BeforeMount } from '@monaco-editor/react';
@@ -19,6 +19,8 @@ import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indica
 import { PlusIcon, ReloadIcon, ResetIcon } from '@radix-ui/react-icons';
 import { prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
+import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
+import { DARK_COLOR_LIST_10, LIGHT_COLOR_LIST_10, pickRandom } from '@/shared/color-lists';
 
 const DEFAULT_INDICATOR_USER_FUNCTION = `function indicator() {
   // Replace this example
@@ -58,6 +60,8 @@ export const EditorTab = ({
 
   const [functionStartValid, setFunctionValid] = useState(false);
 
+  const [{ mode: displayMode }] = useDisplayMode();
+
   useEffect(() => {
     if (!indicator) {
       return;
@@ -96,7 +100,6 @@ export const EditorTab = ({
       `
       ${prependSpreadFunctions({
         funcString: prefixBuiltInFunctions(indicator ? indicator.funcStr : ''),
-        params: indicator?.params || [],
         existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
           indicator.streams.map(stream => ({
             streamTag: stream.tag,
@@ -238,11 +241,12 @@ export const EditorTab = ({
                   name: param.name.toLowerCase(),
                 })),
                 // TODO
-                tag,
+                tag: tag as IndicatorTag,
                 streams: keys.map(key => ({
                   tag: key,
                   overlay: true,
-                  color: 'white',
+                  // Random color selected from lists
+                  color: displayMode === 'dark' ? pickRandom(DARK_COLOR_LIST_10) : pickRandom(LIGHT_COLOR_LIST_10),
                   lineWidth: 1,
                 })),
                 properties: keys,

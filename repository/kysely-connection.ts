@@ -1,6 +1,6 @@
-import { Pool } from "pg";
-import { Kysely, PostgresDialect } from "kysely";
-import { DB } from "@/repository/kysely-types";
+import { Pool } from 'pg';
+import { Kysely, PostgresDialect } from 'kysely';
+import { DB } from './kysely-types';
 
 const dialect = new PostgresDialect({
   pool: new Pool({
@@ -8,7 +8,7 @@ const dialect = new PostgresDialect({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || "5432"),
+    port: parseInt(process.env.DB_PORT || '5432'),
     max: 10,
   }),
 });

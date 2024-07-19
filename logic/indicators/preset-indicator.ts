@@ -1,11 +1,12 @@
-import { Indicator, IndicatorParamType, IndicatorParamWidget, IndicatorType } from '@/logic/indicators/types';
+import { Indicator, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { v4 as uuid } from 'uuid';
+import { DARK_COLOR_LIST_10 } from '@/shared/color-lists';
 
 export function generateSmaPreset(input: { tag: string; series: string; length: number; color: string }): Indicator {
   const { tag, series, length, color } = input;
   return {
     id: uuid(),
-    tag,
+    tag: tag as IndicatorTag,
 
     label: 'Simple Moving Average',
     params: [
@@ -43,11 +44,16 @@ export function generateSmaPreset(input: { tag: string; series: string; length: 
   };
 }
 
-export const PRESET_INDICATOR_SMA = generateSmaPreset('close', 20);
+export const PRESET_INDICATOR_SMA = generateSmaPreset({
+  tag: 'sma',
+  series: 'close',
+  length: 20,
+  color: DARK_COLOR_LIST_10[0], // red
+});
 
 export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
   id: uuid(),
-  tag: 'sma_channel',
+  tag: 'sma_channel' as IndicatorTag,
   label: 'Simple Moving Average Channel',
   params: [
     {
@@ -70,13 +76,13 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
       tag: 'low_channel',
       overlay: true,
       lineWidth: 1,
-      color: '#FF0000',
+      color: DARK_COLOR_LIST_10[0], // red
     },
     {
       tag: 'high_channel',
       overlay: true,
       lineWidth: 1,
-      color: '#00FF00',
+      color: DARK_COLOR_LIST_10[15], // green
     },
   ],
   properties: ['low_channel', 'high_channel'],
@@ -84,7 +90,7 @@ export const PRESET_INDICATOR_SMA_CHANNEL: Indicator = {
 
 export const PRESET_INDICATOR_EMA: Indicator = {
   id: uuid(),
-  tag: 'ema',
+  tag: 'ema' as IndicatorTag,
   label: 'Exponential Moving Average',
   params: [
     {
@@ -114,7 +120,7 @@ export const PRESET_INDICATOR_EMA: Indicator = {
       tag: 'value',
       overlay: true,
       lineWidth: 1,
-      color: 'yellow',
+      color: DARK_COLOR_LIST_10[21], // yellow
     },
   ],
   properties: ['value'],
@@ -122,7 +128,7 @@ export const PRESET_INDICATOR_EMA: Indicator = {
 
 export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
   id: uuid(),
-  tag: 'bollinger_bands',
+  tag: 'bollinger_bands' as IndicatorTag,
   label: 'Bollinger Bands',
   params: [
     {
@@ -155,42 +161,22 @@ export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
       tag: 'middle_band',
       overlay: true,
       lineWidth: 1,
-      color: '#CC0000', // Middle band in blue
+      color: DARK_COLOR_LIST_10[0], // red
     },
     {
       tag: 'upper_band',
       overlay: true,
       lineWidth: 1,
-      color: '#10CAF9', // Upper band in red
+      color: DARK_COLOR_LIST_10[11], // blue
     },
     {
       tag: 'lower_band',
       overlay: true,
       lineWidth: 1,
-      color: '#10CAF9', // Lower band in green
+      color: DARK_COLOR_LIST_10[11], // blue
     },
   ],
   properties: ['middle_band', 'upper_band', 'lower_band'],
-};
-
-export const MUCKABOUT: Indicator = {
-  id: uuid(),
-  tag: 'muckabout',
-  label: 'Muckabout',
-  params: [],
-  funcStr: `function indicator() {
-    return { line: 40000 };
-  }`,
-  overlay: true,
-  streams: [
-    {
-      tag: 'line',
-      overlay: true,
-      lineWidth: 1,
-      color: '#10CAF9', // Upper band in red
-    },
-  ],
-  properties: ['line'],
 };
 
 export const PRESET_INDICATORS: Indicator[] = [
@@ -199,6 +185,4 @@ export const PRESET_INDICATORS: Indicator[] = [
   PRESET_INDICATOR_SMA_CHANNEL,
   PRESET_INDICATOR_BOLLINGER_BANDS,
   // ... add more presets here
-
-  MUCKABOUT,
 ];

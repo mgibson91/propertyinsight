@@ -1,4 +1,4 @@
-import { MatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { MatchingSnapshot } from '@/app/display-snapshot-provider';
 import { UserSeriesData } from '@/app/(logic)/types';
 import { getConsolidatedSeriesNew } from '@/logic/get-consolidated-series-new';
 

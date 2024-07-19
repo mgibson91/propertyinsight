@@ -1,7 +1,7 @@
 import '../css/preflight-without-button.css';
 import '../css/globals.css';
 import '@radix-ui/themes/styles.css';
-import { MatchingSnapshotProvider } from '@/app/matching-snapshot-provider';
+import { DisplaySnapshotProvider } from '@/app/display-snapshot-provider';
 import { DisplayModeAwareRadixThemeProvider } from '@/app/display-mode-aware-radix-theme-provider';
 import Script from 'next/script';
 import { cookies } from 'next/headers';
@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
 
           <main className="flex-auto flex flex-col items-center text-primary-text">
-            <MatchingSnapshotProvider>{children}</MatchingSnapshotProvider>
+            <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
           </main>
           {/*</ResponsiveDisplay>*/}
         </DisplayModeAwareRadixThemeProvider>

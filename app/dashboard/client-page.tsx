@@ -38,17 +38,12 @@ import { LightweightChart } from '@/components/LightweightChart';
 import { UserSeriesDialog } from '@/components/UserSeriesDialog';
 import { UserTriggerDialog } from '@/components/UserTriggerDialog';
 import { UserOutcomeDialog } from '@/components/UserOutcomeDialog';
-import { useMatchingSnapshot } from '@/app/matching-snapshot-provider';
+import { useDisplaySnapshot } from '@/app/display-snapshot-provider';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 // import { getConsolidatedSeries } from '@/app/(logic)/get-consolidated-series';
 import { GenericData, UserOutcome, UserSeries, UserSeriesData, UserTrigger } from '@/app/(logic)/types';
 import { EditIndicatorDialog } from '@/components/edit-indicator-dialog';
-import {
-  generateSmaPreset,
-  MUCKABOUT,
-  PRESET_INDICATOR_EMA,
-  PRESET_INDICATOR_SMA,
-} from '@/logic/indicators/preset-indicator';
+import { generateSmaPreset, PRESET_INDICATOR_EMA, PRESET_INDICATOR_SMA } from '@/logic/indicators/preset-indicator';
 import { AddIndicatorDialog } from '@/components/add-indicator-dialog';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
 import { Toast } from '@/shared/toast';
@@ -61,11 +56,21 @@ import dynamic from 'next/dynamic';
 import { StrategiesTab } from '@/app/dashboard/_components/strategies-tab';
 import { getConsolidatedSeriesNew } from '@/logic/get-consolidated-series-new';
 import * as z from 'zod';
-import { Indicator, IndicatorSchema } from '@/logic/indicators/types';
+import { Indicator, IndicatorSchema, IndicatorTag } from '@/logic/indicators/types';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/edit-trigger';
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
 import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
+import { EditOutcome } from '@/components/triggers/edit-outcome';
+import { calculateOutcomeEvents } from '@/logic/outcomes/calculate-outcome-events';
+import { OutcomeConfig } from '@/logic/outcomes/types';
+import { calculateOutcomeSummary } from '@/logic/outcomes/calculate-outcome-summary';
+import { getTickerStreamData } from '@/repository/ticker_stream_data/get-ticker-stream-data';
+import { TickerStreamModel } from '@/repository/ticker_stream_data/get-ticker-streams';
+import { getMatchingSnapshots } from '@/logic/snapshots/get-matching-snapshots';
+import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
+import { buildDisplaySnapshot } from '@/logic/snapshots/build-display-snapshot';
+import { buildStreamTagIndicatorMap } from '@/app/(logic)/resolve-all-indicator-stream-tags';
 
 // const IndicatorSchema = z.object({
 //   id: z.string(),
@@ -199,6 +204,7 @@ async function loadStrategies(): Promise<Strategy[]> {
 }
 
 async function saveStrategies(strategies: Strategy[]) {
+  console.log('Saving strategies', strategies);
   localStorage.setItem('strategies', JSON.stringify(strategies));
 }
 
@@ -223,7 +229,40 @@ const generateEmptyStrategy = (name?: string): Strategy => ({
   outcomes: [],
 });
 
-const App = () => {
+// const TICKER_STREAMS = [
+//   {
+//     id: '79cd3a48-4cb0-4bdf-80e7-d671200be0fd',
+//     source: 'binance',
+//     ticker: 'BTCUSDT',
+//     period: '1h',
+//   },
+//   {
+//     id: '6c55c8d5-d4fb-4199-a67d-a3de3655f7f8',
+//     source: 'binance',
+//     ticker: 'SOLUSDT',
+//     period: '1h',
+//   },
+//   {
+//     id: '85749a89-aa58-4a40-82b3-4a48e4f18734',
+//     source: 'binance',
+//     ticker: 'AVAXUSDT',
+//     period: '1h',
+//   },
+//   {
+//     id: '667b33fb-2aa1-4697-b1b9-50ece1f05405',
+//     source: 'binance',
+//     ticker: 'TRXUSDT',
+//     period: '1h',
+//   },
+//   {
+//     id: 'ee78ceaf-e5c6-4618-9aed-220cde4f4c58',
+//     source: 'binance',
+//     ticker: 'XRPUSDT',
+//     period: '1h',
+//   },
+// ];
+
+const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const chartRef = useRef(null);
   const [ticker, setTicker] = useState('BTCUSD');
   const [timeframe, setTimeframe] = useState('1h');
@@ -232,6 +271,7 @@ const App = () => {
     new Date('2023-11-15')
   );
   const [endDate, setEndDate] = useState(new Date('2023-12-15'));
+  const [tickerStream, setTickerStream] = useState(streams[0]);
   const [candlestickData, setCandlestickData] = useState<CandlestickData<UTCTimestamp>[]>([]);
   const [userSeriesData, setUserSeriesData] = useState<
     {
@@ -256,17 +296,10 @@ const App = () => {
   const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
 
   // Displayed - these need to change on current indicator <-> strategy switch
-  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([
-    PRESET_INDICATOR_SMA,
-    PRESET_INDICATOR_EMA,
-    MUCKABOUT,
-  ]);
-
+  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([PRESET_INDICATOR_SMA, PRESET_INDICATOR_EMA]);
   const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [outcomeConfigs, setOutcomeConfigs] = useState<OutcomeConfig[]>([]);
 
-  // TODO: REmove
-  const [userTriggers, setUserTriggers] = useState<UserTrigger[]>([]);
-  const [userOutcome, setUserOutcome] = useState<UserOutcome[]>([]);
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
 
@@ -282,7 +315,7 @@ const App = () => {
 
   const [newStrategyName, setNewStrategyName] = useState<string>('');
 
-  const [markerSnapshots, setMarkerSnapshots] = useMatchingSnapshot();
+  const [displaySnapshots, setDisplaySnapshots] = useDisplaySnapshot();
 
   const [displayMode] = useDisplayMode();
 
@@ -291,23 +324,6 @@ const App = () => {
   // We display
   const [bottomTab, setBottomTab] = useState<'editor' | 'strategies' | undefined>();
 
-  // const [markerSnapshots, setMarkerSnapshots] = useState<
-  //   {
-  //     marker: SeriesMarker<UTCTimestamp>;
-  //     candlestickData: OhlcData<UTCTimestamp>[];
-  //     userSeriesData: UserSeriesData[];
-  //     outcome?: {
-  //       marker: SeriesMarker<UTCTimestamp>;
-  //       outcomeDetails: {
-  //         offset: number;
-  //         value: number;
-  //         text: string;
-  //       };
-  //     };
-  //     historicalCandles: number;
-  //   }[]
-  // >([]);
-  const [currentMarkerSnapshotIndex, setCurrentMarkerSnapshotIndex] = useState<number>(0);
   const [outcomeSummary, setOutcomeSummary] = useState<{
     successCount: number;
     failCount: number;
@@ -317,20 +333,6 @@ const App = () => {
   // TODO: Make this dialog indicator
   const [currentIndicator, setCurrentIndicator] = useState<Indicator>(DEFAULT_INDICATOR);
   const [editorIndicator, setEditorIndicator] = useState<Indicator | undefined>(undefined);
-  const [currentTrigger, setCurrentTrigger] = useState<UserTrigger>({
-    id: '',
-    name: '',
-    triggerFunctionString: '',
-    color: '',
-    size: 0,
-  });
-  const [currentOutcome, setCurrentOutcome] = useState<UserOutcome>({
-    id: '',
-    name: '',
-    outcomeFunctionString: '',
-    color: '',
-    size: 0,
-  });
   const [showAddIndicatorDialog, setShowAddIndicatorDialog] = useState(false);
   const [editTrigger, setEditTrigger] = useState<{
     trigger?: Trigger;
@@ -339,12 +341,15 @@ const App = () => {
     trigger: undefined,
     display: false,
   });
+  const [editOutcome, setEditOutcome] = useState<{
+    outcome?: OutcomeConfig;
+    display: boolean;
+  }>({
+    outcome: undefined,
+    display: false,
+  });
   const [showEditIndicatorDialog, setShowEditIndicatorDialog] = useState(false);
   const [showEditIndicatorCodeDialog, setShowEditIndicatorCodeDialog] = useState(false);
-  const [showTriggerDialog, setShowTriggerDialog] = useState(false);
-  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [candlesPerSecond, setCandlesPerSecond] = useState<number>(1);
 
   // Load strategies from local storage
   useEffect(() => {
@@ -365,24 +370,93 @@ const App = () => {
       setSelectedStrategy(activeStrategy);
 
       // Set local yokes for speed
-      setUserIndicators(activeStrategy.indicators);
+      // setUserIndicators(activeStrategy.indicators);
     };
 
     asyncLoadStrategies();
   }, []);
 
-  // Add new indicator
-  const centralAddIndicator = async (indicator: Indicator) => {
-    const newIndicators = [...userIndicators, indicator];
+  const centralDelete = async <T extends { id: string | number }>(
+    entityType: 'indicator' | 'trigger' | 'outcome',
+    entities: T[],
+    filterFunction: (entity: T) => boolean
+  ) => {
+    let updatedEntities: T[];
+
+    updatedEntities = entities.filter(filterFunction);
 
     // Local updates for rapidity
-    setUserIndicators(newIndicators);
+    switch (entityType) {
+      case 'indicator':
+        setUserIndicators(updatedEntities as unknown as Indicator[]);
+        break;
+      case 'trigger':
+        setTriggers(updatedEntities as unknown as Trigger[]);
+        break;
+      case 'outcome':
+        setOutcomeConfigs(updatedEntities as unknown as OutcomeConfig[]);
+        break;
+      default:
+        throw new Error('Invalid entity type');
+    }
 
     const newStrategies = strategies.map(strategy => {
       if (strategy.id === selectedStrategy.id) {
         return {
           ...strategy,
-          indicators: newIndicators,
+          ...(entityType === 'indicator' ? { indicators: updatedEntities } : {}),
+          ...(entityType === 'trigger' ? { triggers: updatedEntities } : {}),
+          ...(entityType === 'outcome' ? { outcomes: updatedEntities } : {}),
+        };
+      }
+
+      return strategy;
+    });
+
+    // Save to strategy
+    await saveStrategies(newStrategies as any);
+  };
+
+  // Define a generic function to update strategy
+  const centralUpdateStrategy = async <T extends { id: string | number }>(
+    entityType: 'indicator' | 'trigger' | 'outcome',
+    entities: T[],
+    newEntity: T | Partial<T>,
+    updateType: 'add' | 'edit' | 'delete'
+  ) => {
+    let updatedEntities: T[];
+
+    switch (updateType) {
+      case 'add':
+        updatedEntities = [...entities, newEntity as T];
+        break;
+      case 'edit':
+        updatedEntities = entities.map(e => (e.id === (newEntity as T).id ? (newEntity as T) : e));
+        break;
+      default:
+        throw new Error('Invalid update type');
+    }
+
+    // Local updates for rapidity
+    switch (entityType) {
+      case 'indicator':
+        setUserIndicators(updatedEntities as unknown as Indicator[]);
+        break;
+      case 'trigger':
+        setTriggers(updatedEntities as unknown as Trigger[]);
+        break;
+      case 'outcome':
+        setOutcomeConfigs(updatedEntities as unknown as OutcomeConfig[]);
+        break;
+      default:
+        throw new Error('Invalid entity type');
+    }
+
+    const newStrategies = strategies.map(strategy => {
+      if (strategy.id === selectedStrategy.id) {
+        return {
+          ...strategy,
+          [entityType + 's']: updatedEntities,
         };
       }
 
@@ -391,129 +465,25 @@ const App = () => {
 
     // Save to strategy
     await saveStrategies(newStrategies);
+    setStrategies(newStrategies);
   };
 
-  // Add new indicator
-  const centralAddTrigger = async (trigger: Trigger) => {
-    const newTriggers = [...triggers, trigger];
+  // // Specific functions for each entity type
+  const centralAddIndicator = async (indicator: Indicator) =>
+    centralUpdateStrategy('indicator', userIndicators, indicator, 'add');
+  const centralEditIndicator = async (indicator: Indicator) =>
+    centralUpdateStrategy('indicator', userIndicators, indicator, 'edit');
+  const centralDeleteIndicator = async (tag: string) => centralDelete('indicator', userIndicators, i => i.tag !== tag);
 
-    // Local updates for rapidity
-    setTriggers(newTriggers);
+  const centralAddTrigger = async (trigger: Trigger) => centralUpdateStrategy('trigger', triggers, trigger, 'add');
+  const centralEditTrigger = async (trigger: Trigger) => centralUpdateStrategy('trigger', triggers, trigger, 'edit');
+  const centralDeleteTrigger = async (id: string) => centralDelete('trigger', triggers, t => t.id !== id);
 
-    const newStrategies = strategies.map(strategy => {
-      if (strategy.id === selectedStrategy.id) {
-        return {
-          ...strategy,
-          triggers: newTriggers,
-        };
-      }
-
-      return strategy;
-    });
-
-    // Save to strategy
-    await saveStrategies(newStrategies);
-  };
-
-  // Add new indicator
-  const centralEditIndicator = async (indicator: Indicator) => {
-    // Local updates for rapidity
-    const newIndicators = userIndicators.map(i => {
-      if (i.tag === indicator.tag) {
-        return indicator;
-      }
-
-      return i;
-    });
-
-    // Local updates for rapidity
-    setUserIndicators(newIndicators);
-
-    const newStrategies = strategies.map(strategy => {
-      if (strategy.id === selectedStrategy.id) {
-        return {
-          ...strategy,
-          indicators: newIndicators,
-        };
-      }
-
-      return strategy;
-    });
-
-    // Save to strategy
-    await saveStrategies(newStrategies);
-  };
-
-  // Add new indicator
-  const centralEditTrigger = async (trigger: Trigger) => {
-    // Local updates for rapidity
-    const newTriggers = triggers.map(t => {
-      if (t.id === trigger.id) {
-        return trigger;
-      }
-
-      return t;
-    });
-
-    // Local updates for rapidity
-    setTriggers(newTriggers);
-
-    const newStrategies = strategies.map(strategy => {
-      if (strategy.id === selectedStrategy.id) {
-        return {
-          ...strategy,
-          triggers: newTriggers,
-        };
-      }
-
-      return strategy;
-    });
-
-    // Save to strategy
-    await saveStrategies(newStrategies);
-  };
-
-  const centralDeleteIndicator = async (tag: string) => {
-    const newIndicators = userIndicators.filter(i => i.tag !== tag);
-
-    // Local updates for rapidity
-    setUserIndicators(newIndicators);
-
-    const newStrategies = strategies.map(strategy => {
-      if (strategy.id === selectedStrategy.id) {
-        return {
-          ...strategy,
-          indicators: newIndicators,
-        };
-      }
-
-      return strategy;
-    });
-
-    // Save to strategy
-    await saveStrategies(newStrategies);
-  };
-
-  const centralDeleteTrigger = async (id: string) => {
-    const newTriggers = triggers.filter(i => i.id !== id);
-
-    // Local updates for rapidity
-    setTriggers(newTriggers);
-
-    const newStrategies = strategies.map(strategy => {
-      if (strategy.id === selectedStrategy.id) {
-        return {
-          ...strategy,
-          triggers: newTriggers,
-        };
-      }
-
-      return strategy;
-    });
-
-    // Save to strategy
-    await saveStrategies(newStrategies);
-  };
+  const centralAddOutcome = async (outcome: OutcomeConfig) =>
+    centralUpdateStrategy('outcome', outcomeConfigs, outcome, 'add');
+  const centralEditOutcome = async (outcome: OutcomeConfig) =>
+    centralUpdateStrategy('outcome', outcomeConfigs, outcome, 'edit');
+  const centralDeleteOutcome = async (id: string) => centralDelete('outcome', outcomeConfigs, o => o.id !== id);
 
   const resizeChart = useDebounceCallback(() => {
     if (chartRef.current) {
@@ -521,41 +491,41 @@ const App = () => {
     }
   }, 200);
 
-  // Gets the indicator stream data and it's style config
-  function getIndicatorChartData(tag: string): LineData<UTCTimestamp>[] {
-    const indicatorStream = indicatorSeriesMap[tag];
-
-    if (!indicatorStream) {
-      return [];
-    }
-
-    return indicatorStream;
-  }
-
   useEffect(() => {
     const newIndicatorData = convertStreamsToChartSeries(indicatorSeriesMap, userIndicators);
     setUserIndicatorData(newIndicatorData);
   }, [indicatorSeriesMap, userIndicators]);
 
   useEffect(() => {
-    setUserIndicators(selectedStrategy?.indicators || []);
-    setTriggers(selectedStrategy?.triggers || []);
+    (async () => {
+      const strategies = await loadStrategies();
 
-    // setUserSeries(INITIAL_USER_SERIES);
-    // setUserTriggers(INITIAL_USER_TRIGGERS);
-    // setUserOutcome(INITIAL_USER_OUTCOME);
-    // setUserSeries(selectedStrategy?.indicators || []);
+      const strategy = strategies.find(strategy => strategy.id === selectedStrategy.id);
+
+      if (strategy) {
+        setUserIndicators((strategy?.indicators as Indicator[]) || []);
+        setTriggers(strategy?.triggers || []);
+        setOutcomeConfigs(strategy?.outcomes || []);
+      }
+    })();
   }, [selectedStrategy]);
 
   useEffect(() => {
     handleFetchClick();
-  }, [ticker, timeframe, startDate, endDate, userSeries, triggers, userOutcome, userIndicators]);
+  }, [tickerStream, streams, timeframe, startDate, endDate, userSeries, triggers, outcomeConfigs, userIndicators]);
 
   const handleFetchClick = async () => {
     setLoading(true);
     setError(null);
     try {
-      const rawData = await fetchCandlesFromMemory(ticker, timeframe, startDate.getTime(), endDate.getTime());
+      // const rawData = await fetchCandlesFromMemory(ticker, timeframe, startDate.getTime(), endDate.getTime());
+      const rawData = await getTickerStreamData({
+        source: tickerStream.source,
+        ticker: tickerStream.ticker,
+        period: tickerStream.period,
+        startTime: startDate.toISOString(),
+        endTime: endDate.toISOString(),
+      });
 
       // Map the raw data to the format expected by the LightweightChart
       const formattedCandles = rawData.map(
@@ -632,152 +602,73 @@ const App = () => {
       });
 
       // Convert trigger markers to chart
-      const newTriggerMarkers: SeriesMarker<UTCTimestamp>[] = Object.values(triggerEvents || {}).flatMap(time => {
-        return time.map(time => {
-          return {
-            time,
-            text: '',
-            position: 'belowBar',
-            color: displayMode.mode === 'dark' ? '#BDE56C' : '#5C7C2F',
-            shape: 'arrowUp',
-            size: 3,
-          };
-        });
-      });
+      const newTriggerMarkers: SeriesMarker<UTCTimestamp>[] = Object.entries(triggerEvents).flatMap(
+        ([triggerId, times]) => {
+          const triggerName = triggers.find(trigger => trigger.id === triggerId)?.name || triggerId;
+
+          return times.map(time => {
+            return {
+              time,
+              text: triggerName,
+              position: 'belowBar',
+              color: displayMode.mode === 'dark' ? '#BDE56C' : '#5C7C2F',
+              shape: 'arrowUp',
+              size: 2,
+            };
+          });
+        }
+      );
 
       setTriggerMarkers(newTriggerMarkers);
 
-      //
-      // /**
-      //  * Get Consolidated series
-      //  * Instantiate user marker trigger function
-      //  * It rate through consolidated series array
-      //  * At each point, Iterate through trigger functions
-      //  * If trigger function returns true, add marker to array
-      //  */
-      //
-      // const markerFunctionMap = new Map<
-      //   string,
-      //   {
-      //     lookback: number;
-      //     func: Function; // (data: ConsolidatedLineData[]) => boolean;
-      //   }
-      // >();
-      //
-      // for (const trigger of triggers) {
-      //   markerFunctionMap.set(trigger.name, {
-      //     // TODO: Consider this - should in theory be the min required but hardcoded for display ease
-      //     // lookback: HISTORICAL_VALUE_COUNT,
-      //     lookback: 50,
-      //     func: new Function('data', trigger.),
-      //   });
-      // }
-      //
-      // // 2. matchingMarkers is ready to go
-      // const { matchingMarkers, conditionMarkers } = calculateTriggers(
-      //   markerFunctionMap,
-      //   consolidatedSeries,
-      //   newUserSeriesData as UserSeriesData[],
-      //   displayMode.mode === 'dark'
-      // );
-      //
-      // let calculatedOutcomeMarkers: {
-      //   marker: SeriesMarker<UTCTimestamp>;
-      //   outcome: { time: number; offset: number; value: number };
-      // }[] = [];
-      //
-      // if (userOutcome) {
-      //   const outcomeUserFunc = new Function('data', 'trigger', userOutcome.outcomeFunctionString);
-      //
-      //   // 3. calculate outcomes
-      //   const { outcomes, summary } = calculateOutcomes({
-      //     consolidatedSeries,
-      //     triggers: conditionMarkers.map(condition => {
-      //       // triggers: [conditionMarkers[0]].map((condition) => {
-      //       return {
-      //         time: condition.marker.time as number,
-      //         offset: consolidatedSeries.findIndex(c => c.time === condition.marker.time),
-      //         text: condition.marker.text || '?',
-      //       };
-      //     }),
-      //     outcomeFunc: outcomeUserFunc,
-      //     // outcomeFunc: (
-      //     //   data: ConsolidatedLineData[],
-      //     //   trigger: { value: number }
-      //     // ) => {
-      //     //   if (data[0].high > trigger.value * 1.02) {
-      //     //     return 'success';
-      //     //   } else if (data[0].low < trigger.value * 0.98) {
-      //     //     return 'failure';
-      //     //   }
-      //     //
-      //     //   return 'uncertain';
-      //     // },
-      //   });
-      //
-      //   // Convert outcomes to markers
-      //   calculatedOutcomeMarkers = outcomes.map(outcome => {
-      //     return {
-      //       marker: {
-      //         time: outcome.outcome.time,
-      //         position: outcome.type === 'success' ? 'belowBar' : 'aboveBar', // 'inBar',
-      //         color:
-      //           outcome.type === 'success'
-      //             ? displayMode.mode === 'dark'
-      //               ? '#1FD8A4'
-      //               : '#208368'
-      //             : displayMode.mode === 'dark'
-      //               ? '#FF977D'
-      //               : '#D13415',
-      //         shape: outcome.type === 'success' ? 'arrowUp' : 'arrowDown',
-      //         size: 2,
-      //         text: outcome.text,
-      //       } as SeriesMarker<UTCTimestamp>,
-      //       outcome: outcome.outcome,
-      //     };
-      //   });
-      //
-      //   setOutcomeMarkers(calculatedOutcomeMarkers.map(outcome => outcome.marker));
-      //   setOutcomeSummary({
-      //     failCount: summary.failCount,
-      //     successCount: summary.successCount,
-      //     winPerc: (summary.successCount / (summary.successCount + summary.failCount)) * 100,
-      //   });
-      // }
-      //
-      // setTriggerMarkers(matchingMarkers);
-      // setMarkerSnapshots(
-      //   conditionMarkers.map(marker => {
-      //     const result: {
-      //       marker: SeriesMarker<UTCTimestamp>;
-      //       candlestickData: OhlcData<UTCTimestamp>[];
-      //       userSeriesData: UserSeriesData[];
-      //       outcome?: {
-      //         outcomeDetails: {
-      //           offset: number;
-      //           value: number;
-      //           text: string;
-      //         };
-      //         marker: SeriesMarker<UTCTimestamp>;
-      //       };
-      //       historicalCandles: number;
-      //     } = marker;
-      //
-      //     const outcome = calculatedOutcomeMarkers.find(outcome => outcome.marker.text === marker.marker.text);
-      //     if (outcome) {
-      //       result.outcome = {
-      //         outcomeDetails: {
-      //           offset: outcome.outcome.offset,
-      //           value: outcome.outcome.value,
-      //           text: outcome.marker.text || 'N/A',
-      //         },
-      //         marker: outcome.marker,
-      //       };
-      //     }
-      //
-      //     return result;
-      //   })
-      // );
+      const outcomeEvents = calculateOutcomeEvents({
+        data: consolidatedSeries.data,
+        outcomeConfigs,
+        streams: consolidatedSeries.streams,
+        triggerEvents,
+      });
+
+      const newOutcomeMarkers: SeriesMarker<UTCTimestamp>[] = outcomeEvents.map(({ outcome, trigger }) => {
+        const triggerName = triggers.find(t => trigger.id === t.id)?.name || '';
+
+        return {
+          time: outcome.time,
+          position: 'belowBar',
+          color: outcome.wasSuccessful ? '#1FD8A4' : '#FF977D',
+          shape: outcome.wasSuccessful ? 'arrowUp' : 'arrowDown',
+          size: 2,
+          text: triggerName,
+        };
+      });
+
+      setOutcomeMarkers(newOutcomeMarkers);
+
+      const summary = calculateOutcomeSummary(outcomeEvents);
+
+      setOutcomeSummary({
+        failCount: summary.failCount,
+        successCount: summary.successCount,
+        winPerc: (summary.successCount / (summary.successCount + summary.failCount)) * 100,
+      });
+
+      const matchingSnapshots = getMatchingSnapshots({
+        data: consolidatedSeries.data,
+        outcomeEvents,
+        historicalValues: HISTORICAL_VALUE_COUNT,
+        futureValues: FUTURE_VALUE_COUNT,
+      });
+
+      const streamTagIndicatorMap = buildStreamTagIndicatorMap(userIndicators);
+
+      const displaySnapshots = matchingSnapshots.map(snapshot =>
+        buildDisplaySnapshot(snapshot, displayMode.mode, streamTagIndicatorMap)
+      );
+
+      // Given
+
+      setDisplaySnapshots(displaySnapshots);
+
+      // TODO: Marker snapshots
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
@@ -906,16 +797,6 @@ const App = () => {
                   <div className={'flex flex-row items-center gap-2'}>
                     <LightningBoltIcon className={'w-3 h-3'} />
                     <label className={'font-medium text-sm'}>{trigger.name}</label>
-                    {/*<Code className="!text-[10px]">{indicator.tag}</Code>*/}
-                    {/*{Boolean(indicator.params.length) && (*/}
-                    {/*  <p className="text-xs">*/}
-                    {/*    (*/}
-                    {/*    {indicator.params*/}
-                    {/*      .map(i => (i.value == null || i.value === '' ? i.defaultValue : i.value))*/}
-                    {/*      .join(', ')}*/}
-                    {/*    )*/}
-                    {/*  </p>*/}
-                    {/*)}*/}
                   </div>
                   <div className={'flex-row items-center gap-2 hidden group-hover:flex'}>
                     <div className={'flex flex-row items-center gap-2'}>
@@ -977,11 +858,88 @@ const App = () => {
                       size={'1'}
                       onClick={async () => {
                         await centralDeleteTrigger(trigger.id);
-                        // await centralDeleteIndicator(indicator.tag);
-                        // const index = userIndicators.findIndex(i => i.tag === indicator.tag);
-                        // const newIndicators = [...userIndicators];
-                        // newIndicators.splice(index, 1);
-                        // setUserIndicators(newIndicators);
+                      }}
+                    >
+                      <Cross1Icon color="tomato"></Cross1Icon>
+                    </IconButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {outcomeConfigs.map(outcome => (
+            <div key={outcome.name} className={'flex flex-row items-center gap-3'}>
+              <div
+                className={
+                  'flex flex-col flex-auto bg-transparent hover:bg-primary-bg hover:ring-[1px] hover:ring-inset hover:ring-primary-border p-1 rounded-md'
+                }
+              >
+                <div className={'flex flex-row gap-3 justify-between group'}>
+                  <div className={'flex flex-row items-center gap-2'}>
+                    <CheckboxIcon className={'w-3 h-3'} />
+                    <label className={'font-medium text-sm'}>{outcome.name}</label>
+                  </div>
+                  <div className={'flex-row items-center gap-2 hidden group-hover:flex'}>
+                    <div className={'flex flex-row items-center gap-2'}>
+                      <IconButton
+                        variant={'ghost'}
+                        size={'1'}
+                        onClick={() => {
+                          // TODO: Central edit outcome
+                          const newOutcomes = outcomeConfigs.map(t => {
+                            if (t.name === outcome.name) {
+                              return {
+                                ...t,
+                                enabled: !t.enabled,
+                              };
+                            }
+
+                            return t;
+                          });
+
+                          setOutcomeConfigs(newOutcomes);
+                        }}
+                      >
+                        {outcome.enabled ? <EyeOpenIcon /> : <EyeNoneIcon />}
+                      </IconButton>
+                    </div>
+
+                    {/*TODO: View and edit code - override if edited*/}
+                    <IconButton
+                      color={'gray'}
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={() => {
+                        // TODO: Outcome code edit
+                        setEditOutcome({
+                          outcome,
+                          display: true,
+                        });
+                      }}
+                    >
+                      <CodeIcon color="gray"></CodeIcon>
+                    </IconButton>
+
+                    <IconButton
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={() => {
+                        setEditOutcome({
+                          outcome,
+                          display: true,
+                        });
+                      }}
+                    >
+                      <GearIcon></GearIcon>
+                    </IconButton>
+
+                    <IconButton
+                      color={'tomato'}
+                      variant={'ghost'}
+                      size={'1'}
+                      onClick={async () => {
+                        await centralDeleteOutcome(outcome.id);
                       }}
                     >
                       <Cross1Icon color="tomato"></Cross1Icon>
@@ -1040,59 +998,62 @@ const App = () => {
           }
         }}
       >
-        <TabsList className={'flex gap-2 justify-start px-3'}>
-          <TabsTrigger
-            value="editor"
-            onClick={() => {
-              if (bottomTab === 'editor') {
-                setBottomTab(null as any);
-              } else {
-                setBottomTab('editor');
-              }
-            }}
-          >
-            Code Editor
-          </TabsTrigger>
-          <TabsTrigger
-            value="strategies"
-            onClick={() => {
-              if (bottomTab === 'strategies') {
-                setBottomTab(null as any);
-              } else {
-                setBottomTab('strategies');
-              }
-            }}
-          >
-            Strategy Performance
-          </TabsTrigger>
-        </TabsList>
+        <div className={'flex flex-row justify-between bg-primary-bg'}>
+          <TabsList className={'flex gap-2 justify-start px-3'}>
+            <TabsTrigger
+              value="editor"
+              onClick={() => {
+                if (bottomTab === 'editor') {
+                  setBottomTab(null as any);
+                } else {
+                  setBottomTab('editor');
+                }
+              }}
+            >
+              Code Editor
+            </TabsTrigger>
+            {/*<TabsTrigger*/}
+            {/*  value="strategies"*/}
+            {/*  onClick={() => {*/}
+            {/*    if (bottomTab === 'strategies') {*/}
+            {/*      setBottomTab(null as any);*/}
+            {/*    } else {*/}
+            {/*      setBottomTab('strategies');*/}
+            {/*    }*/}
+            {/*  }}*/}
+            {/*>*/}
+            {/*  Strategy Performance*/}
+            {/*</TabsTrigger>*/}
+          </TabsList>
+
+          {outcomeSummary && (
+            <div className={'flex flex-row items-center !mr-3'}>
+              <div className={'flex flex-row gap-2'}>
+                <span className={''}>
+                  Win Rate&nbsp; <b>{isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%</b>
+                </span>
+                <div className={'flex flex-row items-center'}>
+                  <span className={'text-[var(--jade-11)] '}>{outcomeSummary?.successCount}</span>
+                  <span className={''}>:</span>
+                  <span className={'text-[var(--tomato-11)] '}>{outcomeSummary?.failCount}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         <TabsContent value="editor">
           <EditorTab
             existingIndicators={userIndicators}
             indicator={editorIndicator}
-            // setIndicator={setCurrentIndicator}
             onSaveToChartClicked={async partialIndicator => {
               const { tag, label, funcStr, params, streams, properties } = partialIndicator;
               const index = userIndicators.findIndex(i => i.tag === tag);
 
               if (index !== -1) {
-                // // Update existing indicator
-                // const newIndicators = userIndicators.map((indicator, i) => {
-                //   if (i === index) {
-                //     return {
-                //       ...indicator,
-                //       ...partialIndicator,
-                //     };
-                //   }
-                //
-                //   return indicator;
-                // });
-
                 await centralEditIndicator({
                   ...userIndicators[index],
                   ...partialIndicator,
                 });
-                // setUserIndicators(newIndicators);
               } else {
                 // Add dialog indicator
                 const newIndicator: Indicator = {
@@ -1128,91 +1089,6 @@ const App = () => {
   return (
     <>
       <div className={'flex-auto flex flex-col w-[100vw]'}>
-        {/*<div className={'flex flex-row gap-2 m-5 w-full pr-10'}>*/}
-        {/*  <Card className={''}>*/}
-        {/*    <div className={'flex flex-row items-center gap-3'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Ticker</label>*/}
-        {/*        <TickerSelector*/}
-        {/*          options={[*/}
-        {/*            // { value: 'FETUSD', label: 'FET/USD' },*/}
-        {/*            { value: 'BTCUSD', label: 'BTC/USD' },*/}
-        {/*            // { value: 'ETHUSD', label: 'ETH/USD' },*/}
-        {/*          ]}*/}
-        {/*          value={ticker}*/}
-        {/*          onChange={selectedOption => setTicker(selectedOption)}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Timeframe</label>*/}
-        {/*        <TimeFrameSelector*/}
-        {/*          options={[*/}
-        {/*            // { value: '15m', label: '15m' },*/}
-        {/*            { value: '1h', label: '1h' },*/}
-        {/*          ]}*/}
-        {/*          value={timeframe}*/}
-        {/*          onChange={selectedOption => setTimeframe(selectedOption)}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </Card>*/}
-
-        {/*  <Card className={''}>*/}
-        {/*    <div className={'flex flex-row items-center gap-3'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>Start Time</label>*/}
-        {/*        /!*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*!/*/}
-        {/*        /!*Change to use normal html input date*!/*/}
-        {/*        <TextFieldInput*/}
-        {/*          type="date"*/}
-        {/*          value={startDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'*/}
-        {/*          onChange={e => setStartDate(new Date(e.target.value))}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <label>End Time</label>*/}
-        {/*        <TextFieldInput*/}
-        {/*          type="date"*/}
-        {/*          value={endDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'*/}
-        {/*          onChange={e => setEndDate(new Date(e.target.value))}*/}
-        {/*        />*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </Card>*/}
-
-        {/*  <div className={'flex flex-col gap-2 justify-between'}>*/}
-        {/*    <Button onClick={handleFetchClick} disabled={loading}>*/}
-        {/*      {loading ? 'Loading...' : 'Refresh'}*/}
-        {/*    </Button>*/}
-        {/*    {error && <div>Error fetching data: {error}</div>}*/}
-        {/*  </div>*/}
-
-        {/*  {outcomeSummary && (*/}
-        {/*    <Card className={'flex-0 ml-auto !bg-primary-bg-subtle'}>*/}
-        {/*      <div className={'flex flex-col'}>*/}
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Wins:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--jade-11)] font-bold'}>{outcomeSummary?.successCount}</span>*/}
-        {/*        </div>*/}
-
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Losses:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--tomato-11)] font-bold'}>{outcomeSummary?.failCount}</span>*/}
-        {/*        </div>*/}
-
-        {/*        <div className={'flex flex-row'}>*/}
-        {/*          <span className={'font-bold w-20'}>Win Rate:&nbsp;</span>*/}
-        {/*          <span className={'text-[var(--slate-11)] font-bold'}>*/}
-        {/*            {isNaN(outcomeSummary?.winPerc) ? 0 : outcomeSummary?.winPerc.toFixed(1)}%*/}
-        {/*          </span>*/}
-        {/*        </div>*/}
-        {/*      </div>*/}
-        {/*    </Card>*/}
-        {/*  )}*/}
-        {/*</div>*/}
-
         <div className={'flex flex-row w-[100%] flex-auto gap-5'}>
           <div className={'hidden flex flex-col gap-5'}>
             <Card className={'!bg-primary-bg-subtle'}>
@@ -1306,11 +1182,13 @@ const App = () => {
                             color={'tomato'}
                             variant={'ghost'}
                             size={'1'}
-                            onClick={() => {
+                            onClick={async () => {
                               const index = userIndicators.findIndex(i => i.tag === indicator.tag);
                               const newIndicators = [...userIndicators];
                               newIndicators.splice(index, 1);
                               setUserIndicators(newIndicators);
+
+                              await centralDeleteIndicator(indicator.tag);
                             }}
                           >
                             <TrashIcon color="tomato"></TrashIcon>
@@ -1333,129 +1211,34 @@ const App = () => {
                 ))}
               </div>
             </Card>
-
-            <Card className={'!bg-primary-bg-subtle'}>
-              <div className={'flex flex-col w-[300px] gap-3'}>
-                <div className={'flex flex-row items-center justify-between'}>
-                  <Heading size={'5'} className={'text-primary-text-contrast'}>
-                    Triggers
-                  </Heading>
-
-                  {/* Consolidate series with names */}
-                  {/* Pass to function which receives an array of objects */}
-
-                  <IconButton
-                    onClick={() => {
-                      setCurrentTrigger(DEFAULT_USER_TRIGGER);
-                      setShowTriggerDialog(true);
-                    }}
-                    size={'1'}
-                  >
-                    <PlusIcon />
-                  </IconButton>
-                </div>
-
-                {userTriggers.map(trigger => (
-                  <div key={trigger.name} className={'flex flex-row items-center gap-3'}>
-                    <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>
-                      <div className={'flex flex-row gap-5 justify-between'}>
-                        <label className={'font-bold'}>{trigger.name}</label>
-
-                        <div className={'flex flex-row items-center gap-3'}>
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              const index = userTriggers.findIndex(s => s.name === trigger.name);
-                              const newTriggers = [...userTriggers];
-                              newTriggers.splice(index, 1);
-                              setUserTriggers(newTriggers);
-                            }}
-                          >
-                            <TrashIcon color="tomato"></TrashIcon>
-                          </IconButton>
-
-                          <IconButton
-                            variant={'ghost'}
-                            onClick={() => {
-                              setCurrentTrigger({
-                                color: trigger.color,
-                                size: trigger.size,
-                                name: trigger.name,
-                                triggerFunctionString: trigger.triggerFunctionString,
-                                id: trigger.id,
-                              });
-                              setShowTriggerDialog(true);
-                            }}
-                          >
-                            <GearIcon></GearIcon>
-                          </IconButton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className={'!bg-primary-bg-subtle'}>
-              <div className={'flex flex-col w-[300px] gap-3'}>
-                <div className={'flex flex-row items-center justify-between'}>
-                  <Heading size={'5'} className={'text-primary-text-contrast'}>
-                    Outcome
-                  </Heading>
-
-                  {/* Consolidate series with names */}
-                  {/* Pass to function which receives an array of objects */}
-
-                  <IconButton
-                    onClick={() => {
-                      setCurrentOutcome(DEFAULT_USER_OUTCOME);
-                      setShowOutcomeDialog(true);
-                    }}
-                    size={'1'}
-                  >
-                    <PlusIcon />
-                  </IconButton>
-                </div>
-
-                {/*{userOutcome && (*/}
-                {/*  <div key={userOutcome.name} className={'flex flex-row items-center gap-3'}>*/}
-                {/*    <div className={'flex flex-col flex-auto bg-primary-bg rounded-lg p-2'}>*/}
-                {/*      <div className={'flex flex-row gap-5 justify-between'}>*/}
-                {/*        <label className={'font-bold'}>{userOutcome.name}</label>*/}
-
-                {/*        <div className={'flex flex-row items-center gap-3'}>*/}
-                {/*          <IconButton*/}
-                {/*            variant={'ghost'}*/}
-                {/*            onClick={() => {*/}
-                {/*              setUserOutcome(null);*/}
-                {/*              setOutcomeMarkers([]);*/}
-                {/*            }}*/}
-                {/*          >*/}
-                {/*            <TrashIcon color="tomato"></TrashIcon>*/}
-                {/*          </IconButton>*/}
-
-                {/*          <IconButton*/}
-                {/*            variant={'ghost'}*/}
-                {/*            onClick={() => {*/}
-                {/*              setCurrentOutcome(userOutcome);*/}
-                {/*              setShowOutcomeDialog(true);*/}
-                {/*            }}*/}
-                {/*          >*/}
-                {/*            <GearIcon></GearIcon>*/}
-                {/*          </IconButton>*/}
-                {/*        </div>*/}
-                {/*      </div>*/}
-                {/*    </div>*/}
-                {/*  </div>*/}
-                {/*)}*/}
-              </div>
-            </Card>
           </div>
 
           <div className={'flex flex-col flex-auto w-[100%]'}>
             <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex px-3'}>
               <div className={'flex flex-row items-center gap-3'}>
+                <div className={'flex flex-row items-center gap-2'}>
+                  <p className="text-xs">Source</p>
+                  <Select.Root
+                    size={'1'}
+                    value={tickerStream.id}
+                    onValueChange={value => {
+                      const selected = streams.find(s => s.id === value);
+                      if (selected) {
+                        setTickerStream(selected);
+                      }
+                    }}
+                  >
+                    <Select.Trigger className={'!w-[100px]'} />
+                    <Select.Content>
+                      {streams.map(stream => (
+                        <Select.Item key={stream.id} value={stream.id}>
+                          {stream.ticker}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </div>
+
                 <div className={'flex items-center gap-2'}>
                   <p className="text-xs">From</p>
                   {/*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*/}
@@ -1508,10 +1291,12 @@ const App = () => {
 
                   <Button
                     variant={'soft'}
-                    disabled={true}
                     size={'1'}
                     onClick={() => {
-                      // setShowAddIndicatorDialog(true);
+                      setEditOutcome({
+                        display: true,
+                        outcome: undefined,
+                      });
                     }}
                   >
                     <p className="hidden xl:block">Add Outcome</p>
@@ -1684,18 +1469,16 @@ const App = () => {
 
           const newIndicator: Indicator = {
             id: uuid(),
-            tag: indicatorCount ? `${indicator.tag}${indicatorCount + 1}` : indicator.tag,
+            tag: (indicatorCount ? `${indicator.tag}${indicatorCount + 1}` : indicator.tag) as IndicatorTag,
             funcStr: indicator.funcStr,
             params: indicator.params,
             label: indicator.label,
             overlay: indicator.overlay,
             streams: indicator.streams,
-            // properties: indicator.properties,
             properties: parseFunctionReturnKeys(indicator.funcStr),
           };
 
           await centralAddIndicator(newIndicator);
-          // setUserIndicators([...userIndicators, newIndicator]);
           setShowAddIndicatorDialog(false);
         }}
         onClose={() => {
@@ -1724,17 +1507,6 @@ const App = () => {
             ...userIndicators[index],
             ...dialogIndicator,
           });
-
-          // if (index !== -1) {
-          //   // Update existing indicator
-          //   const newIndicators = [...userIndicators];
-          //   newIndicators[index] = {
-          //     ...newIndicators[index],
-          //     ...dialogIndicator,
-          //   };
-          //
-          //   setUserIndicators(newIndicators);
-          // }
 
           setShowEditIndicatorDialog(false);
         }}
@@ -1773,34 +1545,6 @@ const App = () => {
         onCancelClicked={() => {
           setCurrentIndicator(DEFAULT_INDICATOR);
           setShowEditIndicatorCodeDialog(false);
-        }}
-      />
-
-      <UserTriggerDialog
-        show={showTriggerDialog}
-        trigger={currentTrigger}
-        setTrigger={setCurrentTrigger}
-        onSaveClicked={() => {
-          const updatedTriggers = [...userTriggers];
-          const triggerIndex = updatedTriggers.findIndex(t => t.id === currentTrigger.id);
-
-          if (triggerIndex !== -1) {
-            // Update existing trigger
-            updatedTriggers[triggerIndex] = currentTrigger;
-          } else {
-            // Add new trigger
-            updatedTriggers.push({
-              ...currentTrigger,
-              id: Date.now().toString(),
-            });
-          }
-
-          setUserTriggers(updatedTriggers);
-          setShowTriggerDialog(false); // Close the dialog
-        }}
-        onCancelClicked={() => {
-          setCurrentTrigger(DEFAULT_USER_TRIGGER);
-          setShowTriggerDialog(false);
         }}
       />
 
@@ -1851,87 +1595,60 @@ const App = () => {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/*<UserOutcomeDialog*/}
-      {/*  show={showOutcomeDialog}*/}
-      {/*  outcome={currentOutcome}*/}
-      {/*  setOutcome={setCurrentOutcome}*/}
-      {/*  onSaveClicked={() => {*/}
-      {/*    setUserOutcome(currentOutcome);*/}
-      {/*    setShowOutcomeDialog(false); // Close the dialog*/}
-      {/*  }}*/}
-      {/*  onCancelClicked={() => {*/}
-      {/*    setCurrentOutcome(DEFAULT_USER_OUTCOME);*/}
-      {/*    setShowOutcomeDialog(false);*/}
-      {/*  }}*/}
-      {/*/>*/}
+      {/*Same edit trigger but for outcome*/}
+      <Dialog.Root open={editOutcome.display}>
+        <Dialog.Content>
+          <EditOutcome
+            outcome={editOutcome.outcome}
+            saveOutcome={async (outcome: OutcomeConfig) => {
+              if (editOutcome.outcome) {
+                await centralEditOutcome({
+                  ...(editOutcome.outcome || {}),
+                  ...outcome,
+                });
+              } else {
+                await centralAddOutcome({ ...outcome, enabled: true });
+              }
+
+              setEditOutcome({
+                display: false,
+                outcome: undefined,
+              });
+            }}
+            topRightSlot={
+              <IconButton
+                variant={'ghost'}
+                className={'!rounded-full'}
+                size={'1'}
+                onClick={() => {
+                  setEditOutcome({
+                    display: false,
+                    outcome: undefined,
+                  });
+                }}
+              >
+                <Cross2Icon className="h-6 w-6"></Cross2Icon>
+              </IconButton>
+            }
+            properties={{
+              default: DEFAULT_FIELDS,
+              indicator: userIndicators.map(i => ({
+                indicatorTag: i.tag,
+                streamTag: i.streams.map(s => s.tag),
+              })),
+            }}
+            // TODO: DO I need to make operators funcs array based?
+            operators={DEFAULT_OPERATORS}
+          />
+        </Dialog.Content>
+      </Dialog.Root>
     </>
   );
 };
 
-export default App;
+export default ClientPage;
 
 const DEFAULT_INDICATOR: Indicator = PRESET_INDICATOR_SMA;
-
-const DEFAULT_USER_SERIES: UserSeries = {
-  name: '',
-  seriesFunctionString: `const windowSize = 20;  // Setting the period for SMA
-  
-const smaData = data.map((current, index) => {
-  if (index >= windowSize - 1) {
-    // Calculate SMA only when there are enough preceding data points
-    let sum = 0;
-    // Sum the closing prices of the last 'windowSize' days
-    for (let i = index - windowSize + 1; i <= index; i++) {
-      sum += data[i].close;
-    }
-    let average = sum / windowSize;
-    return { time: current.time, value: average };
-  } else {
-    return null;  // Not enough data to calculate SMA
-  }
-});
- 
-return smaData.filter(item => item !== null);
-/* Close example:
-return data.map(d => ({ time: d.time, value: d.close }));
-*/
-
-/*
-Lookback offset example:
-
-const offsetData = data.map((d, index) => {
-  return (index >= 5) ? { time: d.time, value: data[index - 5].close } : null
-})
-
-return offsetData.filter(item => item !== null);
-*/
-
-/*
-High pivots example:
-
-const pivotData = data.map((d, index) => {
-  if (index >= 10) { 
-    let validPivots = [];
-    for (let i = index - 10; i <= index - 3; i++) {
-      if (data[i].close < data[i+1].close && data[i+2].close < data[i+1].close) {
-        validPivots.push(data[i+1].close); // Push the value of the higher high
-      }
-    }
-
-    if (validPivots.length > 0) {
-      let highestPivot = Math.max(...validPivots);
-      return { time: d.time, value: highestPivot };
-    }
-  }
-  return null;
-});
-
-return pivotData.filter(item => item !== null);
-*/`,
-  overlay: true,
-  color: '#ffffff',
-  lineWidth: 1,
-};
 
 const DEFAULT_USER_TRIGGER: UserTrigger = {
   id: '',

@@ -12,3 +12,16 @@ export function resolveAllIndicatorStreamTags(
     });
   });
 }
+
+export function buildStreamTagIndicatorMap(indicators: Indicator[]): Record<string, Indicator> {
+  const streamTagIndicatorMap: Record<string, Indicator> = {};
+
+  indicators.forEach(indicator => {
+    indicator.properties.forEach(property => {
+      const streamTag = `${indicator.tag}_${property}`;
+      streamTagIndicatorMap[streamTag] = indicator;
+    });
+  });
+
+  return streamTagIndicatorMap;
+}

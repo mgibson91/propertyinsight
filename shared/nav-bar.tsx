@@ -46,17 +46,17 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
             </Text>
           </Link>
 
-          <Link href={'/dashboaard'}>
-            <Text
-              size={'3'}
-              className={cx(
-                'hover:text-accent-text transform-all duration-200',
-                path === '/dashboaard' ? 'text-accent-text' : 'text-primary-text-contrast'
-              )}
-            >
-              Dashboaard
-            </Text>
-          </Link>
+          {/*<Link href={'/dashboaard'}>*/}
+          {/*  <Text*/}
+          {/*    size={'3'}*/}
+          {/*    className={cx(*/}
+          {/*      'hover:text-accent-text transform-all duration-200',*/}
+          {/*      path === '/dashboaard' ? 'text-accent-text' : 'text-primary-text-contrast'*/}
+          {/*    )}*/}
+          {/*  >*/}
+          {/*    Dashboaard*/}
+          {/*  </Text>*/}
+          {/*</Link>*/}
 
           <Link href={'/setups'}>
             <Text

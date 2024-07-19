@@ -16,23 +16,23 @@ describe.skip('buildFunctionComponents', () => {
       {
         fieldA: {
           property: 'sma20_value',
-          offset: 0,
+          offsetBetweenTriggerAndOutcome: 0,
         },
         operator: 'crossover',
         fieldB: {
           property: 'sma50_value',
-          offset: 0,
+          offsetBetweenTriggerAndOutcome: 0,
         },
       },
       {
         fieldA: {
           property: 'sma20_value',
-          offset: 1,
+          offsetBetweenTriggerAndOutcome: 1,
         },
         operator: 'crossover',
         fieldB: {
           property: 'sma50_value',
-          offset: 0,
+          offsetBetweenTriggerAndOutcome: 0,
         },
       },
     ],
@@ -58,7 +58,7 @@ describe.skip('buildFunctionComponents', () => {
   });
 
   test('full', () => {
-    const fullFunc = buildTriggerFunc({ trigger, delayMap: {} });
+    const fullFunc = buildTriggerFunc({ trigger });
     expect(fullFunc).toEqual(
       `const trigger = () => {
 const a0 = index => data[index + 0].sma20_value;
