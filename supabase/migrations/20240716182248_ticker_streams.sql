@@ -13,13 +13,16 @@ create table "public"."ticker_stream_data" (
 
 alter table "public"."ticker_stream_data" enable row level security;
 
+create type "public"."ticker_stream_type" as enum ('crypto', 'forex');
+
 create table "public"."ticker_streams" (
     "id" uuid not null default gen_random_uuid(),
     "created_at" timestamp with time zone not null default now(),
     "ticker" text not null,
     "source" text not null,
     "period" text not null,
-    "tag" text not null
+    "tag" text not null,
+    "category_tag" ticker_stream_type not null
 );
 
 

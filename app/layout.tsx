@@ -8,7 +8,7 @@ import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NavDropdown } from '@/shared/nav-dropdown';
 import { NavBar } from '@/shared/nav-bar';
-import ResponsiveDisplay from '@/shared/layout/responsive-display';
+import { CSPostHogProvider } from '@/app/posthog-provider';
 
 const defaultUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
@@ -51,28 +51,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           })(window,document,'script','dataLayer','${process.env.GTM_ID}');
           `}
       </Script>
-      <body className="min-h-screen">
-        <DisplayModeAwareRadixThemeProvider>
-          {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
-          <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
-            <NavBar
-              isLoggedIn={Boolean(user?.email)}
-              rightSlot={
-                <div className={'ml-2'}>
-                  <NavDropdown
-                    headerSlot={<span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>}
-                  />
-                </div>
-              }
-            />
-          </div>
+      <CSPostHogProvider>
+        <body className="min-h-screen">
+          <DisplayModeAwareRadixThemeProvider>
+            {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
+            <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
+              <NavBar
+                isLoggedIn={Boolean(user?.email)}
+                rightSlot={
+                  <div className={'ml-2'}>
+                    <NavDropdown
+                      headerSlot={
+                        <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
+                      }
+                    />
+                  </div>
+                }
+              />
+            </div>
 
-          <main className="flex-auto flex flex-col items-center text-primary-text">
-            <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
-          </main>
-          {/*</ResponsiveDisplay>*/}
-        </DisplayModeAwareRadixThemeProvider>
-      </body>
+            <main className="flex-auto flex flex-col items-center text-primary-text">
+              <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
+            </main>
+            {/*</ResponsiveDisplay>*/}
+          </DisplayModeAwareRadixThemeProvider>
+        </body>
+      </CSPostHogProvider>
     </html>
   );
 }

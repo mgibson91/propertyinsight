@@ -44,6 +44,7 @@
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
     "postcss": "^8.4.32",
+    "posthog-js": "^1.148.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
