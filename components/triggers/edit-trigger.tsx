@@ -45,12 +45,12 @@ return a[0] < b[0] && ((a[1] > b[1]) || (a[1] === b[1] && a[2] > b[2]))
 const DEFAULT_CONDITION: TriggerCondition = {
   fieldA: {
     property: 'close',
-    offsetBetweenTriggerAndOutcome: 0,
+    offset: 0,
   },
   operator: DEFAULT_OPERATORS[0].label,
   fieldB: {
     property: 'close',
-    offsetBetweenTriggerAndOutcome: 0,
+    offset: 0,
   },
 };
 

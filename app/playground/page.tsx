@@ -2,7 +2,6 @@
 
 import IndicatorSearchView from '@/components/indicators/add-indicator';
 import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
-import DemoComponent from '@/app/playground/DemoComponent';
 import SlideToggle from '@/app/playground/SlideToggle';
 import React, { useState } from 'react';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
@@ -108,26 +107,26 @@ export default function Page() {
       {/*</SlideToggle2>*/}
 
       <div className="!w-1/2 !h-1/2">
-        <EditTrigger
-          trigger={trigger}
-          saveTrigger={newTrigger => {
-            setTrigger(newTrigger);
-          }}
-          properties={{
-            default: ['close', 'open', 'high', 'low'],
-            indicator: [
-              {
-                indicatorTag: 'sma20',
-                streamTag: ['value'],
-              },
-              {
-                indicatorTag: 'sma50',
-                streamTag: ['value'],
-              },
-            ],
-          }}
-          operators={DEFAULT_OPERATORS}
-        />
+        {/*<EditTrigger*/}
+        {/*  trigger={trigger}*/}
+        {/*  saveTrigger={newTrigger => {*/}
+        {/*    setTrigger(newTrigger);*/}
+        {/*  }}*/}
+        {/*  properties={{*/}
+        {/*    default: ['close', 'open', 'high', 'low'],*/}
+        {/*    indicator: [*/}
+        {/*      {*/}
+        {/*        indicatorTag: 'sma20',*/}
+        {/*        streamTag: ['value'],*/}
+        {/*      },*/}
+        {/*      {*/}
+        {/*        indicatorTag: 'sma50',*/}
+        {/*        streamTag: ['value'],*/}
+        {/*      },*/}
+        {/*    ],*/}
+        {/*  }}*/}
+        {/*  operators={DEFAULT_OPERATORS}*/}
+        {/*/>*/}
       </div>
     </div>
   );

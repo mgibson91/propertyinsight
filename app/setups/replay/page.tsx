@@ -3,7 +3,7 @@
 import { Button, IconButton, Slider } from '@radix-ui/themes';
 import { BacktestChart } from '@/components/BacktestChart';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
-import { PauseIcon, PlayIcon } from '@radix-ui/react-icons';
+import { ArrowLeftIcon, ArrowRightIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import { useDisplaySnapshot } from '@/app/display-snapshot-provider';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
@@ -105,6 +105,7 @@ export default function () {
           <div className={'flex-1'}></div>
           <div className={'flex flex-row gap-2'}>
             <Button
+              variant={'soft'}
               onClick={() => {
                 if (position > 0) {
                   setPosition(position - 1);
@@ -112,9 +113,11 @@ export default function () {
                 }
               }}
             >
-              Prev setup
+              <ArrowLeftIcon />
+              Last setup
             </Button>
             <Button
+              variant={'soft'}
               onClick={() => {
                 if (position < displaySnapshots.length - 1) {
                   setPosition(position + 1);
@@ -123,6 +126,7 @@ export default function () {
               }}
             >
               Next setup
+              <ArrowRightIcon />
             </Button>
           </div>
 

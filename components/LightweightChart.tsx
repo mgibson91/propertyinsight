@@ -50,7 +50,7 @@ export const LightweightChart = ({
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  let resizeObserver;
+  let resizeObserver: ResizeObserver;
 
   useEffect(() => {
     if (!chartContainerRef.current) {

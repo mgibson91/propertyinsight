@@ -183,7 +183,7 @@ export const AddConditionPopover = ({
                         ...pendingCondition,
                         fieldA: {
                           ...pendingCondition.fieldA,
-                          offsetBetweenTriggerAndOutcome: parseInt(e.target.value),
+                          offset: parseInt(e.target.value),
                         },
                       });
                     }}
@@ -285,7 +285,7 @@ export const AddConditionPopover = ({
                         ...pendingCondition,
                         fieldB: {
                           ...pendingCondition.fieldB,
-                          offsetBetweenTriggerAndOutcome: parseInt(e.target.value),
+                          offset: parseInt(e.target.value),
                         },
                       });
                     }}

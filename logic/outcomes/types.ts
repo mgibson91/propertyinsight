@@ -1,6 +1,6 @@
 import { Brand } from '@/utils/brand';
 
-interface OutcomeField {
+export interface OutcomeField {
   property: string;
   offset: number;
 }

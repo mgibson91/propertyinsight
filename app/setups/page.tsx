@@ -5,18 +5,18 @@ import { BacktestChart } from '@/components/BacktestChart';
 import { Button, Card, Dialog, Heading, IconButton, Slider, TextFieldInput, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
-import { DownloadIcon, PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
+import { BellIcon, Cross2Icon, DownloadIcon, PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { CSVLink } from 'react-csv';
-import { prepareCsvContent } from '@/app/(logic)/prepare-csv-content';
 import { CandlestickData, LineData, SeriesMarker, Time, UTCTimestamp } from 'lightweight-charts';
 import { GenericData } from '@/app/(logic)/types';
 import { getRandomValues } from 'node:crypto';
 import { DARK_COLOR_LIST_10, pickRandom } from '@/shared/color-lists';
 import { MatchingSnapshot } from '@/logic/snapshots/get-matching-snapshots';
 import { buildDisplaySnapshot } from '@/logic/snapshots/build-display-snapshot';
+// import { prepareCsvContent } from '@/app/(logic)/prepare-csv-content';
 
 export default function SnapshotPage() {
   const [displaySnapshots] = useDisplaySnapshot();
@@ -49,37 +49,57 @@ export default function SnapshotPage() {
 
             <Dialog.Root>
               <Dialog.Trigger className={'flex flex-row gap-2 items-center'}>
-                <Button>
+                <Button variant={'soft'}>
                   Download CSV
                   <DownloadIcon></DownloadIcon>
                 </Button>
               </Dialog.Trigger>
 
               <Dialog.Content className={'!max-w-[350px]'}>
-                <div className={'flex flex-col gap-4'}>
-                  <Heading>Download matching setups</Heading>
+                <div className="justify-center items-center h-full w-full">
+                  <div className={'flex flex-col gap-3'}>
+                    <div className={'flex flex-row justify-between items-center'}>
+                      <Heading size={'3'}>Coming soon</Heading>
+                      <Dialog.Close>
+                        <IconButton color={'gray'} variant={'ghost'}>
+                          <Cross2Icon />
+                        </IconButton>
+                      </Dialog.Close>
+                    </div>
+                    <div className="gap-2 flex items-center justify-center">
+                      <p className="text-2xl">🚧</p>
+                    </div>
 
-                  <div className={'flex flex-col'}>
-                    <label>Number of preceding values</label>
-                    <TextFieldInput
-                      type={'number'}
-                      value={precedingSamples}
-                      onChange={e => setPrecedingSamples(parseInt(e.currentTarget.value))}
-                    ></TextFieldInput>
+                    <Button variant={'soft'}>
+                      Keep me informed
+                      <BellIcon />
+                    </Button>
                   </div>
-
-                  {/*<CSVLink*/}
-                  {/*  className={'self-center mt-2'}*/}
-                  {/*  data={prepareCsvContent(matchingSnapshots, precedingSamples)}*/}
-                  {/*  filename={'my-file.csv'}*/}
-                  {/*  target="_blank"*/}
-                  {/*>*/}
-                  {/*  <Button size={'3'}>*/}
-                  {/*    Download CSV*/}
-                  {/*    <DownloadIcon></DownloadIcon>*/}
-                  {/*  </Button>*/}
-                  {/*</CSVLink>*/}
                 </div>
+                {/*<div className={'flex flex-col gap-4'}>*/}
+                {/*  <Heading>Download matching setups</Heading>*/}
+
+                {/*  <div className={'flex flex-col'}>*/}
+                {/*    <label>Number of preceding values</label>*/}
+                {/*    <TextFieldInput*/}
+                {/*      type={'number'}*/}
+                {/*      value={precedingSamples}*/}
+                {/*      onChange={e => setPrecedingSamples(parseInt(e.currentTarget.value))}*/}
+                {/*    ></TextFieldInput>*/}
+                {/*  </div>*/}
+
+                {/*  <CSVLink*/}
+                {/*    className={'self-center mt-2'}*/}
+                {/*    data={prepareCsvContent(displaySnapshots, precedingSamples)}*/}
+                {/*    filename={'my-file.csv'}*/}
+                {/*    target="_blank"*/}
+                {/*  >*/}
+                {/*    <Button size={'3'}>*/}
+                {/*      Download CSV*/}
+                {/*      <DownloadIcon></DownloadIcon>*/}
+                {/*    </Button>*/}
+                {/*  </CSVLink>*/}
+                {/*</div>*/}
               </Dialog.Content>
             </Dialog.Root>
           </div>
@@ -113,9 +133,9 @@ export default function SnapshotPage() {
           return (
             <Card className={'h-[300px] !bg-primary-bg-subtle'}>
               <div className={'h-full pt-8 relative'}>
-                <div className={'absolute top-0 right-0 w-full z-10 flex justify-end'}>
+                <div className={'absolute top-0 left-0 w-full z-10 flex justify-start'}>
                   <Tooltip content={'Replay'} delayDuration={100}>
-                    <IconButton onClick={() => router.push(`/setups/replay?position=${index}`)}>
+                    <IconButton variant={'soft'} onClick={() => router.push(`/setups/replay?position=${index}`)}>
                       <TimerIcon className={'h-5 w-5'}></TimerIcon>
                     </IconButton>
                   </Tooltip>

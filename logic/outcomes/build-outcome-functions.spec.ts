@@ -16,23 +16,23 @@ describe('buildFunctionComponents', () => {
       {
         fieldA: {
           property: 'sma20_value',
-          offsetBetweenTriggerAndOutcome: 0,
+          offset: 0,
         },
         operator: 'crossover',
         fieldB: {
           property: 'sma50_value',
-          offsetBetweenTriggerAndOutcome: 0,
+          offset: 0,
         },
       },
       {
         fieldA: {
           property: 'sma20_value',
-          offsetBetweenTriggerAndOutcome: 1,
+          offset: 1,
         },
         operator: 'crossover',
         fieldB: {
           property: 'sma50_value',
-          offsetBetweenTriggerAndOutcome: 0,
+          offset: 0,
         },
       },
     ],
@@ -40,12 +40,12 @@ describe('buildFunctionComponents', () => {
       {
         fieldA: {
           property: 'sma20_value',
-          offsetBetweenTriggerAndOutcome: 0,
+          offset: 0,
         },
         operator: 'crossover',
         fieldB: {
           property: 'sma50_value',
-          offsetBetweenTriggerAndOutcome: 0,
+          offset: 0,
         },
       },
     ],

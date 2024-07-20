@@ -3,18 +3,18 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Card, TextFieldInput } from '@radix-ui/themes';
 import { Indicator } from '@/logic/indicators/types';
-import { AvatarIcon, CheckIcon, GlobeIcon } from '@radix-ui/react-icons';
+import { AvatarIcon, BarChartIcon, CheckIcon, GlobeIcon } from '@radix-ui/react-icons';
 import { PRESET_INDICATOR_BOLLINGER_BANDS } from '@/logic/indicators/preset-indicator';
 
 enum Category {
-  MyLibrary = 'My Library',
   Standard = 'Standard',
+  MyLibrary = 'My Library',
   Community = 'Community',
 }
 
 const categoryIcons = {
+  [Category.Standard]: BarChartIcon,
   [Category.MyLibrary]: AvatarIcon,
-  [Category.Standard]: CheckIcon,
   [Category.Community]: GlobeIcon,
 };
 
@@ -52,11 +52,15 @@ const IndicatorSearchView = ({
   useEffect(() => {
     let sourcedIndicators: Indicator[] = [];
 
-    if (category === Category.MyLibrary) {
-      sourcedIndicators = [PRESET_INDICATOR_BOLLINGER_BANDS];
-    } else if (category === Category.Standard) {
+    if (category === Category.Standard) {
       sourcedIndicators = indicators;
     }
+
+    // if (category === Category.MyLibrary) {
+    //   sourcedIndicators = [PRESET_INDICATOR_BOLLINGER_BANDS];
+    // } else if (category === Category.Standard) {
+    //   sourcedIndicators = indicators;
+    // }
 
     const filtered = sourcedIndicators
       .map(indicator => {
@@ -136,7 +140,7 @@ const IndicatorSearchView = ({
           onChange={e => setSearch(e.target.value)}
         />
       </div>
-      <div className={'flex flex-row gap-3  !max-h-[300px]'}>
+      <div className={'flex flex-row gap-3 !max-h-[300px] h-[250px]'}>
         {/*<div className={'flex flex-col border border-primary-border rounded-lg'}>My Library</div>*/}
         <div className={'flex flex-col gap-2 items-start w-[120px]'}>
           {Object.values(Category).map(cat => (
@@ -170,15 +174,24 @@ const IndicatorSearchView = ({
         <div className={'border-r border-primary-border h-full w-[10px]'}></div>
 
         <div className="flex flex-col gap-2 overflow-auto w-full">
-          {filteredIndicators.map(indicator => (
-            <div
-              onClick={() => onItemClicked(indicator)}
-              key={indicator.tag}
-              className="bg-primary-bg cursor-pointer hover:bg-primary-bg-active p-2 text-left rounded-lg"
-            >
-              {highlightMatch(indicator.label, indicator.matches || [])}
+          {category !== Category.Standard ? (
+            <div className={'h-full flex flex-row items-center justify-center'}>
+              <div className="gap-2 flex">
+                <p>🚧</p>
+                <p>Coming Soon</p>
+              </div>
             </div>
-          ))}
+          ) : (
+            filteredIndicators.map(indicator => (
+              <div
+                onClick={() => onItemClicked(indicator)}
+                key={indicator.tag}
+                className="bg-primary-bg cursor-pointer hover:bg-primary-bg-active p-2 text-left rounded-lg"
+              >
+                {highlightMatch(indicator.label, (indicator as any).matches || [])}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

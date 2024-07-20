@@ -6,7 +6,7 @@ import { PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { v4 as uuid } from 'uuid';
 import { Brand } from '@/utils/brand';
 import { AddConditionPopover } from '@/components/triggers/add-condition-popover';
-import { OutcomeConfig, OutcomeCondition, OutcomeId } from '@/logic/outcomes/types';
+import { OutcomeConfig, OutcomeCondition, OutcomeId, OutcomeField } from '@/logic/outcomes/types';
 
 export const DEFAULT_OPERATORS: { label: string; func: string }[] = [
   {
@@ -20,12 +20,12 @@ return a[0] > b[0] && ((a[1] < b[1]) || (a[1] === b[1] && a[2] < b[2]))
 const DEFAULT_CONDITION: OutcomeCondition = {
   fieldA: {
     property: 'close',
-    offsetBetweenTriggerAndOutcome: 0,
+    offset: 0,
   },
   operator: DEFAULT_OPERATORS[0].label,
   fieldB: {
     property: 'close',
-    offsetBetweenTriggerAndOutcome: 0,
+    offset: 0,
   },
 };
 

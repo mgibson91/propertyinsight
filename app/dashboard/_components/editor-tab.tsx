@@ -1,22 +1,11 @@
-import {
-  Box,
-  Button,
-  Code,
-  Dialog,
-  Heading,
-  IconButton,
-  Popover,
-  Select,
-  Tabs,
-  TextFieldInput,
-} from '@radix-ui/themes';
+import { Button, Code, Heading, IconButton, Popover, Select, TextFieldInput } from '@radix-ui/themes';
 import { Indicator, IndicatorParam, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
-import { Editor, BeforeMount } from '@monaco-editor/react';
+import { BeforeMount, Editor } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
-import { PlusIcon, ReloadIcon, ResetIcon } from '@radix-ui/react-icons';
+import { PlusIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
@@ -143,7 +132,6 @@ export const EditorTab = ({
   }, [funcStr]);
 
   return (
-    //  onKeyDown={handleKeyDown}
     <div className={'flex flex-col'}>
       <div className={'flex flex-row items-center justify-between bg-accent-bg h-[36px] px-2'}>
         <div className={'flex flex-row gap-2 items-center px-1'}>
@@ -152,7 +140,7 @@ export const EditorTab = ({
             className={'min-w-[150px]'}
             placeholder={'Indicator name'}
             value={label}
-            onInput={e => {
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               setLabel(e.target.value);
             }}
           ></TextFieldInput>
@@ -162,7 +150,7 @@ export const EditorTab = ({
             className={'min-w-[150px]'}
             placeholder={'Indicator tag'}
             value={tag}
-            onInput={e => {
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               setTag(e.target.value);
             }}
           ></TextFieldInput>
@@ -211,7 +199,7 @@ export const EditorTab = ({
                   name: param.name.toLowerCase(),
                 })),
                 // TODO
-                tag,
+                tag: tag as IndicatorTag,
                 streams: keys.map(key => ({
                   tag: key,
                   overlay: false,
