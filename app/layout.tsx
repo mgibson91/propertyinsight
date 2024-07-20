@@ -9,6 +9,8 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NavDropdown } from '@/shared/nav-dropdown';
 import { NavBar } from '@/shared/nav-bar';
 import { CSPostHogProvider } from '@/app/posthog-provider';
+import { UserMetadata, UserMetadataProvider } from '@/app/user-metadata-provider';
+import { PostHogIdentifier } from '@/app/posthog-identifier';
 
 const defaultUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
@@ -40,6 +42,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     data: { user },
   } = await supabase.auth.getUser();
 
+  const userMetadata: UserMetadata = {
+    userId: '',
+    email: '',
+    // subscribed: false,
+    // creditBalance: 0,
+  };
+
+  if (user?.id && user?.email) {
+    // const subscription = await getSubscription(user.id);
+    // userMetadata.subscribed = Boolean(subscription);
+    userMetadata.userId = user.id;
+    userMetadata.email = user.email;
+    // userMetadata.creditBalance = subscription?.creditBalance || 0;
+  }
+
+  if (user?.id) {
+    userMetadata.userId = user.id;
+  }
+
   return (
     <html lang="en">
       {process.env.GTM_ID && (
@@ -56,28 +77,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       <CSPostHogProvider>
         <body className="min-h-screen">
-          <DisplayModeAwareRadixThemeProvider>
-            {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
-            <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
-              <NavBar
-                isLoggedIn={Boolean(user?.email)}
-                rightSlot={
-                  <div className={'ml-2'}>
-                    <NavDropdown
-                      headerSlot={
-                        <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
-                      }
-                    />
-                  </div>
-                }
-              />
-            </div>
+          <UserMetadataProvider defaultValues={userMetadata}>
+            <PostHogIdentifier>
+              <DisplayModeAwareRadixThemeProvider>
+                {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
+                <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
+                  <NavBar
+                    isLoggedIn={Boolean(user?.email)}
+                    rightSlot={
+                      <div className={'ml-2'}>
+                        <NavDropdown
+                          headerSlot={
+                            <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
+                          }
+                        />
+                      </div>
+                    }
+                  />
+                </div>
 
-            <main className="flex-auto flex flex-col items-center text-primary-text">
-              <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
-            </main>
-            {/*</ResponsiveDisplay>*/}
-          </DisplayModeAwareRadixThemeProvider>
+                <main className="flex-auto flex flex-col items-center text-primary-text">
+                  <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
+                </main>
+                {/*</ResponsiveDisplay>*/}
+              </DisplayModeAwareRadixThemeProvider>
+            </PostHogIdentifier>
+          </UserMetadataProvider>
         </body>
       </CSPostHogProvider>
     </html>
