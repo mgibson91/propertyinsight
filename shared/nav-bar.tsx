@@ -114,7 +114,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
         size={'1'}
         className={'!bg-primary-bg-active'}
         onClick={() => {
-          // setDisplayMode({ mode: displayMode.mode === 'dark' ? 'light' : 'dark' });
+          setDisplayMode({ mode: displayMode.mode === 'dark' ? 'light' : 'dark' });
         }}
       >
         <Icon className={displayMode.mode === 'dark' ? 'text-primary-text-contrast' : 'text-primary-text-contrast'} />
