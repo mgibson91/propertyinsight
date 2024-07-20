@@ -89,7 +89,7 @@ export default function () {
       <div className={'w-full h-full items-center justify-center'}>
         <div className={'h-full gap-2 items-center justify-center flex flex-col'}>
           <p>No historical setups available</p>
-          <Link href={'/'}>
+          <Link href={'/dashboard'}>
             <Button size={'3'}>Configure setups in dashboard</Button>
           </Link>
         </div>
