@@ -224,12 +224,12 @@ export const AddConditionPopover = ({
                       >
                         <Select.Trigger className={'flex-1'} />
                         <Select.Content>
-                          <Select.Group>
-                            <Select.Label>Fixed</Select.Label>
-                            <Select.Item key={`value`} value={'value'}>
-                              Value
-                            </Select.Item>
-                          </Select.Group>
+                          {/*<Select.Group>*/}
+                          {/*  <Select.Label>Fixed</Select.Label>*/}
+                          {/*  <Select.Item key={`value`} value={'value'}>*/}
+                          {/*    Value*/}
+                          {/*  </Select.Item>*/}
+                          {/*</Select.Group>*/}
 
                           <Select.Group>
                             <Select.Label>Default</Select.Label>

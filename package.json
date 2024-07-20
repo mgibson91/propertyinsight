@@ -37,6 +37,7 @@
     "immutability-helper": "^3.1.1",
     "jest": "^29.7.0",
     "lightweight-charts": "^4.1.1",
+    "luxon": "^3.4.4",
     "next": "latest",
     "next-axiom": "^1.1.1",
     "openai": "^4.24.1",
@@ -62,6 +63,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/luxon": "^3.4.2",
     "@types/node": "20.3.1",
     "@types/pg": "^8.11.0",
     "@types/react": "^18.2.46",

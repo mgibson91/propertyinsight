@@ -4,6 +4,12 @@ process.env.DB_PASSWORD = 'postgres';
 process.env.DB_PORT = '54322';
 process.env.DB_USER = 'postgres';
 
+// process.env.DB_HOST = 'aws-0-eu-west-2.pooler.supabase.com';
+// process.env.DB_NAME = 'postgres';
+// process.env.DB_PASSWORD = 'thisismyparty!';
+// process.env.DB_PORT = '6543';
+// process.env.DB_USER = 'postgres.lmdjnapcgjqqcfbjkvbq';
+
 import path from 'node:path';
 import csv from 'csv-parser';
 import * as fs from 'node:fs';
