@@ -179,10 +179,50 @@ export const PRESET_INDICATOR_BOLLINGER_BANDS: Indicator = {
   properties: ['middle_band', 'upper_band', 'lower_band'],
 };
 
+export const PRESET_INDICATOR_ATR_STOP: Indicator = {
+  id: uuid(),
+  tag: 'atr_stop' as IndicatorTag,
+  label: 'ATR Stop',
+  params: [
+    {
+      name: 'length',
+      type: IndicatorParamType.NUMBER,
+      label: 'Length',
+      required: true,
+      defaultValue: 14,
+      value: 14,
+    },
+  ],
+  funcStr: `function indicator() {
+  const _atr = atr($$length)
+  return {
+    high: close[0] + _atr,
+    low: close[0] - _atr,
+  };
+}`,
+  overlay: true,
+  streams: [
+    {
+      tag: 'high',
+      overlay: true,
+      lineWidth: 1,
+      color: DARK_COLOR_LIST_10[15], // green
+    },
+    {
+      tag: 'low',
+      overlay: true,
+      lineWidth: 1,
+      color: DARK_COLOR_LIST_10[0], // red
+    },
+  ],
+  properties: ['low_channel', 'high_channel'],
+};
+
 export const PRESET_INDICATORS: Indicator[] = [
   PRESET_INDICATOR_SMA,
   PRESET_INDICATOR_EMA,
   PRESET_INDICATOR_SMA_CHANNEL,
   PRESET_INDICATOR_BOLLINGER_BANDS,
+  PRESET_INDICATOR_ATR_STOP,
   // ... add more presets here
 ];

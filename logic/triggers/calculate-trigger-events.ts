@@ -85,7 +85,7 @@ return trigger();`,
       const reversedLookbackSeries = lookbackData.reverse();
       if (triggerFunc.func({ data: reversedLookbackSeries })) {
         result[trigger.id] = result[trigger.id] ?? [];
-        result[trigger.id].push(data[i].time);
+        result[trigger.id].push(data[i - 1].time); // The previous candle to signfiy the trigger
       }
     }
   }

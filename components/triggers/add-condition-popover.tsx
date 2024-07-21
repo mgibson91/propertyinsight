@@ -56,9 +56,12 @@ export const AddConditionPopover = ({
       });
 
       const indicator = properties.indicator.find(i => i.indicatorTag === pendingTopLevelA);
-      const firstStream = indicator?.streamTag[0];
-      if (firstStream) {
-        setPendingSubLevelA(firstStream);
+
+      if (!pendingSubLevelA) {
+        const firstStream = indicator?.streamTag[0];
+        if (firstStream) {
+          setPendingSubLevelA(firstStream);
+        }
       }
     }
   }, [pendingTopLevelA, pendingSubLevelA]);
@@ -94,9 +97,11 @@ export const AddConditionPopover = ({
       });
 
       const indicator = properties.indicator.find(i => i.indicatorTag === pendingTopLevelB);
-      const firstStream = indicator?.streamTag[0];
-      if (firstStream) {
-        setPendingSubLevelB(firstStream);
+      if (!pendingSubLevelB) {
+        const firstStream = indicator?.streamTag[0];
+        if (firstStream) {
+          setPendingSubLevelB(firstStream);
+        }
       }
     }
   }, [pendingTopLevelB, pendingSubLevelB]);
@@ -230,6 +235,10 @@ export const AddConditionPopover = ({
                           {/*    Value*/}
                           {/*  </Select.Item>*/}
                           {/*</Select.Group>*/}
+
+                          {/*<Select.Item key={'trigger'} value={'trigger'}>*/}
+                          {/*  entry*/}
+                          {/*</Select.Item>*/}
 
                           <Select.Group>
                             <Select.Label>Default</Select.Label>

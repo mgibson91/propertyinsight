@@ -332,6 +332,7 @@ export const EditorTab = ({
                       <TextFieldInput
                         className={'w-[100px]'}
                         type={'number'}
+                        step={0.01}
                         value={param.defaultValue as number}
                         placeholder="Default"
                         onChange={e =>

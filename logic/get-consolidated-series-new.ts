@@ -117,10 +117,11 @@ return indicator();`,
     for (let i = offset; i < augmentedData.length; i++) {
       const batch =
         resolvedIndicator.length === 0 ? [augmentedData[i]] : augmentedData.slice(i - resolvedIndicator.length, i);
+      const reversedBatch = batch.slice().reverse();
 
       // TODO: Add inputs here
       // indicatorFunc({ data: batch }, cache);
-      const result = indicatorFunc({ data: batch }, cache);
+      const result = indicatorFunc({ data: reversedBatch }, cache);
 
       for (const streamTag of resolvedIndicator.outputStreamTags) {
         augmentedData[i][`${resolvedIndicator.tag}_${streamTag}`] = result[streamTag];
