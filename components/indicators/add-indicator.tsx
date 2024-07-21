@@ -25,7 +25,7 @@ const IndicatorSearchView = ({
   indicators: Indicator[];
   onItemClicked: (item: Indicator) => void;
 }) => {
-  const [category, setCategory] = useState(Category.MyLibrary);
+  const [category, setCategory] = useState(Category.Standard);
   const [search, setSearch] = useState('');
   const [filteredIndicators, setFilteredIndicators] = useState(indicators);
 

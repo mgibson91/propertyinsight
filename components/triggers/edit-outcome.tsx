@@ -151,7 +151,7 @@ export const EditOutcome = (props: {
         </div>
 
         <Button
-          disabled={successConditions.length === 0 || failureConditions.length === 0 || !name}
+          disabled={(successConditions.length === 0 && failureConditions.length === 0) || !name}
           onClick={() => {
             saveOutcome({
               id: outcome?.id || (uuid() as OutcomeId),
