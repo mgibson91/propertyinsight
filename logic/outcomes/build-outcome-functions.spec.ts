@@ -54,12 +54,12 @@ describe('buildFunctionComponents', () => {
 
   test('full', () => {
     const expected = `const outcome = () => {
-const success_a0 = index => inputData[index + 0].sma20_value;
-const success_b0 = index => inputData[index + 0].sma50_value;
-const success_a1 = index => inputData[index + 1].sma20_value;
-const success_b1 = index => inputData[index + 0].sma50_value;
-const failure_a0 = index => inputData[index + 0].sma20_value;
-const failure_b0 = index => inputData[index + 0].sma50_value;
+const success_a0 = index => data[index + 0].sma20_value;
+const success_b0 = index => data[index + 0].sma50_value;
+const success_a1 = index => data[index + 1].sma20_value;
+const success_b1 = index => data[index + 0].sma50_value;
+const failure_a0 = index => data[index + 0].sma20_value;
+const failure_b0 = index => data[index + 0].sma50_value;
 
 const condition_success_0 = (success_a0, success_b0) => {
   return success_a0(0) > success_b0(0) && ((success_a0(1) < success_b0(1)) || (success_a0(1) === success_b0(1) && success_a0(2) < success_b0(2)));
@@ -115,7 +115,7 @@ describe('referencing trigger', () => {
 
   test('trigger with transform', () => {
     const expected = `const outcome = () => {
-const success_a0 = index => inputData[index + 0].close;
+const success_a0 = index => data[index + 0].close;
 const success_b0 = index => trigger.close * 1.01;
 
 

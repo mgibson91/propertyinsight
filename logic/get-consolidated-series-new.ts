@@ -121,7 +121,7 @@ return indicator();`,
 
       // TODO: Add inputs here
       // indicatorFunc({ data: batch }, cache);
-      const result = indicatorFunc({ data: reversedBatch }, cache);
+      const result = indicatorFunc(reversedBatch, cache);
 
       for (const streamTag of resolvedIndicator.outputStreamTags) {
         augmentedData[i][`${resolvedIndicator.tag}_${streamTag}`] = result[streamTag];
@@ -162,11 +162,10 @@ export function prependSpreadFunctions({
   existingIndicatorMetadata: { streamTag: string; indicatorTag: IndicatorTag }[];
 }): string {
   let adjustedFunc = `
-const inputData = data.data;
-const open = inputData.map(d => d.open);
-const high = inputData.map(d => d.high);
-const low = inputData.map(d => d.low);
-const close = inputData.map(d => d.close);
+const open = data.map(d => d.open);
+const high = data.map(d => d.high);
+const low = data.map(d => d.low);
+const close = data.map(d => d.close);
 
 ${buildIndicatorStreamVariables(existingIndicatorMetadata)}
 
@@ -182,8 +181,8 @@ export function buildIndicatorStreamVariables(existingIndicatorStreams: Indicato
 
   for (const indicatorStream of existingIndicatorStreams) {
     lines.push(
-      // `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => (d && d.${indicatorStream.indicatorTag} && d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag}) ? d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag} : null);`
-      `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = inputData.map(d => d.${indicatorStream.indicatorTag}_${indicatorStream.streamTag} ?? null);`
+      // `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = data.map(d => (d && d.${indicatorStream.indicatorTag} && d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag}) ? d.${indicatorStream.indicatorTag}.${indicatorStream.streamTag} : null);`
+      `const $${indicatorStream.indicatorTag}_${indicatorStream.streamTag} = data.map(d => d.${indicatorStream.indicatorTag}_${indicatorStream.streamTag} ?? null);`
     );
   }
 

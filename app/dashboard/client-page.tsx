@@ -268,7 +268,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState(
     // new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-    new Date('2024-05-01')
+    new Date('2024-06-01')
     // new Date('2023-12-11')
   );
   const [endDate, setEndDate] = useState(new Date('2024-06-30'));

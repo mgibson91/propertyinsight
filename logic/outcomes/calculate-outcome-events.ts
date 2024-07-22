@@ -109,7 +109,7 @@ return outcome();`,
 
           const reversedLookbackSeries = outcomeData.reverse();
 
-          const wasSuccessful = outcomeFunc.func({ data: reversedLookbackSeries }, { close: data[triggerIdx].close });
+          const wasSuccessful = outcomeFunc.func(reversedLookbackSeries, { close: data[triggerIdx].close });
 
           if (wasSuccessful != null) {
             results.push({

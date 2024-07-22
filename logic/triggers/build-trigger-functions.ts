@@ -40,14 +40,14 @@ export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: 
 
     // TODO: Support if property === 'value', then fixed
     result.inputDeclarations.push(
-      `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
+      `const ${fieldAName} = index => data[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
 
     const fieldBTransformString = condition.fieldBTransform
       ? buildFieldTransformPostfix(condition.fieldBTransform)
       : '';
     result.inputDeclarations.push(
-      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}${fieldBTransformString};`
+      `const ${fieldBName} = index => data[index + ${condition.fieldB.offset}].${condition.fieldB.property}${fieldBTransformString};`
     );
 
     // TODO: Factor in index here and also return unique condition variable accessor functions

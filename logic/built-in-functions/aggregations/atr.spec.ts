@@ -36,7 +36,7 @@ describe('atr', () => {
 
     const func = new Function('data', 'length', completeFuncString);
 
-    const atr = func({ data: DATA }, length);
+    const atr = func(DATA, length);
 
     expect(atr).toBeCloseTo(expectedATR, 1);
   });

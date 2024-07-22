@@ -94,7 +94,7 @@ return trigger();`,
 
       // We reverse it to mirror trading view data[0] = now, data[1] = 1 candle ago
       const reversedLookbackSeries = lookbackData.reverse();
-      if (triggerFunc.func({ data: reversedLookbackSeries })) {
+      if (triggerFunc.func(reversedLookbackSeries)) {
         // Update the trigger count
         triggerCountMap[trigger.id] = triggerCountMap[trigger.id] ?? 0;
         triggerCountMap[trigger.id]++;

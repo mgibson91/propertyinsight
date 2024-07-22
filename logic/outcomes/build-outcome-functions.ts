@@ -69,13 +69,13 @@ export function buildFunctionComponents(
 
     // TODO: Support if property === 'value', then fixed
     result.inputDeclarations.push(
-      `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
+      `const ${fieldAName} = index => data[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
 
     // TODO: Add support for trigger (passed in as a top level param to outcome functions)
     const baseFieldBFunc = condition.fieldB.property.startsWith('trigger.')
       ? `const ${fieldBName} = index => ${condition.fieldB.property}`
-      : `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}`;
+      : `const ${fieldBName} = index => data[index + ${condition.fieldB.offset}].${condition.fieldB.property}`;
 
     const fieldBTransformString = condition.fieldBTransform
       ? buildFieldTransformPostfix(condition.fieldBTransform)
