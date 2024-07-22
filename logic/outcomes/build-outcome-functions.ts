@@ -23,16 +23,16 @@ export function buildOutcomeFunc({ outcome }: { outcome: OutcomeConfig }): strin
     logic += `if (${successComponents.functions
       .map(({ name, fieldNames: { a, b } }) => `${name}(${a}, ${b})`)
       .join(' &&\n  ')}) {
-      return true;
-  }`;
+  return true;
+}`;
   }
 
   if (failureComponents.functions.length) {
-    logic += `if (${failureComponents.functions
+    logic += `\nif (${failureComponents.functions
       .map(({ name, fieldNames: { a, b } }) => `${name}(${a}, ${b})`)
       .join(' &&\n  ')}) {
-      return false;
-  }`;
+  return false;
+}`;
   }
 
   logic += `\n\nreturn null;`;
@@ -71,12 +71,17 @@ export function buildFunctionComponents(
     result.inputDeclarations.push(
       `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
+
+    // TODO: Add support for trigger (passed in as a top level param to outcome functions)
+    const baseFieldBFunc = condition.fieldB.property.startsWith('trigger.')
+      ? `const ${fieldBName} = index => ${condition.fieldB.property}`
+      : `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}`;
+
     const fieldBTransformString = condition.fieldBTransform
       ? buildFieldTransformPostfix(condition.fieldBTransform)
       : '';
-    result.inputDeclarations.push(
-      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}${fieldBTransformString};`
-    );
+
+    result.inputDeclarations.push(`${baseFieldBFunc}${fieldBTransformString};`);
 
     const name = `condition_${prefix || ''}${i}`;
 

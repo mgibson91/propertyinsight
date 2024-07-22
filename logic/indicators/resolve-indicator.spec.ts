@@ -1,8 +1,8 @@
-import { Indicator, IndicatorParamType } from '@/logic/indicators/types';
+import { Indicator, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { ResolvedIndicator, resolveIndicator } from '@/logic/indicators/resolve-indicator';
 
 const TEST_INDICATOR: Indicator = {
-  tag: 'sma',
+  tag: 'sma' as IndicatorTag,
   label: 'Simple Moving Average',
   funcStr: `function indicator() {
   const value = sma($$field.slice(0, $$length), $$length);

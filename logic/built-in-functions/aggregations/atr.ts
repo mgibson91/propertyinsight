@@ -17,14 +17,14 @@ export function atr(data: { close: number; low: number; high: number }[], length
 }
 
 export const ATR_FUNCTION = `function atr(length) {
-  if (inputData.length < length) {
+  if (data.length < length) {
     return null;
   }
   
   function calculateTR(index) {
-    const highLowDiff = inputData[index].high - inputData[index].low;
-    const highPrevCloseDiff = index === 0 ? 0 : Math.abs(inputData[index].high - inputData[index - 1].close);
-    const lowPrevCloseDiff = index === 0 ? 0 : Math.abs(inputData[index].low - inputData[index - 1].close);
+    const highLowDiff = data[index].high - data[index].low;
+    const highPrevCloseDiff = index === 0 ? 0 : Math.abs(data[index].high - data[index - 1].close);
+    const lowPrevCloseDiff = index === 0 ? 0 : Math.abs(data[index].low - data[index - 1].close);
     return Math.max(highLowDiff, highPrevCloseDiff, lowPrevCloseDiff);
   }
 

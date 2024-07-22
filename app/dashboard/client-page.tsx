@@ -268,11 +268,11 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState(
     // new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-    // new Date('2023-11-15')
-    new Date('2023-12-11')
+    new Date('2024-05-01')
+    // new Date('2023-12-11')
   );
-  // const [endDate, setEndDate] = useState(new Date('2023-12-15'));
-  const [endDate, setEndDate] = useState(new Date('2023-12-13'));
+  const [endDate, setEndDate] = useState(new Date('2024-06-30'));
+  // const [endDate, setEndDate] = useState(new Date('2023-12-13'));
   const [tickerStream, setTickerStream] = useState(streams[0]);
   const [candlestickData, setCandlestickData] = useState<CandlestickData<UTCTimestamp>[]>([]);
   const [userSeriesData, setUserSeriesData] = useState<
@@ -298,7 +298,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [userSeries, setUserSeries] = useState<UserSeries[]>([]);
 
   // Displayed - these need to change on current indicator <-> strategy switch
-  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([PRESET_INDICATOR_SMA, PRESET_INDICATOR_EMA]);
+  const [userIndicators, setUserIndicators] = useState<Array<Indicator>>([]);
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [outcomeConfigs, setOutcomeConfigs] = useState<OutcomeConfig[]>([]);
 
@@ -370,6 +370,9 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
       }
 
       setSelectedStrategy(activeStrategy);
+      setUserIndicators(activeStrategy.indicators as Indicator[]);
+      setTriggers(activeStrategy.triggers);
+      setOutcomeConfigs(activeStrategy.outcomes);
 
       // Set local yokes for speed
       // setUserIndicators(activeStrategy.indicators);
@@ -596,22 +599,25 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
       setUserIndicatorData(localIndicatorData);
 
+      const streamTagIndicatorMap = buildStreamTagIndicatorMap(userIndicators);
+
       const triggerEvents = calculateTriggerEvents({
         data: consolidatedSeries.data,
         triggers,
         delayMap: consolidatedSeries.delayMap,
         streams: consolidatedSeries.streams,
+        streamTagIndicatorMap,
       });
 
       // Convert trigger markers to chart
       const newTriggerMarkers: SeriesMarker<UTCTimestamp>[] = Object.entries(triggerEvents).flatMap(
-        ([triggerId, times]) => {
+        ([triggerId, events]) => {
           const triggerName = triggers.find(trigger => trigger.id === triggerId)?.name || triggerId;
 
-          return times.map(time => {
+          return events.map(({ time, occurrence }) => {
             return {
               time,
-              text: triggerName,
+              text: `${triggerName} ${occurrence}`,
               position: 'belowBar',
               color: displayMode.mode === 'dark' ? '#BDE56C' : '#5C7C2F',
               shape: 'arrowUp',
@@ -639,7 +645,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
           color: outcome.wasSuccessful ? '#1FD8A4' : '#FF977D',
           shape: outcome.wasSuccessful ? 'arrowUp' : 'arrowDown',
           size: 2,
-          text: triggerName,
+          text: `${triggerName} ${trigger.occurrence}`,
         };
       });
 
@@ -659,8 +665,6 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
         historicalValues: HISTORICAL_VALUE_COUNT,
         futureValues: FUTURE_VALUE_COUNT,
       });
-
-      const streamTagIndicatorMap = buildStreamTagIndicatorMap(userIndicators);
 
       const displaySnapshots = matchingSnapshots.map(snapshot =>
         buildDisplaySnapshot(snapshot, displayMode.mode, streamTagIndicatorMap)
@@ -1415,6 +1419,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                                 size={'1'}
                                 onClick={() => {
                                   const newStrategy = generateEmptyStrategy(newStrategyName);
+                                  setSelectedStrategy(newStrategy);
 
                                   const updatedStrategies = [...strategies, newStrategy];
                                   setStrategies(updatedStrategies);

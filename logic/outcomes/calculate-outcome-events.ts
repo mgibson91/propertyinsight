@@ -8,7 +8,7 @@ import { IndicatorStreamMetadata, prependSpreadFunctions } from '@/logic/get-con
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 
 export type OutcomeEvent = {
-  trigger: { id: string; time: UTCTimestamp };
+  trigger: { id: string; time: UTCTimestamp; occurrence: number };
   outcome: {
     time: UTCTimestamp;
     wasSuccessful: boolean | null;
@@ -38,7 +38,7 @@ export function calculateOutcomeEvents({
 }: {
   data: GenericData[];
   streams: IndicatorStreamMetadata[];
-  triggerEvents: Record<TriggerId, UTCTimestamp[]>;
+  triggerEvents: Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]>;
   outcomeConfigs: OutcomeConfig[];
 }): OutcomeEvent[] {
   const outcomeFuncMap: Record<
@@ -89,32 +89,32 @@ return outcome();`,
   enabledOutcomeConfigs.map(outcome => {
     const outcomeFunc = outcomeFuncMap[outcome.id];
 
-    Object.entries(triggerEvents).map(([triggerId, triggerTimes]) => {
-      triggerTimes.map(triggerTime => {
-        const index = data.findIndex(({ time: dataTime }) => dataTime === triggerTime);
-        if (index === -1) {
+    Object.entries(triggerEvents).map(([triggerId, triggerEvent]) => {
+      triggerEvent.map(({ time: triggerTime, occurrence }) => {
+        const triggerIdx = data.findIndex(({ time: dataTime }) => dataTime === triggerTime);
+        if (triggerIdx === -1) {
           return;
         }
 
-        if (index + outcomeFunc.lookback >= data.length) {
+        if (triggerIdx + outcomeFunc.lookback >= data.length) {
           return; // not enough data
         }
 
         // Trigger has been found, now iterate from this point to end of data looking for outcome
         // TODO: Fix this need for entire lookback - should only be if new series or something smarter
-        for (let i = index + outcomeFunc.lookback; i < data.length; i++) {
+        for (let i = triggerIdx + outcomeFunc.lookback; i < data.length; i++) {
           // Start from net position - if available
           // How much data do we need to pass / should this be cached per outcome?
           const outcomeData = data.slice(i - outcomeFunc.lookback, i);
 
           const reversedLookbackSeries = outcomeData.reverse();
 
-          const wasSuccessful = outcomeFunc.func({ data: reversedLookbackSeries }, { value: data[i].close });
+          const wasSuccessful = outcomeFunc.func({ data: reversedLookbackSeries }, { close: data[triggerIdx].close });
 
           if (wasSuccessful != null) {
             results.push({
-              trigger: { id: triggerId, time: triggerTime },
-              outcome: { time: data[i].time, wasSuccessful, offsetFromTrigger: i - index },
+              trigger: { id: triggerId, time: triggerTime, occurrence },
+              outcome: { time: data[i].time, wasSuccessful, offsetFromTrigger: i - triggerIdx },
             });
             return; // TODO: Return actual values
           }

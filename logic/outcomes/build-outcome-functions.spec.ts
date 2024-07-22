@@ -52,28 +52,8 @@ describe('buildFunctionComponents', () => {
     enabled: true,
   };
 
-  //   test('buildFunctionComponents', () => {
-  //     const result = buildFunctionComponents(outcome);
-  //     expect(result.inputDeclarations).toEqual([
-  //       'const a0 = index => inputData[index + 0].sma20_value;',
-  //       'const b0 = index => inputData[index + 0].sma50_value;',
-  //       'const a1 = index => inputData[index + 1].sma20_value;',
-  //       'const b1 = index => inputData[index + 0].sma50_value;',
-  //     ]);
-  //     expect(result.funcStrs).toEqual([
-  //       `const condition0 = (a0, b0) => {
-  //   return a0(0) > b0(0) && ((a0(1) < b0(1)) || (a0(1) === b0(1) && a0(2) < b0(2)));
-  // }`,
-  //       `const condition1 = (a1, b1) => {
-  //   return a1(0) > b1(0) && ((a1(1) < b1(1)) || (a1(1) === b1(1) && a1(2) < b1(2)));
-  // }`,
-  //     ]);
-  //   });
-
   test('full', () => {
-    const fullFunc = buildOutcomeFunc({ outcome });
-    expect(fullFunc).toEqual(
-      `const outcome = () => {
+    const expected = `const outcome = () => {
 const success_a0 = index => inputData[index + 0].sma20_value;
 const success_b0 = index => inputData[index + 0].sma50_value;
 const success_a1 = index => inputData[index + 1].sma20_value;
@@ -87,6 +67,9 @@ const condition_success_0 = (success_a0, success_b0) => {
 const condition_success_1 = (success_a1, success_b1) => {
   return success_a1(0) > success_b1(0) && ((success_a1(1) < success_b1(1)) || (success_a1(1) === success_b1(1) && success_a1(2) < success_b1(2)));
 }
+const condition_failure_0 = (failure_a0, failure_b0) => {
+  return failure_a0(0) > failure_b0(0) && ((failure_a0(1) < failure_b0(1)) || (failure_a0(1) === failure_b0(1) && failure_a0(2) < failure_b0(2)));
+}
 
 if (condition_success_0(success_a0, success_b0) &&
   condition_success_1(success_a1, success_b1)) {
@@ -97,7 +80,57 @@ if (condition_failure_0(failure_a0, failure_b0)) {
 }
 
 return null;
-}`
-    );
+}`;
+    const fullFunc = buildOutcomeFunc({ outcome });
+    expect(fullFunc).toEqual(expected);
+  });
+});
+
+describe('referencing trigger', () => {
+  const outcome: OutcomeConfig = {
+    id: '1' as OutcomeId,
+    name: 'Test Outcome',
+    successConditions: [
+      {
+        fieldA: {
+          property: 'close',
+          offset: 0,
+        },
+        operator: 'crossover',
+        fieldB: {
+          property: 'trigger.close',
+          offset: 0,
+        },
+        fieldBTransform: {
+          operator: '+',
+          value: 1,
+          type: 'percent',
+        },
+      },
+    ],
+
+    failureConditions: [],
+    enabled: true,
+  };
+
+  test('trigger with transform', () => {
+    const expected = `const outcome = () => {
+const success_a0 = index => inputData[index + 0].close;
+const success_b0 = index => trigger.close * 1.01;
+
+
+const condition_success_0 = (success_a0, success_b0) => {
+  return success_a0(0) > success_b0(0) && ((success_a0(1) < success_b0(1)) || (success_a0(1) === success_b0(1) && success_a0(2) < success_b0(2)));
+}
+
+
+if (condition_success_0(success_a0, success_b0)) {
+  return true;
+}
+
+return null;
+}`;
+    const fullFunc = buildOutcomeFunc({ outcome });
+    expect(fullFunc).toEqual(expected);
   });
 });

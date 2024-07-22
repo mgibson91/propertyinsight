@@ -43,10 +43,10 @@ describe('buildFunctionComponents', () => {
     test('components', () => {
       const result = buildFunctionComponents(BASIC_TRIGGER);
       expect(result.inputDeclarations).toEqual([
-        'const a0 = index => inputData[index + 0].sma20_value;',
-        'const b0 = index => inputData[index + 0].sma50_value;',
-        'const a1 = index => inputData[index + 1].sma20_value;',
-        'const b1 = index => inputData[index + 0].sma50_value;',
+        'const a0 = index => data[index + 0].sma20_value;',
+        'const b0 = index => data[index + 0].sma50_value;',
+        'const a1 = index => data[index + 1].sma20_value;',
+        'const b1 = index => data[index + 0].sma50_value;',
       ]);
       expect(result.funcStrs).toEqual([
         `const condition0 = (a0, b0) => {
@@ -62,10 +62,10 @@ describe('buildFunctionComponents', () => {
       const fullFunc = buildTriggerFunc({ trigger: BASIC_TRIGGER });
       expect(fullFunc).toEqual(
         `const trigger = () => {
-const a0 = index => inputData[index + 0].sma20_value;
-const b0 = index => inputData[index + 0].sma50_value;
-const a1 = index => inputData[index + 1].sma20_value;
-const b1 = index => inputData[index + 0].sma50_value;
+const a0 = index => data[index + 0].sma20_value;
+const b0 = index => data[index + 0].sma50_value;
+const a1 = index => data[index + 1].sma20_value;
+const b1 = index => data[index + 0].sma50_value;
 
 const condition0 = (a0, b0) => {
   return a0(0) > b0(0) && ((a0(1) < b0(1)) || (a0(1) === b0(1) && a0(2) < b0(2)));
@@ -109,8 +109,8 @@ return(condition0(a0, b0) &&
     test('components', () => {
       const result = buildFunctionComponents(TRIGGER_WITH_TRANSFORM);
       expect(result.inputDeclarations).toEqual([
-        'const a0 = index => inputData[index + 0].close;',
-        'const b0 = index => inputData[index + 1].close * 1.01;',
+        'const a0 = index => data[index + 0].close;',
+        'const b0 = index => data[index + 1].close * 1.01;',
       ]);
       expect(result.funcStrs).toEqual([
         `const condition0 = (a0, b0) => {

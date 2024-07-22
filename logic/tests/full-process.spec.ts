@@ -159,18 +159,19 @@ describe('full process', () => {
             {
               fieldA: {
                 property: 'steep_level',
-                offsetBetweenTriggerAndOutcome: 0,
+                offset: 0,
               },
               operator: 'crossover',
               fieldB: {
                 property: 'sma_value',
-                offsetBetweenTriggerAndOutcome: 0,
+                offset: 0,
               },
             },
           ],
           enabled: true,
         },
       ],
+      streamTagIndicatorMap: {},
     });
     expect(Object.keys(triggerEvents)).toEqual(['1']);
 
@@ -187,12 +188,12 @@ describe('full process', () => {
             {
               fieldA: {
                 property: 'super_steep_level',
-                offsetBetweenTriggerAndOutcome: 0,
+                offset: 0,
               },
               operator: 'crossover',
               fieldB: {
                 property: 'sma_value',
-                offsetBetweenTriggerAndOutcome: 0,
+                offset: 0,
               },
             },
           ],

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Checkbox, Dialog, Heading, IconButton, SegmentedControl, Select, TextField } from '@radix-ui/themes';
 import { Cross2Icon, PlusIcon } from '@radix-ui/react-icons';
 import { TransformOperator, TransformType, TriggerCondition } from '@/components/triggers/edit-trigger';
+import { capitalize } from '@/shared/utils/capitalize';
 
 const DEFAULT_CONDITION: TriggerCondition = {
   fieldA: {
@@ -19,6 +20,7 @@ export const AddConditionPopover = ({
   properties,
   operators,
   addCondition,
+  includeTrigger,
 }: {
   properties: {
     default: string[];
@@ -26,6 +28,7 @@ export const AddConditionPopover = ({
   };
   operators: { label: string; func: string }[];
   addCondition: (condition: TriggerCondition) => void;
+  includeTrigger?: boolean; // Refactor
 }) => {
   const [pendingCondition, setPendingCondition] = useState<TriggerCondition>(DEFAULT_CONDITION);
 
@@ -101,6 +104,14 @@ export const AddConditionPopover = ({
         },
       });
     } else if (properties.default.includes(pendingTopLevelB)) {
+      setPendingCondition({
+        ...pendingCondition,
+        fieldB: {
+          ...pendingCondition.fieldB,
+          property: pendingTopLevelB,
+        },
+      });
+    } else if (pendingTopLevelB.startsWith('trigger.')) {
       setPendingCondition({
         ...pendingCondition,
         fieldB: {
@@ -275,9 +286,14 @@ export const AddConditionPopover = ({
                             {/*  </Select.Item>*/}
                             {/*</Select.Group>*/}
 
-                            {/*<Select.Item key={'trigger'} value={'trigger'}>*/}
-                            {/*  entry*/}
-                            {/*</Select.Item>*/}
+                            {includeTrigger && (
+                              <Select.Group>
+                                <Select.Label>Trigger</Select.Label>
+                                <Select.Item key={'trigger'} value={'trigger.close'}>
+                                  trigger.close
+                                </Select.Item>
+                              </Select.Group>
+                            )}
 
                             <Select.Group>
                               <Select.Label>Default</Select.Label>

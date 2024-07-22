@@ -4,6 +4,8 @@ import { Trigger, TriggerId } from '@/components/triggers/edit-trigger';
 import { UTCTimestamp } from 'lightweight-charts';
 import { buildTriggerFunc } from '@/logic/triggers/build-trigger-functions';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
+import { getDependentIndicators } from '@/logic/indicators/get-dependent-indicators';
+import { Indicator } from '@/logic/indicators/types';
 
 export const OPERATOR_LOOKBACK_MAP: Record<string, number> = {
   crossover: 3, // Faciltates the equal in the middle case - should 2...?
@@ -20,13 +22,15 @@ export function calculateTriggerEvents({
   streams,
   delayMap,
   triggers,
+  streamTagIndicatorMap,
 }: {
   data: GenericData[];
   streams: IndicatorStreamMetadata[];
   delayMap: Record<string, number>;
   triggers: Trigger[];
-}): Record<TriggerId, UTCTimestamp[]> {
-  const result: Record<TriggerId, UTCTimestamp[]> = {};
+  streamTagIndicatorMap: Record<string, Indicator>;
+}): Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]> {
+  const result: Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]> = {};
 
   const triggerFunctionMap: Record<
     TriggerId,
@@ -49,11 +53,6 @@ export function calculateTriggerEvents({
       return Math.max(acc, condition.fieldA.offset, condition.fieldB.offset, ...operatorLookbacks);
     }, 0);
 
-    // Get the longest indicator lookback
-    const indicatorTags = new Set(streams.map(stream => stream.indicatorTag));
-    const delays = Array.from(indicatorTags).map(tag => delayMap[tag]);
-    const delay = Math.max(...delays);
-
     const triggerFuncStr = buildTriggerFunc({ trigger });
     const funcStr = prependSpreadFunctions({
       funcString: `${prefixBuiltInFunctions(triggerFuncStr)}
@@ -64,12 +63,24 @@ return trigger();`,
     });
     const func = new Function('data', funcStr);
 
+    // Get the longest indicator lookback (for any indicators used in the trigger)
+    const indicatorDependencies = getDependentIndicators({
+      funcStr: triggerFuncStr,
+      streamTagIndicatorMap,
+    });
+
+    // const indicatorTags = new Set(streams.map(stream => stream.indicatorTag));
+    const delays = indicatorDependencies.map(tag => delayMap[tag]);
+    const delay = Math.max(...delays, 0);
+
     triggerFunctionMap[trigger.id] = {
       lookback,
       func,
       delay,
     };
   }
+
+  const triggerCountMap: Record<TriggerId, number> = {};
 
   // 2. Iterate over the data and apply each trigger function
   for (let i = 0; i < data.length; i++) {
@@ -84,8 +95,15 @@ return trigger();`,
       // We reverse it to mirror trading view data[0] = now, data[1] = 1 candle ago
       const reversedLookbackSeries = lookbackData.reverse();
       if (triggerFunc.func({ data: reversedLookbackSeries })) {
+        // Update the trigger count
+        triggerCountMap[trigger.id] = triggerCountMap[trigger.id] ?? 0;
+        triggerCountMap[trigger.id]++;
+
         result[trigger.id] = result[trigger.id] ?? [];
-        result[trigger.id].push(data[i - 1].time); // The previous candle to signfiy the trigger
+        result[trigger.id].push({
+          time: reversedLookbackSeries[0].time,
+          occurrence: triggerCountMap[trigger.id],
+        }); // The previous candle to signfiy the trigger
       }
     }
   }

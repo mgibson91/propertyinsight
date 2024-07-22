@@ -49,15 +49,9 @@ export const EditOutcome = (props: {
 
   useEffect(() => {
     setName(outcome?.name || '');
-    // setConditions(outcome?.conditions || []);
     setSuccessConditions(outcome?.successConditions || []);
     setFailureConditions(outcome?.failureConditions || []);
   }, [outcome]);
-
-  const addCondition = (setConditionsFunction: React.Dispatch<React.SetStateAction<Condition[]>>) => {
-    setConditionsFunction(prevConditions => [...prevConditions, pendingCondition]);
-    setPendingCondition(DEFAULT_CONDITION);
-  };
 
   const renderConditions = (
     conditions: Condition[],
@@ -109,29 +103,16 @@ export const EditOutcome = (props: {
       </div>
 
       <div className={'flex flex-col gap-3'}>
-        {/*<div className={'flex flex-col gap-2'}>*/}
-        {/*  <div className={'flex flex-row justify-between items-center'}>*/}
-        {/*    <Heading size={'4'}>Conditions</Heading>*/}
-        {/*    <AddConditionPopover*/}
-        {/*      properties={properties}*/}
-        {/*      operators={operators}*/}
-        {/*      pendingCondition={pendingCondition}*/}
-        {/*      setPendingCondition={setPendingCondition}*/}
-        {/*      addCondition={() => addCondition(setConditions)}*/}
-        {/*    />*/}
-        {/*  </div>*/}
-        {/*  {renderConditions(conditions, setConditions)}*/}
-        {/*</div>*/}
-
         <div className={'flex flex-col gap-2'}>
           <div className={'flex flex-row justify-between items-center'}>
             <Heading size={'4'}>Success Conditions</Heading>
             <AddConditionPopover
               properties={properties}
               operators={operators}
-              pendingCondition={pendingCondition}
-              setPendingCondition={setPendingCondition}
-              addCondition={() => addCondition(setSuccessConditions)}
+              addCondition={(condition: Condition) => {
+                setSuccessConditions([...successConditions, condition]);
+              }}
+              includeTrigger={true}
             />
           </div>
           {renderConditions(successConditions, setSuccessConditions)}
@@ -143,9 +124,10 @@ export const EditOutcome = (props: {
             <AddConditionPopover
               properties={properties}
               operators={operators}
-              pendingCondition={pendingCondition}
-              setPendingCondition={setPendingCondition}
-              addCondition={() => addCondition(setFailureConditions)}
+              addCondition={(condition: Condition) => {
+                setFailureConditions([...failureConditions, condition]);
+              }}
+              includeTrigger={true}
             />
           </div>
           {renderConditions(failureConditions, setFailureConditions)}
