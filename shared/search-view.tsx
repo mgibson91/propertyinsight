@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { TextFieldInput } from '@radix-ui/themes';
+import { TextField } from '@radix-ui/themes';
 
 // Define a generic type for items that might have matching highlights
 type ItemWithMatches<T> = T & { matches?: { start: number; end: number }[] };
@@ -50,7 +50,7 @@ function SearchView<T>({ items, onItemClicked, searchTextExtractor, filterItems 
   return (
     <div className="w-full min-h-[200px]">
       <div className="mb-4">
-        <TextFieldInput
+        <TextField.Root
           autoFocus={true}
           className="w-full"
           type="text"

@@ -1,4 +1,4 @@
-import { Button, Card, Checkbox, Code, Dialog, Heading, HoverCard, TextArea, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, Checkbox, Code, Dialog, Heading, HoverCard, TextArea, TextField } from '@radix-ui/themes';
 
 import { Editor } from '@monaco-editor/react';
 
@@ -34,7 +34,7 @@ export const UserSeriesDialog = ({
               <div className={'flex flex-row gap-2 items-center'}>
                 <div className={'flex flex-col'}>
                   <label>Series Name</label>
-                  <TextFieldInput
+                  <TextField.Root
                     value={series.name}
                     onChange={e =>
                       setSeries({
@@ -47,7 +47,7 @@ export const UserSeriesDialog = ({
 
                 <div className={'flex flex-col'}>
                   <label>Preset Indicator</label>
-                  <TextFieldInput
+                  <TextField.Root
                     value={series.name}
                     onChange={e =>
                       setSeries({
@@ -96,7 +96,7 @@ export const UserSeriesDialog = ({
 
             <div className={'flex flex-col items-start'}>
               <label>Line width</label>
-              <TextFieldInput
+              <TextField.Root
                 type={'number'}
                 value={series.lineWidth}
                 onChange={e =>

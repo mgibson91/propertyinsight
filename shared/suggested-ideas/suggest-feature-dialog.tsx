@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Dialog, Heading, IconButton, TextArea, TextFieldInput } from '@radix-ui/themes';
+import { Button, Dialog, Heading, IconButton, TextArea, TextField } from '@radix-ui/themes';
 import { useState } from 'react';
 import { AsyncButton } from '@/shared/async-button';
 import * as React from 'react';
@@ -42,11 +42,11 @@ export function SuggestFeatureDialog({
 
           <div className={'flex flex-col'}>
             <Heading size={'4'}>Title</Heading>
-            <TextFieldInput
+            <TextField.Root
               value={title}
               placeholder={'Feature title'}
               onChange={e => setTitle(e.target.value)}
-            ></TextFieldInput>
+            ></TextField.Root>
           </div>
 
           <div className={'flex flex-col'}>

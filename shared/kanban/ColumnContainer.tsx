@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import React, { useMemo, useState } from 'react';
 import TaskCard from './TaskCard';
 import { PlusIcon, TrashIcon } from '@radix-ui/react-icons';
-import { Button, Card, IconButton, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, IconButton, TextField } from '@radix-ui/themes';
 
 interface Props {
   column: Column;
@@ -136,7 +136,7 @@ export function ColumnContainer({
           </div>
           {!editMode && column.title}
           {editMode && (
-            <TextFieldInput
+            <TextField.Root
               value={column.title}
               placeholder={'Enter column name'}
               onChange={e => updateColumn(column.id, e.target.value)}

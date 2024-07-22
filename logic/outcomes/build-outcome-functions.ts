@@ -6,7 +6,9 @@
  * 4. Look at dynamically detecting function length
  */
 import { buildConditionFuncStr } from '@/logic/conditions/build-condition-func-str';
-import { OutcomeConfig, OutcomeCondition } from '@/logic/outcomes/types';
+import { OutcomeConfig } from '@/logic/outcomes/types';
+import { buildFieldTransformPostfix } from '@/logic/conditions/build-field-transform-postfix';
+import { Condition } from '@/logic/conditions/types';
 
 export function buildOutcomeFunc({ outcome }: { outcome: OutcomeConfig }): string {
   const successComponents = buildFunctionComponents(outcome.successConditions, { prefix: 'success_' });
@@ -48,7 +50,7 @@ ${logic}
 }
 
 export function buildFunctionComponents(
-  conditions: OutcomeCondition[],
+  conditions: Condition[],
   { prefix }: { prefix: string }
 ): { inputDeclarations: string[]; functions: { code: string; name: string; fieldNames: { a: string; b: string } }[] } {
   const result: {
@@ -69,8 +71,11 @@ export function buildFunctionComponents(
     result.inputDeclarations.push(
       `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
+    const fieldBTransformString = condition.fieldBTransform
+      ? buildFieldTransformPostfix(condition.fieldBTransform)
+      : '';
     result.inputDeclarations.push(
-      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property};`
+      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}${fieldBTransformString};`
     );
 
     const name = `condition_${prefix || ''}${i}`;

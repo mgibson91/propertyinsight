@@ -1,8 +1,8 @@
 'use client';
 
-import { Button, Card, Heading, IconButton, Popover, Select, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, Heading, IconButton, TextField } from '@radix-ui/themes';
 import { useEffect, useState } from 'react';
-import { PlusIcon, TrashIcon } from '@radix-ui/react-icons';
+import { TrashIcon } from '@radix-ui/react-icons';
 import { v4 as uuid } from 'uuid';
 import { Brand } from '@/utils/brand';
 import { AddConditionPopover } from '@/components/triggers/add-condition-popover';
@@ -12,10 +12,20 @@ interface TriggerField {
   offset: number;
 }
 
+export type TransformOperator = '+' | '-';
+export type TransformType = 'percent' | 'absolute';
+
+export interface FieldTransform {
+  operator: TransformOperator;
+  value: number;
+  type: TransformType;
+}
+
 export interface TriggerCondition {
   fieldA: TriggerField;
   operator: string;
   fieldB: TriggerField;
+  fieldBTransform?: FieldTransform;
 }
 
 export type TriggerId = Brand<string, 'TriggerId'>;
@@ -42,18 +52,6 @@ return a[0] < b[0] && ((a[1] > b[1]) || (a[1] === b[1] && a[2] > b[2]))
   },
 ];
 
-const DEFAULT_CONDITION: TriggerCondition = {
-  fieldA: {
-    property: 'close',
-    offset: 0,
-  },
-  operator: DEFAULT_OPERATORS[0].label,
-  fieldB: {
-    property: 'close',
-    offset: 0,
-  },
-};
-
 export const EditTrigger = (props: {
   trigger?: Trigger;
   topRightSlot?: React.ReactNode;
@@ -67,16 +65,14 @@ export const EditTrigger = (props: {
   const { trigger, properties, topRightSlot, operators, saveTrigger } = props;
   const [name, setName] = useState(trigger?.name || '');
   const [conditions, setConditions] = useState<TriggerCondition[]>(trigger?.conditions || []);
-  const [pendingCondition, setPendingCondition] = useState<TriggerCondition>(DEFAULT_CONDITION);
 
   useEffect(() => {
     setName(trigger?.name || '');
     setConditions(trigger?.conditions || []);
   }, [trigger]);
 
-  const addCondition = () => {
-    setConditions([...conditions, pendingCondition]);
-    setPendingCondition(DEFAULT_CONDITION);
+  const addCondition = (condition: TriggerCondition) => {
+    setConditions([...conditions, condition]);
   };
 
   return (
@@ -88,20 +84,14 @@ export const EditTrigger = (props: {
 
       <div className={'flex flex-col'}>
         <Heading size={'4'}>Name</Heading>
-        <TextFieldInput value={name} onChange={e => setName(e.target.value)} />
+        <TextField.Root value={name} onChange={e => setName(e.target.value)} />
       </div>
 
       <div className={'flex flex-col gap-3'}>
         <div className={'flex flex-col gap-2'}>
           <div className={'flex flex-row justify-between items-center'}>
             <Heading size={'4'}>Conditions</Heading>
-            <AddConditionPopover
-              properties={properties}
-              operators={operators}
-              pendingCondition={pendingCondition}
-              setPendingCondition={setPendingCondition}
-              addCondition={addCondition}
-            />
+            <AddConditionPopover properties={properties} operators={operators} addCondition={addCondition} />
           </div>
           <Card className={''}>
             <div className={'flex flex-col max-h-[200px] overflow-hidden'}>

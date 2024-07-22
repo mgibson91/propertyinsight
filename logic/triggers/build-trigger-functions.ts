@@ -5,8 +5,9 @@
  *    - For now, expect trigger code to only operate on valid data (if (close[0])
  * 4. Look at dynamically detecting function length
  */
-import { Trigger } from '@/components/triggers/edit-trigger';
+import { FieldTransform, Trigger } from '@/components/triggers/edit-trigger';
 import { buildConditionFuncStr } from '@/logic/conditions/build-condition-func-str';
+import { buildFieldTransformPostfix } from '@/logic/conditions/build-field-transform-postfix';
 
 export function buildTriggerFunc({ trigger }: { trigger: Trigger }): string {
   const components = buildFunctionComponents(trigger);
@@ -41,8 +42,12 @@ export function buildFunctionComponents(trigger: Trigger): { inputDeclarations: 
     result.inputDeclarations.push(
       `const ${fieldAName} = index => inputData[index + ${condition.fieldA.offset}].${condition.fieldA.property};`
     );
+
+    const fieldBTransformString = condition.fieldBTransform
+      ? buildFieldTransformPostfix(condition.fieldBTransform)
+      : '';
     result.inputDeclarations.push(
-      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property};`
+      `const ${fieldBName} = index => inputData[index + ${condition.fieldB.offset}].${condition.fieldB.property}${fieldBTransformString};`
     );
 
     // TODO: Factor in index here and also return unique condition variable accessor functions

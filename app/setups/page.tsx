@@ -2,7 +2,7 @@
 
 import { useDisplaySnapshot } from '@/app/display-snapshot-provider';
 import { BacktestChart } from '@/components/BacktestChart';
-import { Button, Card, Dialog, Heading, IconButton, Slider, TextFieldInput, Tooltip } from '@radix-ui/themes';
+import { Button, Card, Dialog, Heading, IconButton, Slider, Tooltip } from '@radix-ui/themes';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
 import { BellIcon, Cross2Icon, DownloadIcon, PauseIcon, PlayIcon, TimerIcon } from '@radix-ui/react-icons';
@@ -81,11 +81,11 @@ export default function SnapshotPage() {
 
                 {/*  <div className={'flex flex-col'}>*/}
                 {/*    <label>Number of preceding values</label>*/}
-                {/*    <TextFieldInput*/}
+                {/*    <TextField.Root*/}
                 {/*      type={'number'}*/}
                 {/*      value={precedingSamples}*/}
                 {/*      onChange={e => setPrecedingSamples(parseInt(e.currentTarget.value))}*/}
-                {/*    ></TextFieldInput>*/}
+                {/*    ></TextField.Root>*/}
                 {/*  </div>*/}
 
                 {/*  <CSVLink*/}

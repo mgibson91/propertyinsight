@@ -1,8 +1,8 @@
 // TODO: Change defaultValue to value so it actually changes on save
 
-import { Button, Card, Dialog, TextFieldInput, } from '@radix-ui/themes';
-import { Editor } from "@monaco-editor/react";
-import { UserTrigger } from "@/app/(logic)/types";
+import { Button, Card, Dialog, TextField } from '@radix-ui/themes';
+import { Editor } from '@monaco-editor/react';
+import { UserTrigger } from '@/app/(logic)/types';
 
 export const UserTriggerDialog = ({
   show,
@@ -33,9 +33,9 @@ export const UserTriggerDialog = ({
               {/*Name?*/}
               <div className={'flex flex-col'}>
                 <label>Trigger Name</label>
-                <TextFieldInput
+                <TextField.Root
                   value={trigger.name}
-                  onChange={(e) =>
+                  onChange={e =>
                     setTrigger({
                       ...trigger,
                       name: e.target.value,
@@ -51,7 +51,7 @@ export const UserTriggerDialog = ({
                   id="head"
                   name="head"
                   value={trigger.color}
-                  onChange={(e) =>
+                  onChange={e =>
                     setTrigger({
                       ...trigger,
                       color: e.target.value,
@@ -62,10 +62,10 @@ export const UserTriggerDialog = ({
 
               <div className={'flex flex-col items-start'}>
                 <label>Size</label>
-                <TextFieldInput
+                <TextField.Root
                   type={'number'}
                   value={trigger.size}
-                  onChange={(e) =>
+                  onChange={e =>
                     setTrigger({
                       ...trigger,
                       size: parseInt(e.target.value),
@@ -87,7 +87,7 @@ export const UserTriggerDialog = ({
                   setTrigger({
                     ...trigger,
                     triggerFunctionString: value ?? 'data[0].close > data[0].sma',
-                  })
+                  });
                 }}
               />
 
@@ -118,11 +118,7 @@ export const UserTriggerDialog = ({
               {/*/>*/}
 
               <div className={'flex justify-between mt-3'}>
-                <Button
-                  color="gray"
-                  className={'w-32'}
-                  onClick={() => onCancelClicked()}
-                >
+                <Button color="gray" className={'w-32'} onClick={() => onCancelClicked()}>
                   Cancel
                 </Button>
 

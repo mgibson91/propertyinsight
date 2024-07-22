@@ -1,5 +1,5 @@
 import Messages from './messages';
-import { Button, TextFieldInput } from '@radix-ui/themes';
+import { Button, TextField } from '@radix-ui/themes';
 import Link from 'next/link';
 import { PasswordField } from '@/shared/password-field';
 import { redirect } from 'next/navigation';
@@ -65,7 +65,7 @@ export default function Login() {
             Email
           </label>
 
-          <TextFieldInput size="3" type="email" name="email" placeholder="you@example.com" required />
+          <TextField.Root size="3" type="email" name="email" placeholder="you@example.com" required />
 
           <label className="text-md" htmlFor="password">
             Password

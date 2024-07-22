@@ -5,7 +5,7 @@ import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
 import SlideToggle from '@/app/playground/SlideToggle';
 import React, { useState } from 'react';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
-import { DEFAULT_OPERATORS, EditTrigger } from '@/components/triggers/edit-trigger';
+import { DEFAULT_OPERATORS, EditTrigger, TriggerId } from '@/components/triggers/edit-trigger';
 
 // Mock data array
 // const indicators: Indicator[] = [
@@ -44,6 +44,8 @@ import { DEFAULT_OPERATORS, EditTrigger } from '@/components/triggers/edit-trigg
 
 export default function Page() {
   const [trigger, setTrigger] = useState({
+    id: '1' as TriggerId,
+    enabled: true,
     name: 'Hello',
     conditions: [
       {
@@ -107,26 +109,26 @@ export default function Page() {
       {/*</SlideToggle2>*/}
 
       <div className="!w-1/2 !h-1/2">
-        {/*<EditTrigger*/}
-        {/*  trigger={trigger}*/}
-        {/*  saveTrigger={newTrigger => {*/}
-        {/*    setTrigger(newTrigger);*/}
-        {/*  }}*/}
-        {/*  properties={{*/}
-        {/*    default: ['close', 'open', 'high', 'low'],*/}
-        {/*    indicator: [*/}
-        {/*      {*/}
-        {/*        indicatorTag: 'sma20',*/}
-        {/*        streamTag: ['value'],*/}
-        {/*      },*/}
-        {/*      {*/}
-        {/*        indicatorTag: 'sma50',*/}
-        {/*        streamTag: ['value'],*/}
-        {/*      },*/}
-        {/*    ],*/}
-        {/*  }}*/}
-        {/*  operators={DEFAULT_OPERATORS}*/}
-        {/*/>*/}
+        <EditTrigger
+          trigger={trigger}
+          saveTrigger={newTrigger => {
+            setTrigger(newTrigger);
+          }}
+          properties={{
+            default: ['close', 'open', 'high', 'low'],
+            indicator: [
+              {
+                indicatorTag: 'sma20',
+                streamTag: ['value'],
+              },
+              {
+                indicatorTag: 'sma50',
+                streamTag: ['value'],
+              },
+            ],
+          }}
+          operators={DEFAULT_OPERATORS}
+        />
       </div>
     </div>
   );

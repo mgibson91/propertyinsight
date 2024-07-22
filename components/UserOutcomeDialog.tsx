@@ -1,8 +1,8 @@
 // TODO: Change defaultValue to value so it actually changes on save
 
-import { Button, Card, Dialog, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, Dialog, TextField } from '@radix-ui/themes';
 import { Editor } from '@monaco-editor/react';
-import { UserOutcome } from "@/app/(logic)/types";
+import { UserOutcome } from '@/app/(logic)/types';
 
 export const UserOutcomeDialog = ({
   show,
@@ -33,9 +33,9 @@ export const UserOutcomeDialog = ({
               {/*Name?*/}
               <div className={'flex flex-col'}>
                 <label>Outcome Name</label>
-                <TextFieldInput
+                <TextField.Root
                   value={outcome.name}
-                  onChange={(e) =>
+                  onChange={e =>
                     setOutcome({
                       ...outcome,
                       name: e.target.value,
@@ -51,7 +51,7 @@ export const UserOutcomeDialog = ({
                   id="head"
                   name="head"
                   value={outcome.color}
-                  onChange={(e) =>
+                  onChange={e =>
                     setOutcome({
                       ...outcome,
                       color: e.target.value,
@@ -62,10 +62,10 @@ export const UserOutcomeDialog = ({
 
               <div className={'flex flex-col items-start'}>
                 <label>Size</label>
-                <TextFieldInput
+                <TextField.Root
                   type={'number'}
                   value={outcome.size}
-                  onChange={(e) =>
+                  onChange={e =>
                     setOutcome({
                       ...outcome,
                       size: parseInt(e.target.value),
@@ -86,18 +86,13 @@ export const UserOutcomeDialog = ({
                 onChange={(value, event) => {
                   setOutcome({
                     ...outcome,
-                    outcomeFunctionString:
-                      value ?? 'data[0].close > data[0].sma',
+                    outcomeFunctionString: value ?? 'data[0].close > data[0].sma',
                   });
                 }}
               />
 
               <div className={'flex justify-between mt-3'}>
-                <Button
-                  color="gray"
-                  className={'w-32'}
-                  onClick={() => onCancelClicked()}
-                >
+                <Button color="gray" className={'w-32'} onClick={() => onCancelClicked()}>
                   Cancel
                 </Button>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button, Card, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, TextField } from '@radix-ui/themes';
 import { Indicator } from '@/logic/indicators/types';
 import { AvatarIcon, BarChartIcon, CheckIcon, GlobeIcon } from '@radix-ui/react-icons';
 import { PRESET_INDICATOR_BOLLINGER_BANDS } from '@/logic/indicators/preset-indicator';
@@ -131,7 +131,7 @@ const IndicatorSearchView = ({
   return (
     <div className="w-full min-h-[200px] h-[300px] overflow-hidden">
       <div className="mb-4">
-        <TextFieldInput
+        <TextField.Root
           autoFocus={true}
           className="w-full"
           type="text"

@@ -1,4 +1,4 @@
-import { Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextFieldInput } from '@radix-ui/themes';
+import { Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextField } from '@radix-ui/themes';
 import { Indicator } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React from 'react';
@@ -70,7 +70,7 @@ export const SaveIndicatorToLibraryDialog = ({
                       <div key={index} className={'flex flex-row gap-2 items-center justify-between'}>
                         <label>{param.label}</label>
                         {param.type === 'number' && (
-                          <TextFieldInput
+                          <TextField.Root
                             className={'!w-32'}
                             type={param.type === 'number' ? 'number' : 'text'}
                             value={indicator.params[index].value ?? indicator.params[index].defaultValue}

@@ -1,4 +1,4 @@
-import { Button, Code, Heading, IconButton, Popover, Select, TextFieldInput } from '@radix-ui/themes';
+import { Button, Code, Heading, IconButton, Popover, Select, TextField } from '@radix-ui/themes';
 import { Indicator, IndicatorParam, IndicatorParamType, IndicatorTag } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
@@ -135,7 +135,7 @@ export const EditorTab = ({
     <div className={'flex flex-col'}>
       <div className={'flex flex-row items-center justify-between bg-accent-bg h-[36px] px-2'}>
         <div className={'flex flex-row gap-2 items-center px-1'}>
-          <TextFieldInput
+          <TextField.Root
             size={'1'}
             className={'min-w-[150px]'}
             placeholder={'Indicator name'}
@@ -143,9 +143,9 @@ export const EditorTab = ({
             onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               setLabel(e.target.value);
             }}
-          ></TextFieldInput>
+          ></TextField.Root>
 
-          <TextFieldInput
+          <TextField.Root
             size={'1'}
             className={'min-w-[150px]'}
             placeholder={'Indicator tag'}
@@ -153,7 +153,7 @@ export const EditorTab = ({
             onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               setTag(e.target.value);
             }}
-          ></TextFieldInput>
+          ></TextField.Root>
 
           <IconButton
             variant={'ghost'}
@@ -309,7 +309,7 @@ export const EditorTab = ({
                       </Select.Content>
                     </Select.Root>
 
-                    <TextFieldInput
+                    <TextField.Root
                       className={'w-[100px]'}
                       value={param.name}
                       onChange={e =>
@@ -329,7 +329,7 @@ export const EditorTab = ({
 
                     {/* Default value*/}
                     {param.type === IndicatorParamType.NUMBER ? (
-                      <TextFieldInput
+                      <TextField.Root
                         className={'w-[100px]'}
                         type={'number'}
                         step={0.01}
@@ -379,7 +379,7 @@ export const EditorTab = ({
                         </Select.Content>
                       </Select.Root>
                     ) : (
-                      <TextFieldInput
+                      <TextField.Root
                         className={'w-[100px]'}
                         value={param.defaultValue as string}
                         onChange={e =>

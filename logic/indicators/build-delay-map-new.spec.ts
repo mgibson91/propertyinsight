@@ -1,9 +1,10 @@
 import { buildDelayMapNew } from '@/logic/indicators/build-delay-map-new';
 import { ResolvedIndicator } from '@/logic/indicators/resolve-indicator';
+import { IndicatorTag } from '@/logic/indicators/types';
 
 const TEST_RESOLVED_INDICATORS: ResolvedIndicator[] = [
   {
-    tag: 'sma',
+    tag: 'sma' as IndicatorTag,
     funcStr: `function indicator() {
   const value = sma(open.slice(0, 2), 2);
   return {
@@ -15,7 +16,7 @@ const TEST_RESOLVED_INDICATORS: ResolvedIndicator[] = [
     length: 2,
   },
   {
-    tag: 'channel',
+    tag: 'channel' as IndicatorTag,
     funcStr: `function indicator() {
   const value = sma(open.slice(0, 2), 2);
   return {
@@ -28,7 +29,7 @@ const TEST_RESOLVED_INDICATORS: ResolvedIndicator[] = [
     length: 4,
   },
   {
-    tag: 'derived_sma',
+    tag: 'derived_sma' as IndicatorTag,
     funcStr: `function indicator() {
   const value = sma(channel_high.slice(0, 2), 2);
   const value1 = sma(channel_low.slice(0, 2), 2);
@@ -37,14 +38,14 @@ const TEST_RESOLVED_INDICATORS: ResolvedIndicator[] = [
     value1
   };
   }`,
-    dependsOnIndicatorTags: ['channel'],
+    dependsOnIndicatorTags: ['channel' as IndicatorTag],
     outputStreamTags: ['value', 'value1'],
     length: 6,
   },
   {
-    tag: 'double_delayed',
+    tag: 'double_delayed' as IndicatorTag,
     funcStr: `Doesn't matter`,
-    dependsOnIndicatorTags: ['derived_sma'],
+    dependsOnIndicatorTags: ['derived_sma' as IndicatorTag],
     outputStreamTags: ['value'],
     length: 10,
   },

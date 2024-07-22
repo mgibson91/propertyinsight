@@ -10,21 +10,20 @@ export function PasswordField({ name }: { name: string }) {
   const Icon = visible ? EyeClosedIcon : EyeOpenIcon;
 
   return (
-    <TextField.Root>
-      <TextField.Input
-        name={name}
-        type={visible ? 'text' : 'password'}
-        placeholder="Password"
-        required={true}
-        minLength={8}
-        size="3"
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-          }
-        }}
-      />
-      <TextField.Slot pr="3">
+    <TextField.Root
+      name={name}
+      type={visible ? 'text' : 'password'}
+      placeholder="Password"
+      required={true}
+      minLength={8}
+      size="3"
+      onKeyDown={e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      }}
+    >
+      <TextField.Slot pr="3" side={'right'}>
         <IconButton
           size="2"
           variant="ghost"

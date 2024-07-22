@@ -1,12 +1,13 @@
 'use client';
 
-import { Button, Card, Heading, IconButton, Popover, Select, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, Heading, IconButton, Popover, Select, TextField } from '@radix-ui/themes';
 import { useEffect, useState } from 'react';
 import { PlusIcon, TrashIcon } from '@radix-ui/react-icons';
 import { v4 as uuid } from 'uuid';
 import { Brand } from '@/utils/brand';
 import { AddConditionPopover } from '@/components/triggers/add-condition-popover';
-import { OutcomeConfig, OutcomeCondition, OutcomeId, OutcomeField } from '@/logic/outcomes/types';
+import { OutcomeConfig, OutcomeId } from '@/logic/outcomes/types';
+import { Condition, ConditionField } from '@/logic/conditions/types';
 
 export const DEFAULT_OPERATORS: { label: string; func: string }[] = [
   {
@@ -17,7 +18,7 @@ return a[0] > b[0] && ((a[1] < b[1]) || (a[1] === b[1] && a[2] < b[2]))
   },
 ];
 
-const DEFAULT_CONDITION: OutcomeCondition = {
+const DEFAULT_CONDITION: Condition = {
   fieldA: {
     property: 'close',
     offset: 0,
@@ -42,9 +43,9 @@ export const EditOutcome = (props: {
   const { outcome, properties, topRightSlot, operators, saveOutcome } = props;
   const [name, setName] = useState(outcome?.name || '');
   // const [conditions, setConditions] = useState<OutcomeCondition[]>(outcome?.conditions || []);
-  const [successConditions, setSuccessConditions] = useState<OutcomeCondition[]>(outcome?.successConditions || []);
-  const [failureConditions, setFailureConditions] = useState<OutcomeCondition[]>(outcome?.failureConditions || []);
-  const [pendingCondition, setPendingCondition] = useState<OutcomeCondition>(DEFAULT_CONDITION);
+  const [successConditions, setSuccessConditions] = useState<Condition[]>(outcome?.successConditions || []);
+  const [failureConditions, setFailureConditions] = useState<Condition[]>(outcome?.failureConditions || []);
+  const [pendingCondition, setPendingCondition] = useState<Condition>(DEFAULT_CONDITION);
 
   useEffect(() => {
     setName(outcome?.name || '');
@@ -53,14 +54,14 @@ export const EditOutcome = (props: {
     setFailureConditions(outcome?.failureConditions || []);
   }, [outcome]);
 
-  const addCondition = (setConditionsFunction: React.Dispatch<React.SetStateAction<OutcomeCondition[]>>) => {
+  const addCondition = (setConditionsFunction: React.Dispatch<React.SetStateAction<Condition[]>>) => {
     setConditionsFunction(prevConditions => [...prevConditions, pendingCondition]);
     setPendingCondition(DEFAULT_CONDITION);
   };
 
   const renderConditions = (
-    conditions: OutcomeCondition[],
-    setConditionsFunction: React.Dispatch<React.SetStateAction<OutcomeCondition[]>>
+    conditions: Condition[],
+    setConditionsFunction: React.Dispatch<React.SetStateAction<Condition[]>>
   ) => (
     <Card className={''}>
       <div className={'flex flex-col max-h-[200px] overflow-hidden'}>
@@ -104,7 +105,7 @@ export const EditOutcome = (props: {
 
       <div className={'flex flex-col'}>
         <Heading size={'4'}>Name</Heading>
-        <TextFieldInput value={name} onChange={e => setName(e.target.value)} />
+        <TextField.Root value={name} onChange={e => setName(e.target.value)} />
       </div>
 
       <div className={'flex flex-col gap-3'}>
@@ -170,8 +171,8 @@ export const EditOutcome = (props: {
   );
 };
 
-function getConditionString(condition: OutcomeCondition) {
-  const getFieldString = (field: OutcomeField) => {
+function getConditionString(condition: Condition) {
+  const getFieldString = (field: ConditionField) => {
     if (field.property === 'value') {
       return field.property;
     } else {

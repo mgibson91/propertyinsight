@@ -1,7 +1,7 @@
 import { Indicator } from '@/logic/indicators/types';
 import { UserOutcome, UserTrigger } from '@/app/(logic)/types';
 import React, { useEffect, useState } from 'react';
-import { Button, TextFieldInput } from '@radix-ui/themes';
+import { Button, TextField } from '@radix-ui/themes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Strategy } from '@/app/dashboard/types';
 
@@ -53,7 +53,7 @@ export const StrategiesTab = ({ currentStrategy }: { currentStrategy?: Strategy 
               {/*<TabsContent value="outcome">Outcome</TabsContent>*/}
             </Tabs>
 
-            <TextFieldInput
+            <TextField.Root
               size={'1'}
               placeholder={'Strategy name'}
               className={'min-w-[150px]'}

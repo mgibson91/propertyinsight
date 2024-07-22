@@ -1,4 +1,4 @@
-import { Button, Card, Heading, Text, TextFieldInput } from '@radix-ui/themes';
+import { Button, Card, Heading, Text, TextField } from '@radix-ui/themes';
 import { CheckIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 

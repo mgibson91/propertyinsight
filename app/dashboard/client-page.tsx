@@ -16,7 +16,7 @@ import {
   IconButton,
   Popover,
   Select,
-  TextFieldInput,
+  TextField,
 } from '@radix-ui/themes';
 import {
   BarChartIcon,
@@ -268,9 +268,11 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState(
     // new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-    new Date('2023-11-15')
+    // new Date('2023-11-15')
+    new Date('2023-12-11')
   );
-  const [endDate, setEndDate] = useState(new Date('2023-12-15'));
+  // const [endDate, setEndDate] = useState(new Date('2023-12-15'));
+  const [endDate, setEndDate] = useState(new Date('2023-12-13'));
   const [tickerStream, setTickerStream] = useState(streams[0]);
   const [candlestickData, setCandlestickData] = useState<CandlestickData<UTCTimestamp>[]>([]);
   const [userSeriesData, setUserSeriesData] = useState<
@@ -1243,7 +1245,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                   <p className="text-xs">From</p>
                   {/*<DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} />*/}
                   {/*Change to use normal html input date*/}
-                  <TextFieldInput
+                  <TextField.Root
                     size="1"
                     type="date"
                     value={startDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
@@ -1253,7 +1255,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
                 <div className={'flex items-center gap-2'}>
                   <p className="text-xs">To</p>
-                  <TextFieldInput
+                  <TextField.Root
                     size="1"
                     type="date"
                     value={endDate.toISOString().split('T')[0]} // Format the date to 'YYYY-MM-DD'
@@ -1343,7 +1345,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                     <Popover.Content>
                       <div className={'flex flex-col gap-3'}>
                         <Heading size={'3'}>Edit Strategy</Heading>
-                        <TextFieldInput
+                        <TextField.Root
                           size="1"
                           value={newStrategyName}
                           onChange={e => setNewStrategyName(e.target.value)}
@@ -1397,7 +1399,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                     <Popover.Content>
                       <div className={'flex flex-col gap-3'}>
                         <Heading size={'3'}>Strategy Name</Heading>
-                        <TextFieldInput
+                        <TextField.Root
                           size="1"
                           value={newStrategyName}
                           onChange={e => setNewStrategyName(e.target.value)}

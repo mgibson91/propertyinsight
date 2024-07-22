@@ -1,4 +1,4 @@
-import { Box, Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextFieldInput } from '@radix-ui/themes';
+import { Box, Button, Code, Dialog, Heading, IconButton, Select, Tabs, TextField } from '@radix-ui/themes';
 import { Indicator, IndicatorTag } from '@/logic/indicators/types';
 import { CloseIcon } from 'next/dist/client/components/react-dev-overlay/internal/icons/CloseIcon';
 import React, { useEffect, useState } from 'react';
