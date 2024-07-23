@@ -9,21 +9,14 @@ import { AddConditionPopover } from '@/components/triggers/add-condition-popover
 import { OutcomeConfig, OutcomeId } from '@/logic/outcomes/types';
 import { Condition, ConditionField } from '@/logic/conditions/types';
 
-export const DEFAULT_OPERATORS: { label: string; func: string }[] = [
-  {
-    label: 'crossover',
-    func: `(a,b) => {
-return a[0] > b[0] && ((a[1] < b[1]) || (a[1] === b[1] && a[2] < b[2]))
-}`,
-  },
-];
-
 const DEFAULT_CONDITION: Condition = {
   fieldA: {
     property: 'close',
     offset: 0,
   },
-  operator: DEFAULT_OPERATORS[0].label,
+  operator: {
+    type: 'crossover',
+  },
   fieldB: {
     property: 'close',
     offset: 0,

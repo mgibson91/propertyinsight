@@ -5,7 +5,7 @@ import { PRESET_INDICATORS } from '@/logic/indicators/preset-indicator';
 import SlideToggle from '@/app/playground/SlideToggle';
 import React, { useState } from 'react';
 import SlideToggle2 from '@/shared/layout/slide-toggle2';
-import { DEFAULT_OPERATORS, EditTrigger, TriggerId } from '@/components/triggers/edit-trigger';
+import { DEFAULT_OPERATORS, EditTrigger, Trigger, TriggerId } from '@/components/triggers/edit-trigger';
 
 // Mock data array
 // const indicators: Indicator[] = [
@@ -43,7 +43,7 @@ import { DEFAULT_OPERATORS, EditTrigger, TriggerId } from '@/components/triggers
 // ];
 
 export default function Page() {
-  const [trigger, setTrigger] = useState({
+  const [trigger, setTrigger] = useState<Trigger>({
     id: '1' as TriggerId,
     enabled: true,
     name: 'Hello',
@@ -53,7 +53,9 @@ export default function Page() {
           property: 'sma20',
           offset: 0,
         },
-        operator: '>',
+        operator: {
+          type: '>',
+        },
         fieldB: {
           property: 'sma50',
           offset: 0,
@@ -64,7 +66,9 @@ export default function Page() {
           property: 'sma20',
           offset: 1,
         },
-        operator: '>',
+        operator: {
+          type: '>',
+        },
         fieldB: {
           property: 'sma50',
           offset: 1,
