@@ -14,7 +14,7 @@ export function buildConditionFuncStr({
   let funcStr = `const ${funcName} = (${fieldA}, ${fieldB}) => {
 `;
 
-  switch (condition.operator) {
+  switch (condition.operator.type) {
     case 'crossunder':
       funcStr += `  return ${fieldA}(0) < ${fieldB}(0) && ((${fieldA}(1) > ${fieldB}(1)) || (${fieldA}(1) === ${fieldB}(1) && ${fieldA}(2) > ${fieldB}(2)));`;
       break;

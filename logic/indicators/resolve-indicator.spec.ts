@@ -2,6 +2,7 @@ import { Indicator, IndicatorParamType, IndicatorTag } from '@/logic/indicators/
 import { ResolvedIndicator, resolveIndicator } from '@/logic/indicators/resolve-indicator';
 
 const TEST_INDICATOR: Indicator = {
+  id: 'test',
   tag: 'sma' as IndicatorTag,
   label: 'Simple Moving Average',
   funcStr: `function indicator() {
@@ -54,7 +55,7 @@ describe('resolve indicators', () => {
         });
 
         expect(resolved).toEqual({
-          tag: 'sma',
+          tag: 'sma' as IndicatorTag,
           funcStr: `function indicator() {
   const value = sma(open.slice(0, 2), 2);
   return {
@@ -77,7 +78,7 @@ describe('resolve indicators', () => {
         });
 
         expect(resolved).toEqual({
-          tag: 'sma',
+          tag: 'sma' as IndicatorTag,
           funcStr: `function indicator() {
   const value = sma(close.slice(0, 20), 20);
   return {
@@ -97,7 +98,7 @@ describe('resolve indicators', () => {
       const resolved = resolveIndicator({
         indicator: {
           ...TEST_INDICATOR,
-          tag: 'derived_sma',
+          tag: 'derived_sma' as IndicatorTag,
           properties: ['value', 'value1'],
           funcStr: `function indicator() {
   const value = sma($prev_1.slice(0, $$length), $$length);
@@ -116,7 +117,7 @@ describe('resolve indicators', () => {
       });
 
       expect(resolved).toEqual({
-        tag: 'derived_sma',
+        tag: 'derived_sma' as IndicatorTag,
         funcStr: `function indicator() {
   const value = sma($prev_1.slice(0, 20), 20);
   const value2 = sma($prev_2.slice(0, 20), 20);
@@ -125,7 +126,7 @@ describe('resolve indicators', () => {
     value1
   };
 }`,
-        dependsOnIndicatorTags: ['prev'],
+        dependsOnIndicatorTags: ['prev' as IndicatorTag],
         outputStreamTags: ['value', 'value1'],
         length: 20,
       } satisfies ResolvedIndicator);

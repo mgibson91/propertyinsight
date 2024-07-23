@@ -6,6 +6,7 @@ import { TrashIcon } from '@radix-ui/react-icons';
 import { v4 as uuid } from 'uuid';
 import { Brand } from '@/utils/brand';
 import { AddConditionPopover } from '@/components/triggers/add-condition-popover';
+import { DefaultOperatorType } from '@/logic/indicators/types';
 
 interface TriggerField {
   property: string;
@@ -23,7 +24,10 @@ export interface FieldTransform {
 
 export interface TriggerCondition {
   fieldA: TriggerField;
-  operator: string;
+  operator: {
+    custom?: boolean;
+    type: DefaultOperatorType;
+  };
   fieldB: TriggerField;
   fieldBTransform?: FieldTransform;
 }
@@ -37,7 +41,7 @@ export interface Trigger {
   conditions: TriggerCondition[];
 }
 
-export const DEFAULT_OPERATORS: { label: string; func: string }[] = [
+export const DEFAULT_OPERATORS: { label: DefaultOperatorType; func: string }[] = [
   {
     label: 'crossover',
     func: `(a,b) => {
@@ -48,6 +52,36 @@ return a[0] > b[0] && ((a[1] < b[1]) || (a[1] === b[1] && a[2] < b[2]))
     label: 'crossunder',
     func: `(a,b) => {
 return a[0] < b[0] && ((a[1] > b[1]) || (a[1] === b[1] && a[2] > b[2]))
+}`,
+  },
+  {
+    label: '>',
+    func: `(a,b) => {
+return a[0] > b[0]
+}`,
+  },
+  {
+    label: '<',
+    func: `(a,b) => {
+return a[0] < b[0]
+}`,
+  },
+  {
+    label: '>=',
+    func: `(a,b) => {
+return a[0] >= b[0]
+}`,
+  },
+  {
+    label: '<=',
+    func: `(a,b) => {
+return a[0] <= b[0]
+}`,
+  },
+  {
+    label: '==',
+    func: `(a,b) => {
+return a[0] === b[0]
 }`,
   },
 ];
@@ -156,5 +190,5 @@ function getConditionString(condition: TriggerCondition) {
     }
   };
 
-  return `${getFieldString(condition.fieldA)} ${condition.operator} ${getFieldString(condition.fieldB)}`;
+  return `${getFieldString(condition.fieldA)} ${condition.operator.type} ${getFieldString(condition.fieldB)}`;
 }

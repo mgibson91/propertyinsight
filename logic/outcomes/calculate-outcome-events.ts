@@ -54,8 +54,8 @@ export function calculateOutcomeEvents({
   // Populate the outcome function map
   for (const outcome of enabledOutcomeConfigs) {
     const operatorLookbacks = [
-      ...outcome.successConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator]),
-      ...outcome.failureConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator]),
+      ...outcome.successConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator.type]),
+      ...outcome.failureConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator.type]),
     ].filter(l => l != null);
 
     // TODO: This will be harder in code...... perhaps a manditory variable

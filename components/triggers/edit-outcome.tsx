@@ -162,5 +162,5 @@ function getConditionString(condition: Condition) {
     }
   };
 
-  return `${getFieldString(condition.fieldA)} ${condition.operator} ${getFieldString(condition.fieldB)}`;
+  return `${getFieldString(condition.fieldA)} ${condition.operator.type} ${getFieldString(condition.fieldB)}`;
 }

@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 import { Button, Checkbox, Dialog, Heading, IconButton, SegmentedControl, Select, TextField } from '@radix-ui/themes';
 import { Cross2Icon, PlusIcon } from '@radix-ui/react-icons';
 import { TransformOperator, TransformType, TriggerCondition } from '@/components/triggers/edit-trigger';
-import { capitalize } from '@/shared/utils/capitalize';
+import { DefaultOperatorType } from '@/logic/indicators/types';
 
 const DEFAULT_CONDITION: TriggerCondition = {
   fieldA: {
     property: 'close',
     offset: 0,
   },
-  operator: 'crossover',
+  operator: {
+    type: 'crossover',
+    custom: false,
+  },
   fieldB: {
     property: 'close',
     offset: 0,
@@ -237,11 +240,14 @@ export const AddConditionPopover = ({
 
                 <Heading size={'3'}>Operator</Heading>
                 <Select.Root
-                  value={pendingCondition.operator}
+                  value={pendingCondition.operator.type}
                   onValueChange={value => {
                     setPendingCondition({
                       ...pendingCondition,
-                      operator: value,
+                      operator: {
+                        type: value as DefaultOperatorType,
+                        custom: false,
+                      },
                     });
                   }}
                 >

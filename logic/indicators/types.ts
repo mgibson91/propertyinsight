@@ -81,3 +81,5 @@ export interface IndicatorParamValue {
   key: string;
   value: unknown;
 }
+
+export type DefaultOperatorType = 'crossover' | 'crossunder' | '>' | '<' | '>=' | '<=' | '==';

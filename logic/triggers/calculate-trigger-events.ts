@@ -5,16 +5,16 @@ import { UTCTimestamp } from 'lightweight-charts';
 import { buildTriggerFunc } from '@/logic/triggers/build-trigger-functions';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { getDependentIndicators } from '@/logic/indicators/get-dependent-indicators';
-import { Indicator } from '@/logic/indicators/types';
+import { DefaultOperatorType, Indicator } from '@/logic/indicators/types';
 
-export const OPERATOR_LOOKBACK_MAP: Record<string, number> = {
+export const OPERATOR_LOOKBACK_MAP: Record<DefaultOperatorType, number> = {
   crossover: 3, // Faciltates the equal in the middle case - should 2...?
   crossunder: 3, // Faciltates the equal in the middle case
-  equal: 0,
-  greater: 0,
-  greaterOrEqual: 0,
-  less: 0,
-  lessOrEqual: 0,
+  '>': 0,
+  '<': 0,
+  '>=': 0,
+  '<=': 0,
+  '==': 0,
 };
 
 export function calculateTriggerEvents({
@@ -46,7 +46,7 @@ export function calculateTriggerEvents({
   // 1. Build trigger function map with required lookback
   for (const trigger of enabledTriggers) {
     const operatorLookbacks = trigger.conditions
-      .map(condition => OPERATOR_LOOKBACK_MAP[condition.operator])
+      .map(condition => OPERATOR_LOOKBACK_MAP[condition.operator.type])
       .filter(l => l != null);
 
     const lookback = trigger.conditions.reduce((acc, condition) => {

@@ -1,4 +1,5 @@
 import { TransformOperator, TransformType } from '@/components/triggers/edit-trigger';
+import { DefaultOperatorType } from '@/logic/indicators/types';
 
 export interface FieldTransform {
   operator: TransformOperator;
@@ -13,7 +14,10 @@ export interface ConditionField {
 
 export interface Condition {
   fieldA: ConditionField;
-  operator: string;
+  operator: {
+    custom?: boolean;
+    type: DefaultOperatorType;
+  };
   fieldB: ConditionField;
   fieldBTransform?: FieldTransform;
 }
