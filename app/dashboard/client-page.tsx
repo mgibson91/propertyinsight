@@ -645,8 +645,16 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
         return {
           time: outcome.time,
           position: 'belowBar',
-          color: outcome.delta > 0 ? '#1FD8A4' : '#FF977D',
-          shape: outcome.delta > 0 ? 'arrowUp' : 'arrowDown',
+          // color: outcome.percDelta > 0 ? '#1FD8A4' : '#FF977D',
+          color:
+            outcome.delta > 0
+              ? displayMode.mode === 'dark'
+                ? '#1FD8A4'
+                : '#208368'
+              : displayMode.mode === 'dark'
+                ? '#FF977D'
+                : '#D13415',
+          shape: 'arrowDown',
           size: 2,
           text: `${triggerName} ${trigger.occurrence} (${outcome.percDelta.toFixed(2)}%)`,
         };
@@ -972,14 +980,6 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
             })),
             ...outcomeMarkers.map(t => ({
               ...t,
-              color:
-                t.shape === 'arrowUp'
-                  ? displayMode.mode === 'dark'
-                    ? '#1FD8A4'
-                    : '#208368'
-                  : displayMode.mode === 'dark'
-                    ? '#FF977D'
-                    : '#D13415',
             })),
           ].sort((a, b) => (a.time as number) - (b.time as number))}
           visibleRange={200}
