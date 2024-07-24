@@ -112,7 +112,7 @@ export const EditTrigger = (props: {
   return (
     <div className={'flex flex-col gap-3'}>
       <div className={'flex flex-row justify-between gap-2 items-center'}>
-        <Heading>{trigger?.name ? 'Edit Trigger' : 'Create Trigger'}</Heading>
+        <Heading>{trigger?.name ? 'Edit Entry' : 'Create Entry'}</Heading>
         {topRightSlot}
       </div>
 
@@ -174,7 +174,7 @@ export const EditTrigger = (props: {
             });
           }}
         >
-          Save Trigger
+          Save Entry
         </Button>
       </div>
     </div>

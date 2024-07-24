@@ -8,11 +8,14 @@ import { IndicatorStreamMetadata, prependSpreadFunctions } from '@/logic/get-con
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 
 export type OutcomeEvent = {
-  trigger: { id: string; time: UTCTimestamp; occurrence: number };
+  trigger: { id: string; time: UTCTimestamp; occurrence: number; data: GenericData };
   outcome: {
     time: UTCTimestamp;
     wasSuccessful: boolean | null;
     offsetFromTrigger: number;
+    delta: number;
+    percDelta: number;
+    data: GenericData;
   };
 };
 
@@ -55,15 +58,11 @@ export function calculateOutcomeEvents({
   for (const outcome of enabledOutcomeConfigs) {
     const operatorLookbacks = [
       ...outcome.successConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator.type]),
-      ...outcome.failureConditions.map(condition => OPERATOR_LOOKBACK_MAP[condition.operator.type]),
     ].filter(l => l != null);
 
     // TODO: This will be harder in code...... perhaps a manditory variable
     const lookback = Math.max(
       outcome.successConditions.reduce((acc, condition) => {
-        return Math.max(acc, condition.fieldA.offset, condition.fieldB.offset, ...operatorLookbacks);
-      }, 0),
-      outcome.failureConditions.reduce((acc, condition) => {
         return Math.max(acc, condition.fieldA.offset, condition.fieldB.offset, ...operatorLookbacks);
       }, 0)
     );
@@ -109,12 +108,23 @@ return outcome();`,
 
           const reversedLookbackSeries = outcomeData.reverse();
 
-          const wasSuccessful = outcomeFunc.func(reversedLookbackSeries, { close: data[triggerIdx].close });
+          const triggerData = data[triggerIdx];
+
+          const wasSuccessful = outcomeFunc.func(reversedLookbackSeries, { close: triggerData.close });
+          const delta = (data[i].close as number) - (triggerData.close as number);
 
           if (wasSuccessful != null) {
             results.push({
-              trigger: { id: triggerId, time: triggerTime, occurrence },
-              outcome: { time: data[i].time, wasSuccessful, offsetFromTrigger: i - triggerIdx },
+              trigger: { id: triggerId, time: triggerTime, occurrence, data: triggerData },
+              // NOTE: This is based on close price for now
+              outcome: {
+                time: data[i].time,
+                wasSuccessful,
+                offsetFromTrigger: i - triggerIdx,
+                delta,
+                percDelta: (delta / (triggerData.close as number)) * 100,
+                data: data[i],
+              },
             });
             return; // TODO: Return actual values
           }

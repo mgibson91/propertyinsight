@@ -12,10 +12,8 @@ import { Condition } from '@/logic/conditions/types';
 
 export function buildOutcomeFunc({ outcome }: { outcome: OutcomeConfig }): string {
   const successComponents = buildFunctionComponents(outcome.successConditions, { prefix: 'success_' });
-  const failureComponents = buildFunctionComponents(outcome.failureConditions, { prefix: 'failure_' });
 
   const successDeclarations = successComponents.inputDeclarations.join('\n');
-  const failureDeclarations = failureComponents.inputDeclarations.join('\n');
 
   let logic = '';
 
@@ -27,22 +25,12 @@ export function buildOutcomeFunc({ outcome }: { outcome: OutcomeConfig }): strin
 }`;
   }
 
-  if (failureComponents.functions.length) {
-    logic += `\nif (${failureComponents.functions
-      .map(({ name, fieldNames: { a, b } }) => `${name}(${a}, ${b})`)
-      .join(' &&\n  ')}) {
-  return false;
-}`;
-  }
-
   logic += `\n\nreturn null;`;
 
   const funcStr = `const outcome = () => {
 ${successDeclarations}
-${failureDeclarations}
 
 ${successComponents.functions.map(f => f.code).join('\n')}
-${failureComponents.functions.map(f => f.code).join('\n')}
 
 ${logic}
 }`;

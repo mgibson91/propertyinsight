@@ -8,5 +8,4 @@ export interface OutcomeConfig {
   name: string;
   enabled: boolean;
   successConditions: Condition[];
-  failureConditions: Condition[];
 }

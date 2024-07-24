@@ -35,15 +35,11 @@ export const EditOutcome = (props: {
 }) => {
   const { outcome, properties, topRightSlot, operators, saveOutcome } = props;
   const [name, setName] = useState(outcome?.name || '');
-  // const [conditions, setConditions] = useState<OutcomeCondition[]>(outcome?.conditions || []);
   const [successConditions, setSuccessConditions] = useState<Condition[]>(outcome?.successConditions || []);
-  const [failureConditions, setFailureConditions] = useState<Condition[]>(outcome?.failureConditions || []);
-  const [pendingCondition, setPendingCondition] = useState<Condition>(DEFAULT_CONDITION);
 
   useEffect(() => {
     setName(outcome?.name || '');
     setSuccessConditions(outcome?.successConditions || []);
-    setFailureConditions(outcome?.failureConditions || []);
   }, [outcome]);
 
   const renderConditions = (
@@ -86,7 +82,7 @@ export const EditOutcome = (props: {
   return (
     <div className={'flex flex-col gap-3'}>
       <div className={'flex flex-row justify-between gap-2 items-center'}>
-        <Heading>{outcome?.name ? 'Edit Outcome' : 'Create Outcome'}</Heading>
+        <Heading>{outcome?.name ? 'Edit Exit' : 'Create Exit'}</Heading>
         {topRightSlot}
       </div>
 
@@ -98,7 +94,7 @@ export const EditOutcome = (props: {
       <div className={'flex flex-col gap-3'}>
         <div className={'flex flex-col gap-2'}>
           <div className={'flex flex-row justify-between items-center'}>
-            <Heading size={'4'}>Success Conditions</Heading>
+            <Heading size={'4'}>Exit Conditions</Heading>
             <AddConditionPopover
               properties={properties}
               operators={operators}
@@ -111,35 +107,19 @@ export const EditOutcome = (props: {
           {renderConditions(successConditions, setSuccessConditions)}
         </div>
 
-        <div className={'flex flex-col gap-2'}>
-          <div className={'flex flex-row justify-between items-center'}>
-            <Heading size={'4'}>Failure Conditions</Heading>
-            <AddConditionPopover
-              properties={properties}
-              operators={operators}
-              addCondition={(condition: Condition) => {
-                setFailureConditions([...failureConditions, condition]);
-              }}
-              includeTrigger={true}
-            />
-          </div>
-          {renderConditions(failureConditions, setFailureConditions)}
-        </div>
-
         <Button
-          disabled={(successConditions.length === 0 && failureConditions.length === 0) || !name}
+          disabled={successConditions.length === 0 || !name}
           onClick={() => {
             saveOutcome({
               id: outcome?.id || (uuid() as OutcomeId),
               name,
               // conditions,
               successConditions,
-              failureConditions,
               enabled: outcome?.enabled == null ? true : outcome.enabled,
             });
           }}
         >
-          Save Outcome
+          Save Exit
         </Button>
       </div>
     </div>

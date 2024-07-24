@@ -161,7 +161,9 @@ describe('full process', () => {
                 property: 'steep_level',
                 offset: 0,
               },
-              operator: 'crossover',
+              operator: {
+                type: 'crossover',
+              },
               fieldB: {
                 property: 'sma_value',
                 offset: 0,
@@ -190,14 +192,16 @@ describe('full process', () => {
                 property: 'super_steep_level',
                 offset: 0,
               },
-              operator: 'crossover',
+              operator: {
+                type: 'crossover',
+                custom: false,
+              },
               fieldB: {
                 property: 'sma_value',
                 offset: 0,
               },
             },
           ],
-          failureConditions: [],
         },
       ],
     });

@@ -62,7 +62,7 @@ import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/e
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
 import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
 import { EditOutcome } from '@/components/triggers/edit-outcome';
-import { calculateOutcomeEvents } from '@/logic/outcomes/calculate-outcome-events';
+import { calculateOutcomeEvents, OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 import { OutcomeConfig } from '@/logic/outcomes/types';
 import { calculateOutcomeSummary } from '@/logic/outcomes/calculate-outcome-summary';
 import { getTickerStreamData } from '@/repository/ticker_stream_data/get-ticker-stream-data';
@@ -304,6 +304,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
+  const [outcomeEvents, setOutcomeEvents] = useState<OutcomeEvent[]>([]);
 
   // Caches current strategy edits for user experimentation - no need for save to chart
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -324,7 +325,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [tabResetKey, setTabResetKey] = useState<number>(0);
 
   // We display
-  const [bottomTab, setBottomTab] = useState<'editor' | 'strategies' | undefined>();
+  const [bottomTab, setBottomTab] = useState<'editor' | 'strategy' | undefined>('editor');
 
   const [outcomeSummary, setOutcomeSummary] = useState<{
     successCount: number;
@@ -636,16 +637,18 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
         triggerEvents,
       });
 
+      setOutcomeEvents(outcomeEvents);
+
       const newOutcomeMarkers: SeriesMarker<UTCTimestamp>[] = outcomeEvents.map(({ outcome, trigger }) => {
         const triggerName = triggers.find(t => trigger.id === t.id)?.name || '';
 
         return {
           time: outcome.time,
           position: 'belowBar',
-          color: outcome.wasSuccessful ? '#1FD8A4' : '#FF977D',
-          shape: outcome.wasSuccessful ? 'arrowUp' : 'arrowDown',
+          color: outcome.delta > 0 ? '#1FD8A4' : '#FF977D',
+          shape: outcome.delta > 0 ? 'arrowUp' : 'arrowDown',
           size: 2,
-          text: `${triggerName} ${trigger.occurrence}`,
+          text: `${triggerName} ${trigger.occurrence} (${outcome.percDelta.toFixed(2)}%)`,
         };
       });
 
@@ -995,7 +998,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   function SecondaryPanel() {
     return (
       <Tabs
-        className="w-full"
+        className="w-full flex flex-col flex-1 h-full"
         value={bottomTab}
         onFocus={() => {
           // Need as first setBottomTab from non resizable panel wasn't setting value
@@ -1004,7 +1007,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
           }
         }}
       >
-        <div className={'flex flex-row justify-between bg-primary-bg'}>
+        <div className={'flex flex-row justify-between bg-primary-bg min-h-[40px]'}>
           <TabsList className={'flex gap-2 justify-start px-3'}>
             <TabsTrigger
               value="editor"
@@ -1018,18 +1021,18 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
             >
               Code Editor
             </TabsTrigger>
-            {/*<TabsTrigger*/}
-            {/*  value="strategies"*/}
-            {/*  onClick={() => {*/}
-            {/*    if (bottomTab === 'strategies') {*/}
-            {/*      setBottomTab(null as any);*/}
-            {/*    } else {*/}
-            {/*      setBottomTab('strategies');*/}
-            {/*    }*/}
-            {/*  }}*/}
-            {/*>*/}
-            {/*  Strategy Performance*/}
-            {/*</TabsTrigger>*/}
+            <TabsTrigger
+              value="strategy"
+              onClick={() => {
+                if (bottomTab === 'strategy') {
+                  setBottomTab(null as any);
+                } else {
+                  setBottomTab('strategy');
+                }
+              }}
+            >
+              Strategy Performance
+            </TabsTrigger>
           </TabsList>
 
           {outcomeSummary && (
@@ -1085,8 +1088,8 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
             onSaveToStrategyClicked={input => {}}
           />
         </TabsContent>
-        <TabsContent value="strategies">
-          <StrategiesTab />
+        <TabsContent value="strategy" className="h-full">
+          <StrategiesTab outcomeEvents={outcomeEvents} />
         </TabsContent>
       </Tabs>
     );
@@ -1220,7 +1223,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
           </div>
 
           <div className={'flex flex-col flex-auto w-[100%]'}>
-            <div className={'w-full h-[40px] bg-primary-bg justify-between items-center flex px-3'}>
+            <div className={'w-full min-h-[40px] bg-primary-bg justify-between items-center flex px-3'}>
               <div className={'flex flex-row items-center gap-3'}>
                 <div className={'flex flex-row items-center gap-2'}>
                   <p className="text-xs">Source</p>
@@ -1291,7 +1294,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                       });
                     }}
                   >
-                    <p className="hidden xl:block">Add Trigger</p>
+                    <p className="hidden xl:block">Add Entry</p>
                     <LightningBoltIcon />
                   </Button>
 
@@ -1305,7 +1308,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                       });
                     }}
                   >
-                    <p className="hidden xl:block">Add Outcome</p>
+                    <p className="hidden xl:block">Add Exit</p>
                     <CheckboxIcon />
                   </Button>
                 </div>
@@ -1409,12 +1412,14 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                           onChange={e => setNewStrategyName(e.target.value)}
                         />
                         <div className={'flex flex-row justify-between'}>
-                          <Popover.Close>
-                            <>
+                          <>
+                            <Popover.Close>
                               <Button size="1" color={'gray'}>
                                 Cancel
                               </Button>
+                            </Popover.Close>
 
+                            <Popover.Close>
                               <Button
                                 size={'1'}
                                 onClick={() => {
@@ -1429,8 +1434,8 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                               >
                                 Create
                               </Button>
-                            </>
-                          </Popover.Close>
+                            </Popover.Close>
+                          </>
                         </div>
                       </div>
                     </Popover.Content>
@@ -1459,7 +1464,9 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
               <div className={'flex flex-col flex-auto w-[100%]'}>
                 <ChartPanel />
                 <div className={'w-full h-[2px] bg-primary-border'}></div>
-                <SecondaryPanel />
+                <div className="max-h-[40px]">
+                  <SecondaryPanel />
+                </div>
               </div>
             )}
 

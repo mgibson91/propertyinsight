@@ -1,110 +1,73 @@
 import { Indicator } from '@/logic/indicators/types';
 import { UserOutcome, UserTrigger } from '@/app/(logic)/types';
 import React, { useEffect, useState } from 'react';
-import { Button, TextField } from '@radix-ui/themes';
+import { Button, Heading, TextField } from '@radix-ui/themes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Strategy } from '@/app/dashboard/types';
+import { OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import luxon, { DateTime } from 'luxon';
+import { DividerVerticalIcon } from '@radix-ui/react-icons';
+import cx from 'classnames';
 
-export const StrategiesTab = ({ currentStrategy }: { currentStrategy?: Strategy }) => {
+export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[] }) => {
+  const [displayMode, setDisplayMode] = useState({ mode: 'light' });
   const [name, setName] = useState('');
   const [tab, setTab] = useState('indicators');
 
-  useEffect(() => {
-    if (currentStrategy) {
-      setName(currentStrategy.name);
-    }
-  }, [currentStrategy]);
-
   return (
-    <div className={'flex flex-col w-full'}>
-      <div className={'flex flex-row flex-1 justify-between items-center bg-accent-bg h-[36px] px-2'}>
-        <div className={'flex flex-col'}>
-          <div className={'flex flex-row justify-between items-center gap-2'}>
-            <Tabs
-              orientation={'horizontal'}
-              className={'flex-auto flex bg-accent-bg'}
-              onValueChange={value => setTab(value)}
-            >
-              <TabsList className={'bg-accent-bg'}>
-                <TabsTrigger
-                  className={'ring-offset-bg-accent-bg bg-accent-bg data-[state=active]:bg-accent-base'}
-                  value="indicators"
-                >
-                  Indicators
-                </TabsTrigger>
-                <TabsTrigger
-                  className={'ring-offset-bg-accent-bg bg-accent-bg data-[state=active]:bg-accent-base'}
-                  value="triggers"
-                >
-                  Triggers
-                </TabsTrigger>
-                <TabsTrigger
-                  className={'ring-offset-bg-accent-bg bg-accent-bg data-[state=active]:bg-accent-base'}
-                  value="outcome"
-                >
-                  Outcome
-                </TabsTrigger>
-              </TabsList>
+    <div className={'flex flex-row !h-full w-full p-3'}>
+      <div className={'flex flex-row w-[300px]'}>
+        <div className={'flex flex-col gap-2'}>
+          <Heading size={'3'}>Summary</Heading>
 
-              {/*<TabsContent value="indicators">Indicators</TabsContent>*/}
-
-              {/*<TabsContent value="triggers">Triggers</TabsContent>*/}
-
-              {/*<TabsContent value="outcome">Outcome</TabsContent>*/}
-            </Tabs>
-
-            <TextField.Root
-              size={'1'}
-              placeholder={'Strategy name'}
-              className={'min-w-[150px]'}
-              value={name}
-              onChange={e => {
-                console.log(e);
-                setName(e.target.value);
-              }}
-            />
-          </div>
-        </div>
-
-        <div className={'flex flex-col'}>
-          <div className={'flex flex-row gap-2 items-center'}>
-            <Button
-              size={'1'}
-              className={'w-32'}
-              // onClick={() =>
-              //   onSaveToChartClicked({
-              //     funcStr,
-              //     name,
-              //     inputs,
-              //   })
-              // }
-              variant={'outline'}
-            >
-              Save to library
-            </Button>
-
-            <Button
-              className={'w-32'}
-              size={'1'}
-              // onClick={() =>
-              //   // onSaveToChartClicked({
-              //   //   funcStr,
-              //   //   name,
-              //   //   inputs,
-              //   // })
-              // }
-            >
-              Save to chart
-            </Button>
+          <div className={'flex flex-row items-center gap-1'}>
+            <Heading size={'2'}>Trade Count:</Heading>
+            <p>{outcomeEvents.length}</p>
           </div>
         </div>
       </div>
-      <div className={'flex flex-col'}>
-        {tab === 'indicators' && <div className={'flex flex-col gap-2 p-3'}>Indicators</div>}
 
-        {tab === 'triggers' && <div className={'flex flex-col gap-2 p-3'}>Triggers</div>}
+      <div className={'flex flex-row flex-1'}>
+        <div className={'flex flex-col flex-1 gap-2'}>
+          <Heading size={'3'}>Trade List</Heading>
 
-        {tab === 'outcomes' && <div className={'flex flex-col gap-2 p-3'}>Outcomes</div>}
+          <div className={'flex flex-col overflow-auto flex-auto h-0'}>
+            {outcomeEvents.map((event, index) => (
+              <>
+                <div key={index} className={'flex flex-row gap-3 items-center'}>
+                  <p>{index}</p>
+                  <div className={'flex flex-col'}>
+                    <div
+                      className={cx(
+                        `flex flex-row gap-3 justify-between`,
+                        displayMode.mode === 'dark' ? 'text-[#5C7C2F]' : 'text-[#BDE56C]'
+                      )}
+                    >
+                      {/*Unix time to human time with luxon*/}
+                      <p className="w-8">Entry</p>
+                      <p>{DateTime.fromSeconds(event.trigger.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
+                      <p>${(event.trigger.data as any).close}</p>
+                    </div>
+                    <div className={`flex flex-row gap-3`}>
+                      <p className="w-8">Exit</p>
+                      <p>{DateTime.fromSeconds(event.outcome.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
+                      <p>${(event.outcome.data as any).close}</p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`flex flex-row gap-2 items-center ${event.outcome.delta > 0 ? 'text-[var(--jade-11)]' : 'text-[var(--tomato-11)]'}`}
+                  >
+                    <p>{event.outcome.delta.toPrecision(2)}</p>
+                    <p className="text-sm">({event.outcome.percDelta.toFixed(2)}%)</p>
+                  </div>
+                </div>
+
+                {index < outcomeEvents.length - 1 && <hr />}
+              </>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
