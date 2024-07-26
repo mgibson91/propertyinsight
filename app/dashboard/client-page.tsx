@@ -342,7 +342,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [tabResetKey, setTabResetKey] = useState<number>(0);
 
   // We display
-  const [bottomTab, setBottomTab] = useState<'editor' | 'strategy' | undefined>(urlTab || 'editor');
+  const [bottomTab, setBottomTab] = useState<'editor' | 'strategy' | undefined>((urlTab as any) || 'editor');
 
   const [outcomeSummary, setOutcomeSummary] = useState<{
     successCount: number;
@@ -384,7 +384,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
     }
 
     // run navigation after the first render
-    router.push(`?${params.toString()}`, { shallow: true });
+    router.push(`?${params.toString()}`, { shallow: true } as any); // TODO: types
   }, [tickerStream, startDate, endDate, selectedStrategy, bottomTab]);
 
   // Load strategies from local storage
