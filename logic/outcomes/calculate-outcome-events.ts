@@ -3,47 +3,39 @@ import { UTCTimestamp } from 'lightweight-charts';
 import { OutcomeConfig, OutcomeId } from '@/logic/outcomes/types';
 import { TriggerId } from '@/components/triggers/edit-trigger';
 import { buildOutcomeFunc } from '@/logic/outcomes/build-outcome-functions';
-import { OPERATOR_LOOKBACK_MAP } from '@/logic/triggers/calculate-trigger-events';
+import { OPERATOR_LOOKBACK_MAP, TriggerEvent } from '@/logic/triggers/calculate-trigger-events';
 import { IndicatorStreamMetadata, prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 
 export type OutcomeEvent = {
-  trigger: { id: string; time: UTCTimestamp; occurrence: number; data: GenericData };
-  outcome: {
-    time: UTCTimestamp;
-    wasSuccessful: boolean | null;
-    offsetFromTrigger: number;
-    delta: number;
-    percDelta: number;
-    data: GenericData;
-  };
+  time: UTCTimestamp;
+  wasSuccessful: boolean | null;
+  offsetFromTrigger: number;
+  delta: number;
+  percDelta: number;
+  data: GenericData;
 };
 
-/**
- * Pending triggers set
- *
- * - Set of triggers which haven’t been triggered
- * - OutcomeResult = { triggerId: OutcomeEvent }
- * - Overall Result - includes null
- *
- * Iterate over data, check the current data
- *
- * - current price (data)
- * - trigger specific data (trigger)
- * @param data
- * @param triggers
- */
-export function calculateOutcomeEvents({
-  data,
-  streams,
-  triggerEvents,
-  outcomeConfigs,
-}: {
+export type PossibleOutcomeEvent = {
+  trigger: TriggerEvent;
+  outcome: OutcomeEvent | null;
+};
+
+export type ResolvedOutcomeEvent = {
+  trigger: TriggerEvent;
+  outcome: OutcomeEvent;
+};
+
+export type CalculateOutcomeEventsInput = {
   data: GenericData[];
   streams: IndicatorStreamMetadata[];
-  triggerEvents: Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]>;
+  triggerEvents: Record<TriggerId, TriggerEvent[]>;
   outcomeConfigs: OutcomeConfig[];
-}): OutcomeEvent[] {
+};
+
+export function calculateOutcomeEvents(input: CalculateOutcomeEventsInput): PossibleOutcomeEvent[] {
+  const { data, streams, triggerEvents, outcomeConfigs } = input;
+
   const outcomeFuncMap: Record<
     OutcomeId,
     {
@@ -83,13 +75,20 @@ return outcome();`,
     };
   }
 
-  const results: OutcomeEvent[] = [];
+  const earliestOutcomes = new Map<
+    number,
+    {
+      trigger: TriggerEvent;
+      outcome: OutcomeEvent;
+    }
+  >();
+  const unresolvedOutcomes: PossibleOutcomeEvent[] = [];
 
   enabledOutcomeConfigs.map(outcome => {
     const outcomeFunc = outcomeFuncMap[outcome.id];
 
     Object.entries(triggerEvents).map(([triggerId, triggerEvent]) => {
-      triggerEvent.map(({ time: triggerTime, occurrence }) => {
+      triggerEvent.map(({ time: triggerTime, occurrence, name: triggerName }) => {
         const triggerIdx = data.findIndex(({ time: dataTime }) => dataTime === triggerTime);
         if (triggerIdx === -1) {
           return;
@@ -114,8 +113,14 @@ return outcome();`,
           const delta = (data[i].close as number) - (triggerData.close as number);
 
           if (wasSuccessful != null) {
-            results.push({
-              trigger: { id: triggerId, time: triggerTime, occurrence, data: triggerData },
+            // Check if earlier outcome exists
+            const earlierOutcome = earliestOutcomes.get(occurrence);
+            if (earlierOutcome && earlierOutcome.outcome.time > data[i].time) {
+              return;
+            }
+
+            earliestOutcomes.set(occurrence, {
+              trigger: { id: triggerId, time: triggerTime, name: triggerName, data: triggerData, occurrence },
               // NOTE: This is based on close price for now
               outcome: {
                 time: data[i].time,
@@ -129,9 +134,21 @@ return outcome();`,
             return; // TODO: Return actual values
           }
         }
+
+        if (
+          !earliestOutcomes.has(occurrence) &&
+          !unresolvedOutcomes.find(({ trigger }) => trigger.occurrence === occurrence)
+        ) {
+          unresolvedOutcomes.push({
+            trigger: { id: triggerId, time: triggerTime, name: triggerName, data: data[triggerIdx], occurrence },
+            outcome: null,
+          });
+        }
       });
     });
   });
+
+  const results: PossibleOutcomeEvent[] = [...Array.from(earliestOutcomes.values()), ...unresolvedOutcomes];
 
   return results;
 }

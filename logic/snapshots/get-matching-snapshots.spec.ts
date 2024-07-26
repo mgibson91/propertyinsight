@@ -1,6 +1,6 @@
 import { getMatchingSnapshots, MatchingSnapshot } from './get-matching-snapshots';
 import { GenericData } from '@/app/(logic)/types';
-import { OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import { PossibleOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 import { UTCTimestamp } from 'lightweight-charts'; // Adjust the import path
 
 describe('getMatchingSnapshots', () => {
@@ -13,7 +13,7 @@ describe('getMatchingSnapshots', () => {
       { time: 5 as UTCTimestamp, value: 50 },
     ];
 
-    const outcomeEvents: OutcomeEvent[] = [
+    const outcomeEvents: PossibleOutcomeEvent[] = [
       {
         trigger: { id: 'a', time: 2 as UTCTimestamp },
         outcome: { time: 4 as UTCTimestamp, wasSuccessful: true, offsetFromTrigger: 2 },
@@ -56,7 +56,7 @@ describe('getMatchingSnapshots', () => {
       { time: 5 as UTCTimestamp, value: 50 },
     ];
 
-    const outcomeEvents: OutcomeEvent[] = [
+    const outcomeEvents: PossibleOutcomeEvent[] = [
       {
         trigger: { id: 'a', time: 6 as UTCTimestamp },
         outcome: { time: 7 as UTCTimestamp, wasSuccessful: true, offsetFromTrigger: 1 },
@@ -85,7 +85,7 @@ describe('getMatchingSnapshots', () => {
       { time: 5 as UTCTimestamp, value: 50 },
     ];
 
-    const outcomeEvents: OutcomeEvent[] = [
+    const outcomeEvents: PossibleOutcomeEvent[] = [
       {
         trigger: { id: 'a', time: 1 as UTCTimestamp },
         outcome: { time: 3 as UTCTimestamp, wasSuccessful: true, offsetFromTrigger: 2 },

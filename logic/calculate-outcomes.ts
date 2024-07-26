@@ -25,12 +25,12 @@ export function calculateOutcomes(input: {
   triggers: { offset: number; time: number; text: string }[];
   // eslint-disable-next-line @typescript-eslint/ban-types
   outcomeFunc: Function; // (data: ConsolidatedLineData[]) => boolean; })
-}): { summary: { successCount: number; failCount: number; uncertainCount: number }; outcomes: Outcome[] } {
+}): { summary: { successCount: number; failCount: number; unresolvedCount: number }; outcomes: Outcome[] } {
   const outcomes: Outcome[] = [];
   const summary = {
     successCount: 0,
     failCount: 0,
-    uncertainCount: 0,
+    unresolvedCount: 0,
   };
 
   for (const trigger of input.triggers) {
@@ -61,7 +61,7 @@ export function calculateOutcomes(input: {
       } else if (outcome.type === 'failure') {
         summary.failCount++;
       } else {
-        summary.uncertainCount++;
+        summary.unresolvedCount++;
       }
     }
   }

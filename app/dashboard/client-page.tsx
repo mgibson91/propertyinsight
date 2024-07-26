@@ -62,7 +62,11 @@ import { DEFAULT_OPERATORS, EditTrigger, Trigger } from '@/components/triggers/e
 import { DEFAULT_FIELDS } from '@/app/(logic)/get-indicator-stream-tags';
 import { calculateTriggerEvents } from '@/logic/triggers/calculate-trigger-events';
 import { EditOutcome } from '@/components/triggers/edit-outcome';
-import { calculateOutcomeEvents, OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import {
+  calculateOutcomeEvents,
+  PossibleOutcomeEvent,
+  ResolvedOutcomeEvent,
+} from '@/logic/outcomes/calculate-outcome-events';
 import { OutcomeConfig } from '@/logic/outcomes/types';
 import { calculateOutcomeSummary } from '@/logic/outcomes/calculate-outcome-summary';
 import { getTickerStreamData } from '@/repository/ticker_stream_data/get-ticker-stream-data';
@@ -71,6 +75,7 @@ import { getMatchingSnapshots } from '@/logic/snapshots/get-matching-snapshots';
 import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values';
 import { buildDisplaySnapshot } from '@/logic/snapshots/build-display-snapshot';
 import { buildStreamTagIndicatorMap } from '@/app/(logic)/resolve-all-indicator-stream-tags';
+import { res } from 'pino-std-serializers';
 
 // const IndicatorSchema = z.object({
 //   id: z.string(),
@@ -304,7 +309,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
   const [triggerMarkers, setTriggerMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
   const [outcomeMarkers, setOutcomeMarkers] = useState<SeriesMarker<UTCTimestamp>[]>([]);
-  const [outcomeEvents, setOutcomeEvents] = useState<OutcomeEvent[]>([]);
+  const [possibleOutcomeEvents, setPossibleOutcomeEvents] = useState<PossibleOutcomeEvent[]>([]);
 
   // Caches current strategy edits for user experimentation - no need for save to chart
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -330,6 +335,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [outcomeSummary, setOutcomeSummary] = useState<{
     successCount: number;
     failCount: number;
+    unresolvedCount: number;
     winPerc: number;
   } | null>(null);
 
@@ -630,16 +636,19 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
       setTriggerMarkers(newTriggerMarkers);
 
-      const outcomeEvents = calculateOutcomeEvents({
+      const possibleOutcomeEvents = calculateOutcomeEvents({
         data: consolidatedSeries.data,
         outcomeConfigs,
         streams: consolidatedSeries.streams,
         triggerEvents,
       });
 
-      setOutcomeEvents(outcomeEvents);
+      const resolvedOutcomeEvents = possibleOutcomeEvents.filter(
+        ({ outcome }) => outcome != null
+      ) as ResolvedOutcomeEvent[];
+      setPossibleOutcomeEvents(possibleOutcomeEvents);
 
-      const newOutcomeMarkers: SeriesMarker<UTCTimestamp>[] = outcomeEvents.map(({ outcome, trigger }) => {
+      const newOutcomeMarkers: SeriesMarker<UTCTimestamp>[] = resolvedOutcomeEvents.map(({ outcome, trigger }) => {
         const triggerName = triggers.find(t => trigger.id === t.id)?.name || '';
 
         return {
@@ -662,17 +671,18 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
 
       setOutcomeMarkers(newOutcomeMarkers);
 
-      const summary = calculateOutcomeSummary(outcomeEvents);
+      const summary = calculateOutcomeSummary(possibleOutcomeEvents);
 
       setOutcomeSummary({
         failCount: summary.failCount,
         successCount: summary.successCount,
-        winPerc: (summary.successCount / (summary.successCount + summary.failCount)) * 100,
+        unresolvedCount: summary.unresolvedCount,
+        winPerc: (summary.successCount / (summary.successCount + summary.failCount + summary.unresolvedCount)) * 100,
       });
 
       const matchingSnapshots = getMatchingSnapshots({
         data: consolidatedSeries.data,
-        outcomeEvents,
+        outcomeEvents: resolvedOutcomeEvents,
         historicalValues: HISTORICAL_VALUE_COUNT,
         futureValues: FUTURE_VALUE_COUNT,
       });
@@ -1044,6 +1054,8 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
                 <div className={'flex flex-row items-center'}>
                   <span className={'text-[var(--jade-11)] '}>{outcomeSummary?.successCount}</span>
                   <span className={''}>:</span>
+                  <span className={'text-primary-text] '}>{outcomeSummary?.unresolvedCount}</span>
+                  <span className={''}>:</span>
                   <span className={'text-[var(--tomato-11)] '}>{outcomeSummary?.failCount}</span>
                 </div>
               </div>
@@ -1089,7 +1101,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
           />
         </TabsContent>
         <TabsContent value="strategy" className="h-full">
-          <StrategiesTab outcomeEvents={outcomeEvents} />
+          <StrategiesTab possibleOutcomeEvents={possibleOutcomeEvents} />
         </TabsContent>
       </Tabs>
     );

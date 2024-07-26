@@ -1,13 +1,14 @@
 import { Indicator } from '@/logic/indicators/types';
 import { UserOutcome, UserTrigger } from '@/app/(logic)/types';
 import React, { useEffect, useState } from 'react';
-import { Button, Heading, TextField } from '@radix-ui/themes';
+import { Button, Heading, IconButton, TextField } from '@radix-ui/themes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Strategy } from '@/app/dashboard/types';
-import { OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import { PossibleOutcomeEvent, ResolvedOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 import luxon, { DateTime } from 'luxon';
-import { DividerVerticalIcon } from '@radix-ui/react-icons';
+import { DividerVerticalIcon, TimerIcon } from '@radix-ui/react-icons';
 import cx from 'classnames';
+import Link from 'next/link';
 
 function currencyString(value: number) {
   return Intl.NumberFormat('en-US', {
@@ -36,7 +37,7 @@ function currencyString(value: number) {
   }).format(value);
 }
 
-export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[] }) => {
+export const StrategiesTab = ({ possibleOutcomeEvents }: { possibleOutcomeEvents: PossibleOutcomeEvent[] }) => {
   const [displayMode, setDisplayMode] = useState({ mode: 'light' });
   const [name, setName] = useState('');
   const [tab, setTab] = useState('indicators');
@@ -51,7 +52,11 @@ export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[]
   };
   let totalPerc = 0;
 
-  outcomeEvents.forEach(event => {
+  const resolvedOutcomeEvents: ResolvedOutcomeEvent[] = possibleOutcomeEvents.filter(
+    event => event.outcome != null
+  ) as ResolvedOutcomeEvent[];
+
+  resolvedOutcomeEvents.forEach(event => {
     if (event.outcome.delta > biggestWin.delta) {
       biggestWin.delta = event.outcome.delta;
       biggestWin.deltaPerc = event.outcome.percDelta;
@@ -60,10 +65,10 @@ export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[]
       biggestLoss.delta = event.outcome.delta;
       biggestLoss.deltaPerc = event.outcome.percDelta;
     }
-    totalPerc += event.outcome.delta;
+    totalPerc += event.outcome.percDelta;
   });
 
-  const averagePerformance = totalPerc / outcomeEvents.length;
+  const averagePerformance = totalPerc / resolvedOutcomeEvents.length;
 
   return (
     <div className={'flex flex-row !h-full w-full p-3'}>
@@ -73,7 +78,7 @@ export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[]
 
           <div className={'flex flex-row items-center gap-1'}>
             <Heading size={'2'}>Trade Count:</Heading>
-            <p>{outcomeEvents.length}</p>
+            <p>{possibleOutcomeEvents.length}</p>
           </div>
 
           <div className={'flex flex-row items-center gap-1'}>
@@ -95,7 +100,7 @@ export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[]
           <div className={'flex flex-row items-center gap-1'}>
             <Heading size={'2'}>Average Performance:</Heading>
             <p className={`${averagePerformance > 0 ? 'text-[var(--jade-11)]' : 'text-[var(--tomato-11)]'}`}>
-              {averagePerformance.toFixed(2)}%
+              {isNaN(averagePerformance) ? 0 : averagePerformance.toFixed(2)}%
             </p>
           </div>
         </div>
@@ -106,38 +111,83 @@ export const StrategiesTab = ({ outcomeEvents }: { outcomeEvents: OutcomeEvent[]
           <Heading size={'3'}>Trade List</Heading>
 
           <div className={'flex flex-col overflow-auto flex-auto h-0'}>
-            {outcomeEvents.map((event, index) => (
+            {possibleOutcomeEvents.map((event, index) => (
               <>
-                <div key={index} className={'flex flex-row gap-5 items-center'}>
-                  <p>{index}</p>
-                  <div className={'flex flex-col'}>
+                {event.outcome ? (
+                  <div key={index} className={'flex flex-row gap-5 items-center'}>
+                    <p className="w-8">{index + 1}</p>
+                    <p className="w-24">
+                      {event.trigger.name} {event.trigger.occurrence}[+{event.outcome.offsetFromTrigger}]
+                    </p>
+                    <div className={'flex flex-col'}>
+                      <div
+                        className={cx(
+                          `flex flex-row gap-5 justify-between`,
+                          displayMode.mode === 'dark' ? 'text-[#5C7C2F]' : 'text-[#BDE56C]'
+                        )}
+                      >
+                        {/*Unix time to human time with luxon*/}
+                        <p className="w-8">Entry</p>
+                        <p>{DateTime.fromSeconds(event.trigger.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
+                        <p className="w-24">{currencyString((event.trigger.data as any).close)}</p>
+                      </div>
+                      <div className={`flex flex-row gap-5`}>
+                        <p className="w-8">Exit</p>
+                        <p>{DateTime.fromSeconds(event.outcome.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
+                        <p className="w-24">{currencyString((event.outcome.data as any).close)}</p>
+                      </div>
+                    </div>
+
                     <div
-                      className={cx(
-                        `flex flex-row gap-5 justify-between`,
-                        displayMode.mode === 'dark' ? 'text-[#5C7C2F]' : 'text-[#BDE56C]'
-                      )}
+                      className={`flex flex-row gap-2 items-center ${event.outcome.delta > 0 ? 'text-[var(--jade-11)]' : 'text-[var(--tomato-11)]'}`}
                     >
-                      {/*Unix time to human time with luxon*/}
-                      <p className="w-8">Entry</p>
-                      <p>{DateTime.fromSeconds(event.trigger.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
-                      <p className="w-24">{currencyString((event.trigger.data as any).close)}</p>
+                      <p>{currencyString(event.outcome.delta)}</p>
+                      <p className="text-sm">({event.outcome.percDelta.toFixed(2)}%)</p>
                     </div>
-                    <div className={`flex flex-row gap-5`}>
-                      <p className="w-8">Exit</p>
-                      <p>{DateTime.fromSeconds(event.outcome.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
-                      <p className="w-24">{currencyString((event.outcome.data as any).close)}</p>
+
+                    <div className={'flex flex-auto justify-end mr-2'}>
+                      <Link href={`/setups/replay?position=${index}`}>
+                        <IconButton variant={'soft'}>
+                          <TimerIcon className={'h-5 w-5'}></TimerIcon>
+                        </IconButton>
+                      </Link>
                     </div>
                   </div>
+                ) : (
+                  <div key={index} className={'flex flex-row gap-5 items-center'}>
+                    <p className="w-8">{index + 1}</p>
+                    <p className="w-24">
+                      {event.trigger.name} {event.trigger.occurrence}
+                    </p>
+                    <div className={'flex flex-col'}>
+                      <div
+                        className={cx(
+                          `flex flex-row gap-5 justify-between`,
+                          displayMode.mode === 'dark' ? 'text-[#5C7C2F]' : 'text-[#BDE56C]'
+                        )}
+                      >
+                        {/*Unix time to human time with luxon*/}
+                        <p className="w-8">Entry</p>
+                        <p>{DateTime.fromSeconds(event.trigger.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>
+                        <p className="w-24">{currencyString((event.trigger.data as any).close)}</p>
+                      </div>
+                      <div className={`flex flex-row gap-5`}>
+                        <p className="w-8">Exit</p>
+                        {/*<p>{DateTime.fromSeconds(event.outcome.time).toFormat('yyyy-MM-dd HH:mm:ss')}</p>*/}
+                        {/*<p className="w-24">{currencyString((event.outcome.data as any).close)}</p>*/}
+                      </div>
+                    </div>
 
-                  <div
-                    className={`flex flex-row gap-2 items-center ${event.outcome.delta > 0 ? 'text-[var(--jade-11)]' : 'text-[var(--tomato-11)]'}`}
-                  >
-                    <p>{currencyString(event.outcome.delta)}</p>
-                    <p className="text-sm">({event.outcome.percDelta.toFixed(2)}%)</p>
+                    {/*<div*/}
+                    {/*  className={`flex flex-row gap-2 items-center ${event.outcome.delta > 0 ? 'text-[var(--jade-11)]' : 'text-[var(--tomato-11)]'}`}*/}
+                    {/*>*/}
+                    {/*  <p>{currencyString(event.outcome.delta)}</p>*/}
+                    {/*  <p className="text-sm">({event.outcome.percDelta.toFixed(2)}%)</p>*/}
+                    {/*</div>*/}
                   </div>
-                </div>
+                )}
 
-                {index < outcomeEvents.length - 1 && <hr />}
+                {index < possibleOutcomeEvents.length - 1 && <hr />}
               </>
             ))}
           </div>

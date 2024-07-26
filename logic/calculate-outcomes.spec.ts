@@ -1,5 +1,5 @@
 import { calculateOutcomes, calculateOutcome, Outcome, ConsolidatedLineData } from './calculate-outcomes';
-import { UTCTimestamp } from "lightweight-charts";
+import { UTCTimestamp } from 'lightweight-charts';
 
 // Mocked data for testing
 const consolidatedSeries: ConsolidatedLineData[] = [
@@ -24,7 +24,10 @@ describe.skip('calculateOutcomes', () => {
       return 'success';
     };
 
-    const outcomes: { summary: { successCount: number; failCount: number; uncertainCount: number }; outcomes: Outcome[] } = calculateOutcomes({ consolidatedSeries, triggers, outcomeFunc });
+    const outcomes: {
+      summary: { successCount: number; failCount: number; unresolvedCount: number };
+      outcomes: Outcome[];
+    } = calculateOutcomes({ consolidatedSeries, triggers, outcomeFunc });
 
     // Expectations based on your outcome function logic
     expect(outcomes).toEqual([

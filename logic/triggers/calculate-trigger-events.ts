@@ -17,6 +17,8 @@ export const OPERATOR_LOOKBACK_MAP: Record<DefaultOperatorType, number> = {
   '==': 0,
 };
 
+export type TriggerEvent = { id: string; time: UTCTimestamp; occurrence: number; data: GenericData; name: string };
+
 export function calculateTriggerEvents({
   data,
   streams,
@@ -29,8 +31,8 @@ export function calculateTriggerEvents({
   delayMap: Record<string, number>;
   triggers: Trigger[];
   streamTagIndicatorMap: Record<string, Indicator>;
-}): Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]> {
-  const result: Record<TriggerId, { time: UTCTimestamp; occurrence: number }[]> = {};
+}): Record<TriggerId, TriggerEvent[]> {
+  const result: Record<TriggerId, TriggerEvent[]> = {};
 
   const triggerFunctionMap: Record<
     TriggerId,
@@ -101,8 +103,11 @@ return trigger();`,
 
         result[trigger.id] = result[trigger.id] ?? [];
         result[trigger.id].push({
+          id: trigger.id,
           time: reversedLookbackSeries[0].time,
           occurrence: triggerCountMap[trigger.id],
+          name: trigger.name,
+          data: reversedLookbackSeries[0],
         }); // The previous candle to signfiy the trigger
       }
     }

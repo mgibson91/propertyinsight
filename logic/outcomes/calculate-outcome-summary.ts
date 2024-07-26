@@ -1,23 +1,27 @@
-import { OutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import { PossibleOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 
-export function calculateOutcomeSummary(outcome: OutcomeEvent[]): {
+export function calculateOutcomeSummary(outcome: PossibleOutcomeEvent[]): {
   successCount: number;
   failCount: number;
-  uncertainCount: number;
+  unresolvedCount: number;
 } {
   const summary = {
     successCount: 0,
     failCount: 0,
-    uncertainCount: 0,
+    unresolvedCount: 0,
   };
 
   for (const event of outcome) {
-    if (event.outcome.wasSuccessful === true) {
+    if (!event.outcome) {
+      summary.unresolvedCount++;
+      continue;
+    }
+    if (event.outcome.delta > 0) {
       summary.successCount++;
-    } else if (event.outcome.wasSuccessful === false) {
+    } else if (event.outcome.delta <= 0) {
       summary.failCount++;
     } else {
-      summary.uncertainCount++;
+      summary.unresolvedCount++;
     }
   }
 
