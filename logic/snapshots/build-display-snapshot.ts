@@ -2,6 +2,7 @@ import { CandlestickData, LineData, SeriesMarker, Time, UTCTimestamp } from 'lig
 import { MatchingSnapshot } from '@/logic/snapshots/get-matching-snapshots';
 import { DARK_COLOR_LIST_10, pickRandom } from '@/shared/color-lists';
 import { Indicator } from '@/logic/indicators/types';
+import { ResolvedOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 
 export type DisplaySnapshot = {
   candlestickData: CandlestickData[];
@@ -9,6 +10,7 @@ export type DisplaySnapshot = {
   conditionMarker: SeriesMarker<UTCTimestamp>;
   outcomeMarker: SeriesMarker<UTCTimestamp>;
   outcomeOffset: number;
+  outcomeEvent: ResolvedOutcomeEvent;
 };
 
 export function buildDisplaySnapshot(
@@ -64,18 +66,26 @@ export function buildDisplaySnapshot(
   const outcomeMarker: SeriesMarker<UTCTimestamp> = {
     time: snapshot.outcomeTimestamp as UTCTimestamp,
     position: snapshot.wasSuccessful ? 'belowBar' : 'aboveBar',
-    color: snapshot.wasSuccessful
-      ? displayMode === 'dark'
-        ? '#1FD8A4'
-        : '#208368'
-      : displayMode === 'dark'
-        ? '#FF977D'
-        : '#D13415',
+    color:
+      snapshot.outcomeEvent.outcome.delta > 0
+        ? displayMode === 'dark'
+          ? '#1FD8A4'
+          : '#208368'
+        : displayMode === 'dark'
+          ? '#FF977D'
+          : '#D13415',
     shape: snapshot.wasSuccessful ? 'arrowUp' : 'arrowDown',
     size: 2,
   };
 
   const outcomeOffset = snapshot.offsetBetweenTriggerAndOutcome;
 
-  return { candlestickData, userSeriesData, conditionMarker, outcomeMarker, outcomeOffset };
+  return {
+    candlestickData,
+    userSeriesData,
+    conditionMarker,
+    outcomeMarker,
+    outcomeOffset,
+    outcomeEvent: snapshot.outcomeEvent,
+  };
 }

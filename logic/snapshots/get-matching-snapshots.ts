@@ -1,4 +1,4 @@
-import { PossibleOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
+import { PossibleOutcomeEvent, ResolvedOutcomeEvent } from '@/logic/outcomes/calculate-outcome-events';
 import { GenericData } from '@/app/(logic)/types';
 
 export interface MatchingSnapshot {
@@ -7,6 +7,7 @@ export interface MatchingSnapshot {
   data: GenericData[];
   offsetBetweenTriggerAndOutcome: number;
   wasSuccessful: boolean;
+  outcomeEvent: ResolvedOutcomeEvent;
 }
 
 interface GetMatchingSnapshotsParams {
@@ -24,8 +25,10 @@ export function getMatchingSnapshots({
 }: GetMatchingSnapshotsParams): MatchingSnapshot[] {
   return outcomeEvents
     .map(event => {
+      if (event.outcome === null) return null;
+
       const triggerIndex = data.findIndex(d => d.time === event.trigger.time);
-      const outcomeIndex = data.findIndex(d => d.time === event.outcome?.time);
+      const outcomeIndex = data.findIndex(d => d.time === event.outcome!.time);
 
       if (triggerIndex === -1 || outcomeIndex === -1) return null;
 
@@ -39,6 +42,7 @@ export function getMatchingSnapshots({
         wasSuccessful: event.outcome!.wasSuccessful,
         data: snapshotData,
         offsetBetweenTriggerAndOutcome: event.outcome!.offsetFromTrigger,
+        outcomeEvent: event,
       };
     })
     .filter(snapshot => snapshot !== null) as MatchingSnapshot[];

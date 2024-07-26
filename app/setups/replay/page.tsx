@@ -156,7 +156,8 @@ export default function () {
         </div>
       </div>
 
-      <div className={'w-full flex-1 p-5 pt-0'}>
+      <div className={'w-full flex-1 p-5 pt-0 relative'}>
+        {/*<div className={'flex flex-row absolute top-0 right-0 !z-2'}>Yolo</div>*/}
         <BacktestChart
           autoplay={isPlaying}
           candlesPerSecond={candlesPerSecond}

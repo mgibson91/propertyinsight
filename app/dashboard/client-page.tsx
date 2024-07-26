@@ -76,6 +76,9 @@ import { FUTURE_VALUE_COUNT, HISTORICAL_VALUE_COUNT } from '@/app/(logic)/values
 import { buildDisplaySnapshot } from '@/logic/snapshots/build-display-snapshot';
 import { buildStreamTagIndicatorMap } from '@/app/(logic)/resolve-all-indicator-stream-tags';
 import { res } from 'pino-std-serializers';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { start } from 'node:repl';
+import { DateTime } from 'luxon';
 
 // const IndicatorSchema = z.object({
 //   id: z.string(),
@@ -268,17 +271,26 @@ const generateEmptyStrategy = (name?: string): Strategy => ({
 // ];
 
 const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
+  const searchParams = useSearchParams();
+  const urlTicker = searchParams?.get('ticker');
+  const validTickerFromUrl = streams.find(stream => stream.ticker === urlTicker);
+  const urlFromMillis = searchParams?.get('from');
+  const urlToMillis = searchParams?.get('to');
+  const urlStrategyId = searchParams?.get('strategy');
+  const urlTab = searchParams?.get('tab');
+
+  const router = useRouter();
   const chartRef = useRef(null);
   const [ticker, setTicker] = useState('BTCUSD');
   const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState(
     // new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-    new Date('2024-06-01')
+    urlFromMillis ? new Date(parseInt(urlFromMillis)) : new Date('2024-06-01')
     // new Date('2023-12-11')
   );
-  const [endDate, setEndDate] = useState(new Date('2024-06-30'));
+  const [endDate, setEndDate] = useState(urlToMillis ? new Date(parseInt(urlToMillis)) : new Date('2024-06-30'));
   // const [endDate, setEndDate] = useState(new Date('2023-12-13'));
-  const [tickerStream, setTickerStream] = useState(streams[0]);
+  const [tickerStream, setTickerStream] = useState(validTickerFromUrl || streams[0]);
   const [candlestickData, setCandlestickData] = useState<CandlestickData<UTCTimestamp>[]>([]);
   const [userSeriesData, setUserSeriesData] = useState<
     {
@@ -330,7 +342,7 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [tabResetKey, setTabResetKey] = useState<number>(0);
 
   // We display
-  const [bottomTab, setBottomTab] = useState<'editor' | 'strategy' | undefined>('editor');
+  const [bottomTab, setBottomTab] = useState<'editor' | 'strategy' | undefined>(urlTab || 'editor');
 
   const [outcomeSummary, setOutcomeSummary] = useState<{
     successCount: number;
@@ -360,6 +372,21 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
   const [showEditIndicatorDialog, setShowEditIndicatorDialog] = useState(false);
   const [showEditIndicatorCodeDialog, setShowEditIndicatorCodeDialog] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.append('ticker', tickerStream.ticker);
+    params.append('from', DateTime.fromJSDate(startDate).toMillis().toString());
+    params.append('to', DateTime.fromJSDate(endDate).toMillis().toString());
+    params.append('strategy', selectedStrategy.id);
+
+    if (bottomTab) {
+      params.append('tab', bottomTab);
+    }
+
+    // run navigation after the first render
+    router.push(`?${params.toString()}`, { shallow: true });
+  }, [tickerStream, startDate, endDate, selectedStrategy, bottomTab]);
+
   // Load strategies from local storage
   useEffect(() => {
     const asyncLoadStrategies = async () => {
@@ -373,7 +400,8 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
         activeStrategy = defaultStrategy;
       } else {
         setStrategies(strategies);
-        activeStrategy = strategies[0];
+        // TODO: Refactor this to get passed into this component
+        activeStrategy = strategies.find(strategy => strategy.id === urlStrategyId) || strategies[0];
       }
 
       setSelectedStrategy(activeStrategy);
