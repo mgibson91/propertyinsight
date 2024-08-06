@@ -105,12 +105,12 @@ return outcome();`,
           // How much data do we need to pass / should this be cached per outcome?
           const outcomeData = data.slice(i - outcomeFunc.lookback, i);
 
-          const reversedLookbackSeries = outcomeData.reverse();
+          const reversedLookbackSeries = [...outcomeData].reverse();
 
           const triggerData = data[triggerIdx];
 
           const wasSuccessful = outcomeFunc.func(reversedLookbackSeries, { close: triggerData.close });
-          const delta = (data[i - outcomeFunc.lookback].close as number) - (triggerData.close as number);
+          const delta = (reversedLookbackSeries[0].close as number) - (triggerData.close as number);
 
           if (wasSuccessful != null) {
             // Check if earlier outcome exists
@@ -123,12 +123,12 @@ return outcome();`,
               trigger: { id: triggerId, time: triggerTime, name: triggerName, data: triggerData, occurrence },
               // NOTE: This is based on close price for now
               outcome: {
-                time: data[i - outcomeFunc.lookback].time,
+                time: reversedLookbackSeries[0].time,
                 wasSuccessful,
                 offsetFromTrigger: i - triggerIdx,
                 delta,
                 percDelta: (delta / (triggerData.close as number)) * 100,
-                data: data[i - outcomeFunc.lookback],
+                data: reversedLookbackSeries[0],
               },
             });
             return; // TODO: Return actual values
