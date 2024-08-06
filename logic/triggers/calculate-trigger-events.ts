@@ -10,11 +10,11 @@ import { DefaultOperatorType, Indicator } from '@/logic/indicators/types';
 export const OPERATOR_LOOKBACK_MAP: Record<DefaultOperatorType, number> = {
   crossover: 3, // Faciltates the equal in the middle case - should 2...?
   crossunder: 3, // Faciltates the equal in the middle case
-  '>': 0,
-  '<': 0,
-  '>=': 0,
-  '<=': 0,
-  '==': 0,
+  '>': 1,
+  '<': 1,
+  '>=': 1,
+  '<=': 1,
+  '==': 1,
 };
 
 export type TriggerEvent = { id: string; time: UTCTimestamp; occurrence: number; data: GenericData; name: string };

@@ -103,7 +103,7 @@ return outcome();`,
         for (let i = triggerIdx + outcomeFunc.lookback; i < data.length; i++) {
           // Start from net position - if available
           // How much data do we need to pass / should this be cached per outcome?
-          const outcomeData = outcomeFunc.lookback ? data.slice(i - outcomeFunc.lookback, i) : [data[i]];
+          const outcomeData = data.slice(i - outcomeFunc.lookback, i);
 
           const reversedLookbackSeries = outcomeData.reverse();
 
