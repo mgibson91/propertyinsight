@@ -110,12 +110,12 @@ return outcome();`,
           const triggerData = data[triggerIdx];
 
           const wasSuccessful = outcomeFunc.func(reversedLookbackSeries, { close: triggerData.close });
-          const delta = (data[i].close as number) - (triggerData.close as number);
+          const delta = (data[i - outcomeFunc.lookback].close as number) - (triggerData.close as number);
 
           if (wasSuccessful != null) {
             // Check if earlier outcome exists
             const earlierOutcome = earliestOutcomes.get(occurrence);
-            if (earlierOutcome && earlierOutcome.outcome.time > data[i].time) {
+            if (earlierOutcome && earlierOutcome.outcome.time > data[i - outcomeFunc.lookback].time) {
               return;
             }
 
@@ -123,12 +123,12 @@ return outcome();`,
               trigger: { id: triggerId, time: triggerTime, name: triggerName, data: triggerData, occurrence },
               // NOTE: This is based on close price for now
               outcome: {
-                time: data[i].time,
+                time: data[i - outcomeFunc.lookback].time,
                 wasSuccessful,
                 offsetFromTrigger: i - triggerIdx,
                 delta,
                 percDelta: (delta / (triggerData.close as number)) * 100,
-                data: data[i],
+                data: data[i - outcomeFunc.lookback],
               },
             });
             return; // TODO: Return actual values

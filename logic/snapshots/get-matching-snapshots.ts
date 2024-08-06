@@ -33,7 +33,7 @@ export function getMatchingSnapshots({
       if (triggerIndex === -1 || outcomeIndex === -1) return null;
 
       const start = Math.max(0, triggerIndex - historicalValues);
-      const end = Math.min(data.length, outcomeIndex + futureValues + 1);
+      const end = Math.min(data.length, outcomeIndex + futureValues);
       const snapshotData = data.slice(start, end);
 
       return {
