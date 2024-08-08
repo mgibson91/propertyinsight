@@ -78,7 +78,7 @@ export function BacktestChart({
 
   const candlestickChartData = displaySnapshot.candlestickData.slice(
     0,
-    minDatapointsRequiredForAllSeries + positionRef.current + 1
+    Math.min(displaySnapshot.triggerOffset, minDatapointsRequiredForAllSeries) + positionRef.current + 1
   );
 
   const latestTime = candlestickChartData[candlestickChartData.length - 1].time;

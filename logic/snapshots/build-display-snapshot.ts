@@ -8,6 +8,7 @@ export type DisplaySnapshot = {
   candlestickData: CandlestickData[];
   userSeriesData: { overlay: boolean; color: string; lineWidth: 1 | 2 | 3 | 4; data: LineData<Time>[] }[];
   conditionMarker: SeriesMarker<UTCTimestamp>;
+  triggerOffset: number;
   outcomeMarker: SeriesMarker<UTCTimestamp>;
   outcomeOffset: number;
   outcomeEvent: ResolvedOutcomeEvent;
@@ -86,6 +87,7 @@ export function buildDisplaySnapshot(
     conditionMarker,
     outcomeMarker,
     outcomeOffset,
+    triggerOffset: snapshot.triggerOffset,
     outcomeEvent: snapshot.outcomeEvent,
   };
 }

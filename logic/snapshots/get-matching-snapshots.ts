@@ -3,7 +3,9 @@ import { GenericData } from '@/app/(logic)/types';
 
 export interface MatchingSnapshot {
   triggerTimestamp: number;
+  triggerOffset: number;
   outcomeTimestamp: number;
+  outcomeOffset: number;
   data: GenericData[];
   offsetBetweenTriggerAndOutcome: number;
   wasSuccessful: boolean;
@@ -38,7 +40,9 @@ export function getMatchingSnapshots({
 
       return {
         triggerTimestamp: event.trigger.time,
+        triggerOffset: triggerIndex,
         outcomeTimestamp: event.outcome!.time,
+        outcomeOffset: outcomeIndex,
         wasSuccessful: event.outcome!.wasSuccessful,
         data: snapshotData,
         offsetBetweenTriggerAndOutcome: event.outcome!.offsetFromTrigger,
