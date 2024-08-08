@@ -712,7 +712,8 @@ const ClientPage = ({ streams }: { streams: TickerStreamModel[] }) => {
         data: consolidatedSeries.data,
         outcomeEvents: resolvedOutcomeEvents,
         historicalValues: HISTORICAL_VALUE_COUNT,
-        futureValues: FUTURE_VALUE_COUNT,
+        futureValues: 0,
+        // futureValues: FUTURE_VALUE_COUNT,
       });
 
       const displaySnapshots = matchingSnapshots.map(snapshot =>
