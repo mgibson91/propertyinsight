@@ -6,7 +6,7 @@ import { BeforeMount, Editor } from '@monaco-editor/react';
 import { prefixBuiltInFunctions } from '@/logic/built-in-functions/aggregations/prefix-built-in-functions';
 import { DEFAULT_FIELDS, getIndicatorStreamTags } from '@/app/(logic)/get-indicator-stream-tags';
 import { PlusIcon, ReloadIcon } from '@radix-ui/react-icons';
-import { prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
+import { buildIndicatorStreamVariables, prependSpreadFunctions } from '@/logic/get-consolidated-series-new';
 import { parseFunctionReturnKeys } from '@/app/(logic)/parse-function-return-key';
 import { useDisplayMode } from '@/app/display-mode-aware-radix-theme-provider';
 import { DARK_COLOR_LIST_10, LIGHT_COLOR_LIST_10, pickRandom } from '@/shared/color-lists';
@@ -84,20 +84,23 @@ export const EditorTab = ({
       allowNonTsExtensions: true,
     });
 
+    // This is just a decorative type
+    const inputFieldDeclarations =
+      indicator?.params.map(param => `const $$${param.name} = ${param.value};`).join('\n') || '';
+
+    const typescriptDeclarations = prependSpreadFunctions({
+      // funcString: prefixBuiltInFunctions(indicator ? indicator.funcStr : ''),
+      funcString: prefixBuiltInFunctions(inputFieldDeclarations),
+      existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
+        indicator.streams.map(stream => ({
+          streamTag: stream.tag,
+          indicatorTag: indicator.tag,
+        }))
+      ),
+    });
+
     // It's right through indicators, and for each indicator at all streams
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      `
-      ${prependSpreadFunctions({
-        funcString: prefixBuiltInFunctions(indicator ? indicator.funcStr : ''),
-        existingIndicatorMetadata: existingIndicators.flatMap(indicator =>
-          indicator.streams.map(stream => ({
-            streamTag: stream.tag,
-            indicatorTag: indicator.tag,
-          }))
-        ),
-      })}
-      `
-    );
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(typescriptDeclarations);
 
     monaco.editor.defineTheme('myCustomTheme', {
       base: 'vs-dark', // can also be vs-dark or hc-black
@@ -297,7 +300,7 @@ export const EditorTab = ({
                     >
                       <Select.Trigger
                         placeholder="Type"
-                        className={'bg-primary-bg-subtle w-[100px]'}
+                        className={'bg-primary-bg-subtle !w-[100px]'}
                         variant={'soft'}
                       />
                       <Select.Content>
@@ -368,7 +371,7 @@ export const EditorTab = ({
                       >
                         <Select.Trigger
                           placeholder="Select ticker"
-                          className={'bg-primary-bg-subtle h-[32px] w-[100px]'}
+                          className={'bg-primary-bg-subtle h-[32px] !w-[100px]'}
                         />
                         <Select.Content>
                           {FIELD_OPTIONS.map(option => (
