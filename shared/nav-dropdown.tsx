@@ -41,7 +41,7 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
     {
       title: 'Discord',
       icon: <ChatBubbleIcon />,
-      url: 'https://discord.gg/Nv55UxJQ',
+      url: 'https://discord.gg/ZC2mTtqzMZ',
     },
     {
       title: 'Roadmap',
