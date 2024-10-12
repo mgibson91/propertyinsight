@@ -26,15 +26,15 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
           router.push('/');
         }}
       >
-        <img src={'/logo.png'} className={'h-8'} />
+        <img src={'/logo.svg'} className={'h-8'} />
         <Heading size={'5'} className={'text-primary-text-contrast hover:text-accent-text transform-all duration-200'}>
-          Tradescan
+          Property Insight
         </Heading>
       </div>
 
       {isLoggedIn && (
         <div className={'flex flex-row items-center ml-10 gap-5'}>
-          <Link href={'/dashboard'}>
+          {/* <Link href={'/dashboard'}>
             <Text
               size={'3'}
               className={cx(
@@ -44,45 +44,21 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
             >
               Dashboard
             </Text>
-          </Link>
+          </Link> */}
 
-          {/*<Link href={'/dashboaard'}>*/}
-          {/*  <Text*/}
-          {/*    size={'3'}*/}
-          {/*    className={cx(*/}
-          {/*      'hover:text-accent-text transform-all duration-200',*/}
-          {/*      path === '/dashboaard' ? 'text-accent-text' : 'text-primary-text-contrast'*/}
-          {/*    )}*/}
-          {/*  >*/}
-          {/*    Dashboaard*/}
-          {/*  </Text>*/}
-          {/*</Link>*/}
-
-          <Link href={'/setups'}>
+          <Link href={'/search'}>
             <Text
               size={'3'}
               className={cx(
                 'hover:text-accent-text transform-all duration-200',
-                path === '/setups' ? 'text-accent-text' : 'text-primary-text-contrast'
+                path === '/search' ? 'text-accent-text' : 'text-primary-text-contrast'
               )}
             >
-              Historical Setups
+              Search
             </Text>
           </Link>
 
-          <Link href={'/setups/replay'}>
-            <Text
-              size={'3'}
-              className={cx(
-                'hover:text-accent-text transform-all duration-200',
-                path.includes('/setups/replay') ? 'text-accent-text' : 'text-primary-text-contrast'
-              )}
-            >
-              Replay
-            </Text>
-          </Link>
-
-          <Link href={'/roadmap'} className={'invisible md:visible'}>
+          {/* <Link href={'/roadmap'} className={'invisible md:visible'}>
             <Text
               size={'3'}
               className={cx(
@@ -104,7 +80,7 @@ export const NavBar = ({ isLoggedIn, rightSlot }: { isLoggedIn: boolean; rightSl
             >
               Changelog
             </Text>
-          </Link>
+          </Link> */}
         </div>
       )}
 

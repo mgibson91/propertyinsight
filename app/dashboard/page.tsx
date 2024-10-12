@@ -1,14 +1,13 @@
 import ClientPage from '@/app/dashboard/client-page';
-import { getAllTickerStreams } from '@/repository/ticker_stream_data/get-ticker-streams';
 
 export const metadata = {
-  title: 'tradescan.pro',
-  description: 'Test. Learn. Earn - Faster',
+  title: 'propertyinsight.ai',
+  description: 'Accessible. Transparent. At your fingertips.',
   openGraph: {
-    title: 'Tradescan',
-    description: 'Test. Learn. Earn - Faster',
-    url: 'https://tradescan.pro',
-    siteName: 'Tradescan',
+    title: 'Property Insight',
+    description: 'Accessible. Transparent. At your fingertips.',
+    url: 'https://propertyinsight.ai',
+    siteName: 'Property Insight',
     images: [
       {
         url: 'https://drive.google.com/uc?export=view&id=1dQoOQK9yflBc-vYZAc5VAzAE7652tPbE',
@@ -22,6 +21,5 @@ export const metadata = {
 };
 
 export default async function Page() {
-  const tickerStreams = await getAllTickerStreams();
-  return <ClientPage streams={tickerStreams} />;
+  return <ClientPage />;
 }

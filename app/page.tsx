@@ -7,8 +7,8 @@ export default function () {
     <div className={'w-full h-full flex-col flex text-primary-text-contrast overflow-auto'}>
       <div className={'mt-[5%] flex flex-col items-center'}>
         <div className={'flex flex-row gap-2 items-center'}>
-          <img src={'/logo.png'} className={'h-12'} />
-          <p className={'text-[50px] font-bold'}>Tradescan</p>
+          <img src={'/logo.svg'} className={'h-12'} />
+          <p className={'text-[50px] font-bold'}>propertyinsight.ai</p>
         </div>
         {/*<span className={'text-[30px] leading-none font-normal'}>TEST. LEARN. EARN.</span>*/}
         <p className={'text-[30px] leading-none text-primary-text'}>Master your trading craft</p>

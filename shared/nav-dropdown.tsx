@@ -41,23 +41,23 @@ export const NavDropdown = ({ headerSlot }: { headerSlot: React.ReactNode }) => 
     {
       title: 'Discord',
       icon: <ChatBubbleIcon />,
-      url: 'https://discord.gg/ZC2mTtqzMZ',
+      url: 'https://discord.gg/tHSBvpVufe',
     },
-    {
-      title: 'Roadmap',
-      icon: <DashboardIcon />,
-      url: '/roadmap',
-    },
-    {
-      title: 'Changelog',
-      icon: <RocketIcon />,
-      url: '/changelog',
-    },
-    {
-      title: 'Privacy',
-      icon: <LockClosedIcon />,
-      url: '/privacy',
-    },
+    // {
+    //   title: 'Roadmap',
+    //   icon: <DashboardIcon />,
+    //   url: '/roadmap',
+    // },
+    // {
+    //   title: 'Changelog',
+    //   icon: <RocketIcon />,
+    //   url: '/changelog',
+    // },
+    // {
+    //   title: 'Privacy',
+    //   icon: <LockClosedIcon />,
+    //   url: '/privacy',
+    // },
 
     // ... add more items as needed
   ];

@@ -1,7 +1,6 @@
 import '../css/preflight-without-button.css';
 import '../css/globals.css';
 import '@radix-ui/themes/styles.css';
-import { DisplaySnapshotProvider } from '@/app/display-snapshot-provider';
 import { DisplayModeAwareRadixThemeProvider } from '@/app/display-mode-aware-radix-theme-provider';
 import Script from 'next/script';
 import { cookies } from 'next/headers';
@@ -11,18 +10,20 @@ import { NavBar } from '@/shared/nav-bar';
 import { CSPostHogProvider } from '@/app/posthog-provider';
 import { UserMetadata, UserMetadataProvider } from '@/app/user-metadata-provider';
 import { PostHogIdentifier } from '@/app/posthog-identifier';
+import { ReactQueryProvider } from './ReactQueryProvider';
+import FeedbackForm from '@/app/feedback/FeedbackForm';
 
 const defaultUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: 'tradescan.pro',
+  title: 'propertyinsight.ai',
   description: 'Test. Learn. Earn - Faster',
   openGraph: {
-    title: 'Tradescan',
+    title: 'propertyinsight.ai',
     description: 'Test. Learn. Earn - Faster',
-    url: 'https://tradescan.pro',
-    siteName: 'Tradescan',
+    url: 'https://propertyinsight.ai',
+    siteName: 'propertyinsight.ai',
     images: [
       {
         url: 'https://drive.google.com/uc?export=view&id=1dQoOQK9yflBc-vYZAc5VAzAE7652tPbE',
@@ -79,28 +80,33 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body className="min-h-screen">
           <UserMetadataProvider defaultValues={userMetadata}>
             <PostHogIdentifier>
-              <DisplayModeAwareRadixThemeProvider>
-                {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
-                <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
-                  <NavBar
-                    isLoggedIn={Boolean(user?.email)}
-                    rightSlot={
-                      <div className={'ml-2'}>
-                        <NavDropdown
-                          headerSlot={
-                            <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
-                          }
-                        />
-                      </div>
-                    }
-                  />
-                </div>
+              <ReactQueryProvider>
+                <DisplayModeAwareRadixThemeProvider>
+                  {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
+                  <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
+                    <NavBar
+                      isLoggedIn={Boolean(user?.email)}
+                      rightSlot={
+                        <div className={'ml-2'}>
+                          <NavDropdown
+                            headerSlot={
+                              <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
+                            }
+                          />
+                        </div>
+                      }
+                    />
+                  </div>
 
-                <main className="flex-auto flex flex-col items-center text-primary-text">
-                  <DisplaySnapshotProvider>{children}</DisplaySnapshotProvider>
-                </main>
-                {/*</ResponsiveDisplay>*/}
-              </DisplayModeAwareRadixThemeProvider>
+                  <main className="flex-auto flex flex-col items-center">
+                    {children}
+                    <div className="w-full bg-accent-bg border-t border-primary-line">
+                      <FeedbackForm />
+                    </div>
+                  </main>
+                  {/*</ResponsiveDisplay>*/}
+                </DisplayModeAwareRadixThemeProvider>
+              </ReactQueryProvider>
             </PostHogIdentifier>
           </UserMetadataProvider>
         </body>

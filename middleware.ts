@@ -22,7 +22,7 @@ export async function middleware(req: NextRequest) {
       '/password',
       '/logo.svg',
       '/clap.svg',
-      '/logo.png',
+      '/logo.svg',
       '/favicon.ico',
       '/_next/static',
       '/api/stripe/webhook',
@@ -37,6 +37,10 @@ export async function middleware(req: NextRequest) {
     if (!session && protectedPath) {
       logger.info(`No session found, redirecting from ${req.url} to /login`);
       return NextResponse.redirect(`${req.nextUrl.origin}/login`);
+    }
+
+    if (req.nextUrl.pathname === '/') {
+      return NextResponse.redirect(`${req.nextUrl.origin}/search`);
     }
 
     return response;

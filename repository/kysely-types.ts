@@ -1,5 +1,4 @@
 import type { ColumnType } from "kysely";
-import type { IPostgresInterval } from "postgres-interval";
 
 export type AuthAalLevel = "aal1" | "aal2" | "aal3";
 
@@ -15,8 +14,6 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
-export type Interval = ColumnType<IPostgresInterval, IPostgresInterval | number, IPostgresInterval | number>;
-
 export type Json = ColumnType<JsonValue, string, string>;
 
 export type JsonArray = JsonValue[];
@@ -29,11 +26,15 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type ListingSource = "property-news";
+
 export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type PgsodiumKeyStatus = "default" | "expired" | "invalid" | "valid";
 
 export type PgsodiumKeyType = "aead-det" | "aead-ietf" | "auth" | "generichash" | "hmacsha256" | "hmacsha512" | "kdf" | "secretbox" | "secretstream" | "shorthash" | "stream_xchacha20";
+
+export type PropertyType = "apartment" | "bungalow" | "cottage" | "detached" | "land" | "semi-detached" | "site" | "special-use" | "terraced" | "townhouse" | "villa";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -67,287 +68,12 @@ export interface _RealtimeTenants {
   updated_at: Timestamp;
 }
 
-export interface _TimescaledbCatalogChunk {
-  compressed_chunk_id: number | null;
-  dropped: Generated<boolean>;
-  hypertable_id: number;
-  id: Generated<number>;
-  osm_chunk: Generated<boolean>;
-  schema_name: string;
-  status: Generated<number>;
-  table_name: string;
-}
-
-export interface _TimescaledbCatalogChunkConstraint {
-  chunk_id: number;
-  constraint_name: string;
-  dimension_slice_id: number | null;
-  hypertable_constraint_name: string | null;
-}
-
-export interface _TimescaledbCatalogChunkCopyOperation {
-  backend_pid: number;
-  chunk_id: number;
-  completed_stage: string;
-  compress_chunk_name: string;
-  delete_on_source_node: boolean;
-  dest_node_name: string;
-  operation_id: string;
-  source_node_name: string;
-  time_start: Generated<Timestamp>;
-}
-
-export interface _TimescaledbCatalogChunkDataNode {
-  chunk_id: number;
-  node_chunk_id: number;
-  node_name: string;
-}
-
-export interface _TimescaledbCatalogChunkIndex {
-  chunk_id: number;
-  hypertable_id: number;
-  hypertable_index_name: string;
-  index_name: string;
-}
-
-export interface _TimescaledbCatalogCompressionAlgorithm {
-  description: string | null;
-  id: number;
-  name: string;
-  version: number;
-}
-
-export interface _TimescaledbCatalogCompressionChunkSize {
-  chunk_id: number;
-  compressed_chunk_id: number;
-  compressed_heap_size: Int8;
-  compressed_index_size: Int8;
-  compressed_toast_size: Int8;
-  numrows_post_compression: Int8 | null;
-  numrows_pre_compression: Int8 | null;
-  uncompressed_heap_size: Int8;
-  uncompressed_index_size: Int8;
-  uncompressed_toast_size: Int8;
-}
-
-export interface _TimescaledbCatalogContinuousAgg {
-  bucket_width: Int8;
-  direct_view_name: string;
-  direct_view_schema: string;
-  finalized: Generated<boolean>;
-  mat_hypertable_id: number;
-  materialized_only: Generated<boolean>;
-  parent_mat_hypertable_id: number | null;
-  partial_view_name: string;
-  partial_view_schema: string;
-  raw_hypertable_id: number;
-  user_view_name: string;
-  user_view_schema: string;
-}
-
-export interface _TimescaledbCatalogContinuousAggMigratePlan {
-  end_ts: Timestamp | null;
-  mat_hypertable_id: number;
-  start_ts: Generated<Timestamp>;
-}
-
-export interface _TimescaledbCatalogContinuousAggMigratePlanStep {
-  config: Json | null;
-  end_ts: Timestamp | null;
-  mat_hypertable_id: number;
-  start_ts: Timestamp | null;
-  status: Generated<string>;
-  step_id: Generated<number>;
-  type: string;
-}
-
-export interface _TimescaledbCatalogContinuousAggsBucketFunction {
-  bucket_width: string;
-  experimental: boolean;
-  mat_hypertable_id: number;
-  name: string;
-  origin: string;
-  timezone: string;
-}
-
-export interface _TimescaledbCatalogContinuousAggsHypertableInvalidationLog {
-  greatest_modified_value: Int8;
-  hypertable_id: number;
-  lowest_modified_value: Int8;
-}
-
-export interface _TimescaledbCatalogContinuousAggsInvalidationThreshold {
-  hypertable_id: number;
-  watermark: Int8;
-}
-
-export interface _TimescaledbCatalogContinuousAggsMaterializationInvalidationLog {
-  greatest_modified_value: Int8;
-  lowest_modified_value: Int8;
-  materialization_id: number | null;
-}
-
-export interface _TimescaledbCatalogDimension {
-  aligned: boolean;
-  column_name: string;
-  column_type: string;
-  compress_interval_length: Int8 | null;
-  hypertable_id: number;
-  id: Generated<number>;
-  integer_now_func: string | null;
-  integer_now_func_schema: string | null;
-  interval_length: Int8 | null;
-  num_slices: number | null;
-  partitioning_func: string | null;
-  partitioning_func_schema: string | null;
-}
-
-export interface _TimescaledbCatalogDimensionPartition {
-  data_nodes: string[] | null;
-  dimension_id: number;
-  range_start: Int8;
-}
-
-export interface _TimescaledbCatalogDimensionSlice {
-  dimension_id: number;
-  id: Generated<number>;
-  range_end: Int8;
-  range_start: Int8;
-}
-
-export interface _TimescaledbCatalogHypertable {
-  associated_schema_name: string;
-  associated_table_prefix: string;
-  chunk_sizing_func_name: string;
-  chunk_sizing_func_schema: string;
-  chunk_target_size: Int8;
-  compressed_hypertable_id: number | null;
-  compression_state: Generated<number>;
-  id: Generated<number>;
-  num_dimensions: number;
-  replication_factor: number | null;
-  schema_name: string;
-  table_name: string;
-}
-
-export interface _TimescaledbCatalogHypertableCompression {
-  attname: string;
-  compression_algorithm_id: number | null;
-  hypertable_id: number;
-  orderby_asc: boolean | null;
-  orderby_column_index: number | null;
-  orderby_nullsfirst: boolean | null;
-  segmentby_column_index: number | null;
-}
-
-export interface _TimescaledbCatalogHypertableDataNode {
-  block_chunks: boolean;
-  hypertable_id: number;
-  node_hypertable_id: number | null;
-  node_name: string;
-}
-
-export interface _TimescaledbCatalogMetadata {
-  include_in_telemetry: boolean;
-  key: string;
-  value: string;
-}
-
-export interface _TimescaledbCatalogRemoteTxn {
-  data_node_name: string | null;
-  remote_transaction_id: string;
-}
-
-export interface _TimescaledbCatalogTablespace {
-  hypertable_id: number;
-  id: Generated<number>;
-  tablespace_name: string;
-}
-
-export interface _TimescaledbConfigBgwJob {
-  application_name: string;
-  check_name: string | null;
-  check_schema: string | null;
-  config: Json | null;
-  fixed_schedule: Generated<boolean>;
-  hypertable_id: number | null;
-  id: Generated<number>;
-  initial_start: Timestamp | null;
-  max_retries: number;
-  max_runtime: Interval;
-  owner: Generated<string>;
-  proc_name: string;
-  proc_schema: string;
-  retry_period: Interval;
-  schedule_interval: Interval;
-  scheduled: Generated<boolean>;
-  timezone: string | null;
-}
-
-export interface _TimescaledbInternalBgwJobStat {
-  consecutive_crashes: number;
-  consecutive_failures: number;
-  flags: Generated<number>;
-  job_id: number;
-  last_finish: Timestamp;
-  last_run_success: boolean;
-  last_start: Generated<Timestamp>;
-  last_successful_finish: Timestamp;
-  next_start: Timestamp;
-  total_crashes: Int8;
-  total_duration: Interval;
-  total_duration_failures: Interval;
-  total_failures: Int8;
-  total_runs: Int8;
-  total_successes: Int8;
-}
-
-export interface _TimescaledbInternalBgwPolicyChunkStats {
-  chunk_id: number;
-  job_id: number;
-  last_time_job_run: Timestamp | null;
-  num_times_job_run: number | null;
-}
-
-export interface _TimescaledbInternalCompressedChunkStats {
-  chunk_name: string | null;
-  chunk_schema: string | null;
-  compressed_heap_size: Int8 | null;
-  compressed_index_size: Int8 | null;
-  compressed_toast_size: Int8 | null;
-  compressed_total_size: Int8 | null;
-  compression_status: string | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  uncompressed_heap_size: Int8 | null;
-  uncompressed_index_size: Int8 | null;
-  uncompressed_toast_size: Int8 | null;
-  uncompressed_total_size: Int8 | null;
-}
-
-export interface _TimescaledbInternalHypertableChunkLocalSize {
-  chunk_id: number | null;
-  chunk_name: string | null;
-  chunk_schema: string | null;
-  compressed_heap_size: Int8 | null;
-  compressed_index_size: Int8 | null;
-  compressed_toast_size: Int8 | null;
-  compressed_total_size: Int8 | null;
-  heap_bytes: Int8 | null;
-  hypertable_id: number | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  index_bytes: Int8 | null;
-  toast_bytes: Int8 | null;
-  total_bytes: Int8 | null;
-}
-
-export interface _TimescaledbInternalJobErrors {
-  error_data: Json | null;
-  finish_time: Timestamp | null;
-  job_id: number;
-  pid: number | null;
-  start_time: Timestamp | null;
+export interface Addresses {
+  line1: string | null;
+  line2: string | null;
+  postcode: string | null;
+  property_id: string;
+  town: string | null;
 }
 
 export interface AuthAuditLogEntries {
@@ -524,48 +250,6 @@ export interface AuthUsers {
   updated_at: Timestamp | null;
 }
 
-export interface BoardColumns {
-  board_id: string;
-  created_at: Generated<Timestamp>;
-  creating_user_id: string;
-  id: Generated<string>;
-  position: number;
-  title: string;
-}
-
-export interface BoardIdeas {
-  board_id: string;
-  created_at: Generated<Timestamp>;
-  description: string;
-  id: Generated<string>;
-  requesting_user_id: string;
-  title: string;
-}
-
-export interface BoardItems {
-  column_id: string;
-  created_at: Generated<Timestamp>;
-  creating_user_id: string;
-  id: Generated<string>;
-  position: number;
-  title: string;
-}
-
-export interface Boards {
-  created_at: Generated<Timestamp>;
-  creating_user_id: string;
-  id: Generated<string>;
-  name: string;
-}
-
-export interface BoardVotes {
-  count: number | null;
-  created_at: Generated<Timestamp>;
-  id: Generated<string>;
-  item_id: string | null;
-  user_id: string | null;
-}
-
 export interface ExtensionsPgStatStatements {
   blk_read_time: number | null;
   blk_write_time: number | null;
@@ -615,6 +299,13 @@ export interface ExtensionsPgStatStatements {
 export interface ExtensionsPgStatStatementsInfo {
   dealloc: Int8 | null;
   stats_reset: Timestamp | null;
+}
+
+export interface Feedback {
+  created_at: Generated<Timestamp>;
+  feedback: string;
+  id: Generated<string>;
+  user_id: string | null;
 }
 
 export interface NetHttpRequestQueue {
@@ -710,6 +401,18 @@ export interface PgsodiumValidKey {
   status: PgsodiumKeyStatus | null;
 }
 
+export interface PropertyListings {
+  bedrooms: number;
+  currency: string;
+  id: Generated<string>;
+  metadata: Json;
+  price: Numeric;
+  receptions: number;
+  source: ListingSource;
+  source_id: string;
+  type: PropertyType;
+}
+
 export interface StorageBuckets {
   allowed_mime_types: string[] | null;
   avif_autodetection: Generated<boolean | null>;
@@ -757,180 +460,6 @@ export interface SupabaseFunctionsMigrations {
   version: string;
 }
 
-export interface SupabaseMigrationsSchemaMigrations {
-  name: string | null;
-  statements: string[] | null;
-  version: string;
-}
-
-export interface TickerStreamData {
-  close: number;
-  high: number;
-  low: number;
-  open: number;
-  stream_id: string;
-  timestamp: Int8;
-  volume_usd: number;
-}
-
-export interface TickerStreams {
-  created_at: Generated<Timestamp>;
-  id: Generated<string>;
-  period: string;
-  source: string;
-  tag: string;
-  ticker: string;
-}
-
-export interface TimescaledbExperimentalChunkReplicationStatus {
-  chunk_name: string | null;
-  chunk_schema: string | null;
-  desired_num_replicas: number | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  non_replica_nodes: string[] | null;
-  num_replicas: Int8 | null;
-  replica_nodes: string[] | null;
-}
-
-export interface TimescaledbExperimentalPolicies {
-  config: Json | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  proc_name: string | null;
-  proc_schema: string | null;
-  relation_name: string | null;
-  relation_schema: string | null;
-  schedule_interval: Interval | null;
-}
-
-export interface TimescaledbInformationChunks {
-  chunk_name: string | null;
-  chunk_schema: string | null;
-  chunk_tablespace: string | null;
-  data_nodes: string[] | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  is_compressed: boolean | null;
-  primary_dimension: string | null;
-  primary_dimension_type: string | null;
-  range_end: Timestamp | null;
-  range_end_integer: Int8 | null;
-  range_start: Timestamp | null;
-  range_start_integer: Int8 | null;
-}
-
-export interface TimescaledbInformationCompressionSettings {
-  attname: string | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  orderby_asc: boolean | null;
-  orderby_column_index: number | null;
-  orderby_nullsfirst: boolean | null;
-  segmentby_column_index: number | null;
-}
-
-export interface TimescaledbInformationContinuousAggregates {
-  compression_enabled: boolean | null;
-  finalized: boolean | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  materialization_hypertable_name: string | null;
-  materialization_hypertable_schema: string | null;
-  materialized_only: boolean | null;
-  view_definition: string | null;
-  view_name: string | null;
-  view_owner: string | null;
-  view_schema: string | null;
-}
-
-export interface TimescaledbInformationDataNodes {
-  node_name: string | null;
-  options: string[] | null;
-  owner: string | null;
-}
-
-export interface TimescaledbInformationDimensions {
-  column_name: string | null;
-  column_type: string | null;
-  dimension_number: Int8 | null;
-  dimension_type: string | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  integer_interval: Int8 | null;
-  integer_now_func: string | null;
-  num_partitions: number | null;
-  time_interval: Interval | null;
-}
-
-export interface TimescaledbInformationHypertables {
-  compression_enabled: boolean | null;
-  data_nodes: string[] | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  is_distributed: boolean | null;
-  num_chunks: Int8 | null;
-  num_dimensions: number | null;
-  owner: string | null;
-  replication_factor: number | null;
-  tablespaces: string[] | null;
-}
-
-export interface TimescaledbInformationJobErrors {
-  err_message: string | null;
-  finish_time: Timestamp | null;
-  job_id: number | null;
-  pid: number | null;
-  proc_name: string | null;
-  proc_schema: string | null;
-  sqlerrcode: string | null;
-  start_time: Timestamp | null;
-}
-
-export interface TimescaledbInformationJobs {
-  application_name: string | null;
-  check_name: string | null;
-  check_schema: string | null;
-  config: Json | null;
-  fixed_schedule: boolean | null;
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  initial_start: Timestamp | null;
-  job_id: number | null;
-  max_retries: number | null;
-  max_runtime: Interval | null;
-  next_start: Timestamp | null;
-  owner: string | null;
-  proc_name: string | null;
-  proc_schema: string | null;
-  retry_period: Interval | null;
-  schedule_interval: Interval | null;
-  scheduled: boolean | null;
-}
-
-export interface TimescaledbInformationJobStats {
-  hypertable_name: string | null;
-  hypertable_schema: string | null;
-  job_id: number | null;
-  job_status: string | null;
-  last_run_duration: Interval | null;
-  last_run_started_at: Timestamp | null;
-  last_run_status: string | null;
-  last_successful_finish: Timestamp | null;
-  next_start: Timestamp | null;
-  total_failures: Int8 | null;
-  total_runs: Int8 | null;
-  total_successes: Int8 | null;
-}
-
-export interface UserEvents {
-  data: Json | null;
-  event: string;
-  id: Generated<string>;
-  timestamp: Generated<Timestamp>;
-  user_id: string;
-}
-
 export interface VaultDecryptedSecrets {
   created_at: Timestamp | null;
   decrypted_secret: string | null;
@@ -958,35 +487,7 @@ export interface DB {
   "_realtime.extensions": _RealtimeExtensions;
   "_realtime.schema_migrations": _RealtimeSchemaMigrations;
   "_realtime.tenants": _RealtimeTenants;
-  "_timescaledb_catalog.chunk": _TimescaledbCatalogChunk;
-  "_timescaledb_catalog.chunk_constraint": _TimescaledbCatalogChunkConstraint;
-  "_timescaledb_catalog.chunk_copy_operation": _TimescaledbCatalogChunkCopyOperation;
-  "_timescaledb_catalog.chunk_data_node": _TimescaledbCatalogChunkDataNode;
-  "_timescaledb_catalog.chunk_index": _TimescaledbCatalogChunkIndex;
-  "_timescaledb_catalog.compression_algorithm": _TimescaledbCatalogCompressionAlgorithm;
-  "_timescaledb_catalog.compression_chunk_size": _TimescaledbCatalogCompressionChunkSize;
-  "_timescaledb_catalog.continuous_agg": _TimescaledbCatalogContinuousAgg;
-  "_timescaledb_catalog.continuous_agg_migrate_plan": _TimescaledbCatalogContinuousAggMigratePlan;
-  "_timescaledb_catalog.continuous_agg_migrate_plan_step": _TimescaledbCatalogContinuousAggMigratePlanStep;
-  "_timescaledb_catalog.continuous_aggs_bucket_function": _TimescaledbCatalogContinuousAggsBucketFunction;
-  "_timescaledb_catalog.continuous_aggs_hypertable_invalidation_log": _TimescaledbCatalogContinuousAggsHypertableInvalidationLog;
-  "_timescaledb_catalog.continuous_aggs_invalidation_threshold": _TimescaledbCatalogContinuousAggsInvalidationThreshold;
-  "_timescaledb_catalog.continuous_aggs_materialization_invalidation_log": _TimescaledbCatalogContinuousAggsMaterializationInvalidationLog;
-  "_timescaledb_catalog.dimension": _TimescaledbCatalogDimension;
-  "_timescaledb_catalog.dimension_partition": _TimescaledbCatalogDimensionPartition;
-  "_timescaledb_catalog.dimension_slice": _TimescaledbCatalogDimensionSlice;
-  "_timescaledb_catalog.hypertable": _TimescaledbCatalogHypertable;
-  "_timescaledb_catalog.hypertable_compression": _TimescaledbCatalogHypertableCompression;
-  "_timescaledb_catalog.hypertable_data_node": _TimescaledbCatalogHypertableDataNode;
-  "_timescaledb_catalog.metadata": _TimescaledbCatalogMetadata;
-  "_timescaledb_catalog.remote_txn": _TimescaledbCatalogRemoteTxn;
-  "_timescaledb_catalog.tablespace": _TimescaledbCatalogTablespace;
-  "_timescaledb_config.bgw_job": _TimescaledbConfigBgwJob;
-  "_timescaledb_internal.bgw_job_stat": _TimescaledbInternalBgwJobStat;
-  "_timescaledb_internal.bgw_policy_chunk_stats": _TimescaledbInternalBgwPolicyChunkStats;
-  "_timescaledb_internal.compressed_chunk_stats": _TimescaledbInternalCompressedChunkStats;
-  "_timescaledb_internal.hypertable_chunk_local_size": _TimescaledbInternalHypertableChunkLocalSize;
-  "_timescaledb_internal.job_errors": _TimescaledbInternalJobErrors;
+  addresses: Addresses;
   "auth.audit_log_entries": AuthAuditLogEntries;
   "auth.flow_state": AuthFlowState;
   "auth.identities": AuthIdentities;
@@ -1002,13 +503,9 @@ export interface DB {
   "auth.sso_domains": AuthSsoDomains;
   "auth.sso_providers": AuthSsoProviders;
   "auth.users": AuthUsers;
-  board_columns: BoardColumns;
-  board_ideas: BoardIdeas;
-  board_items: BoardItems;
-  board_votes: BoardVotes;
-  boards: Boards;
   "extensions.pg_stat_statements": ExtensionsPgStatStatements;
   "extensions.pg_stat_statements_info": ExtensionsPgStatStatementsInfo;
+  feedback: Feedback;
   "net._http_response": NetHttpResponse;
   "net.http_request_queue": NetHttpRequestQueue;
   "pgsodium.decrypted_key": PgsodiumDecryptedKey;
@@ -1016,26 +513,12 @@ export interface DB {
   "pgsodium.mask_columns": PgsodiumMaskColumns;
   "pgsodium.masking_rule": PgsodiumMaskingRule;
   "pgsodium.valid_key": PgsodiumValidKey;
+  property_listings: PropertyListings;
   "storage.buckets": StorageBuckets;
   "storage.migrations": StorageMigrations;
   "storage.objects": StorageObjects;
   "supabase_functions.hooks": SupabaseFunctionsHooks;
   "supabase_functions.migrations": SupabaseFunctionsMigrations;
-  "supabase_migrations.schema_migrations": SupabaseMigrationsSchemaMigrations;
-  ticker_stream_data: TickerStreamData;
-  ticker_streams: TickerStreams;
-  "timescaledb_experimental.chunk_replication_status": TimescaledbExperimentalChunkReplicationStatus;
-  "timescaledb_experimental.policies": TimescaledbExperimentalPolicies;
-  "timescaledb_information.chunks": TimescaledbInformationChunks;
-  "timescaledb_information.compression_settings": TimescaledbInformationCompressionSettings;
-  "timescaledb_information.continuous_aggregates": TimescaledbInformationContinuousAggregates;
-  "timescaledb_information.data_nodes": TimescaledbInformationDataNodes;
-  "timescaledb_information.dimensions": TimescaledbInformationDimensions;
-  "timescaledb_information.hypertables": TimescaledbInformationHypertables;
-  "timescaledb_information.job_errors": TimescaledbInformationJobErrors;
-  "timescaledb_information.job_stats": TimescaledbInformationJobStats;
-  "timescaledb_information.jobs": TimescaledbInformationJobs;
-  user_events: UserEvents;
   "vault.decrypted_secrets": VaultDecryptedSecrets;
   "vault.secrets": VaultSecrets;
 }
