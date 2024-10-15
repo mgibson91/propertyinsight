@@ -12,6 +12,10 @@ export default async function Page({
     town: string;
     page: string;
     limit: string;
+    location: string;
+    distance: string;
+    lat: string;
+    lng: string;
   };
 }) {
   const filters = {
@@ -21,6 +25,10 @@ export default async function Page({
     town: searchParams.town,
     page: parseInt(searchParams.page, 10) || 1,
     limit: parseInt(searchParams.limit, 10) || 10,
+    location: searchParams.location,
+    distanceKm: parseFloat(searchParams.distance) || undefined,
+    lat: parseFloat(searchParams.lat) || undefined,
+    lng: parseFloat(searchParams.lng) || undefined,
   };
 
   console.log({ big: '######', searchParams, filters });

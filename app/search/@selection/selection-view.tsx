@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TextField } from '@radix-ui/themes';
+import { TextField, Select } from '@radix-ui/themes';
+import dynamic from 'next/dynamic';
 import { PropertyType } from '@/repository/property-listings/property-news/types';
-// Import the new MultiSelectFilterWidget
-import { MultiSelectFilterWidget } from '@/components/multi-select-filter-widget';
+import { NumericInput } from '@/components/numeric-input';
+
+const SearchBox = dynamic(() => import('@mapbox/search-js-react').then(mod => mod.SearchBox), { ssr: false });
 
 const propertyTypeLabels: Partial<Record<PropertyType, string>> = {
   [PropertyType.Detached]: 'Detached',
@@ -18,6 +20,47 @@ const propertyTypeLabels: Partial<Record<PropertyType, string>> = {
   [PropertyType.Cottage]: 'Cottage',
 };
 
+const theme = {
+  variables: {
+    colorBackground: 'black',
+    colorText: 'white',
+    colorTextInput: 'white',
+    colorTextPlaceholder: 'grey',
+    colorBackgroundHover: '#333333',
+    colorBackgroundSelected: '#444444',
+    borderRadius: '8px',
+  },
+  cssText: `
+    .Input {
+      background-color: black;
+      color: white !important;
+      border: 0.5px solid #444 !important;
+      border-radius: 8px !important;
+    }
+    .Input::placeholder {
+      color: grey;
+    }
+    .Suggestion {
+      background-color: black;
+      color: white;
+      border: none !important;
+    }
+    .Suggestion--selected {
+      background-color: #333333;
+      color: white;
+    }
+    .SearchBox {
+      border: 0.5px solid #444 !important;
+      box-shadow: none !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+    }
+    .SearchBox-input {
+      border-radius: 8px !important;
+    }
+  `,
+};
+
 export function SelectionView() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -26,14 +69,15 @@ export function SelectionView() {
     minPrice: searchParams?.get('minPrice') || '',
     maxPrice: searchParams?.get('maxPrice') || '',
     type: searchParams?.get('type')?.split(',') || [],
-    town: searchParams?.get('town') || '',
+    location: searchParams?.get('location') || '',
+    distance: Number(searchParams?.get('distance')) || 15,
+    lat: parseFloat(searchParams?.get('lat') || '') || null,
+    lng: parseFloat(searchParams?.get('lng') || '') || null,
   };
 
-  const handleFilterChange = (filterName: string, value: string) => {
-    const updatedQuery = updateSearchQuery(searchParams, filterName, value);
-    const queryString = new URLSearchParams(updatedQuery).toString();
-    router.push(`?${queryString}`);
-  };
+  const [location, setLocation] = useState(initialState.location);
+  const [distance, setDistance] = useState(initialState.distance);
+  const [coordinates, setCoordinates] = useState({ lat: initialState.lat, lng: initialState.lng });
 
   const allPropertyTypes = Object.keys(propertyTypeLabels).map(key => ({
     id: key as PropertyType,
@@ -41,10 +85,16 @@ export function SelectionView() {
   }));
   const propertyTypes = allPropertyTypes.filter(pt => pt.id !== PropertyType.SpecialUse);
 
+  const handleFilterChange = (filterName: string, value: string) => {
+    const updatedQuery = updateSearchQuery(searchParams, filterName, value);
+    const queryString = new URLSearchParams(updatedQuery).toString();
+    router.push(`?${queryString}`, undefined, { shallow: true });
+  };
+
   function updateSearchQuery(existingParams: URLSearchParams, newParamKey: string, newParamValue: any) {
     const updatedParams = new URLSearchParams(existingParams.toString());
 
-    if (newParamValue) {
+    if (newParamValue !== '' && newParamValue !== null && newParamValue !== undefined) {
       updatedParams.set(newParamKey, newParamValue);
     } else {
       updatedParams.delete(newParamKey);
@@ -52,6 +102,31 @@ export function SelectionView() {
 
     return updatedParams;
   }
+
+  function handleLocationChange(result: any) {
+    const feature = result.features[0];
+    const newLocation = feature.properties.place_formatted;
+    const [lng, lat] = feature.geometry.coordinates;
+    setLocation(newLocation);
+    setCoordinates({ lat, lng });
+
+    const updatedParams = new URLSearchParams();
+
+    if (initialState.minPrice) updatedParams.set('minPrice', initialState.minPrice);
+    if (initialState.maxPrice) updatedParams.set('maxPrice', initialState.maxPrice);
+    if (initialState.type.length) updatedParams.set('type', initialState.type.join(','));
+    if (newLocation) updatedParams.set('location', newLocation);
+    if (distance) updatedParams.set('distance', distance.toString());
+    if (lat) updatedParams.set('lat', lat.toString());
+    if (lng) updatedParams.set('lng', lng.toString());
+
+    router.push(`?${updatedParams.toString()}`, undefined, { shallow: true });
+  }
+
+  const handleDistanceChange = (value: number) => {
+    setDistance(value);
+    handleFilterChange('distance', value.toString());
+  };
 
   return (
     <div className="flex flex-row justify-center gap-3 w-full p-4 pt-[80px]">
@@ -85,32 +160,49 @@ export function SelectionView() {
         <label htmlFor="propertyType" className="block text-sm font-medium">
           Property Type
         </label>
-
-        <MultiSelectFilterWidget
-          options={propertyTypes}
-          itemName={{ single: 'Type', plural: 'Types' }}
-          selectedIds={initialState.type}
-          setSelectedIds={(newTypes: string[]) => {
-            handleFilterChange(
-              'type',
-              // @ts-ignore
-              Array.isArray(newTypes) ? newTypes.join(',') : newTypes.length > 0 ? [newTypes] : ''
-            );
+        <Select.Root size="3" onValueChange={value => handleFilterChange('type', value)}>
+          <Select.Trigger className="w-full" placeholder="Select Property Types" />
+          <Select.Content>
+            {propertyTypes.map(type => (
+              <Select.Item key={type.id} value={type.id}>
+                {type.label}
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+      </div>
+      <div className="w-full max-w-[250px]">
+        <label htmlFor="location" className="block text-sm font-medium">
+          Location
+        </label>
+        <SearchBox
+          theme={theme}
+          options={{
+            proximity: {
+              lng: -0.1276,
+              lat: 51.5074,
+            },
           }}
-          placeholder="Select Property Types"
+          value={location ? `${location}, UK` : ''}
+          onRetrieve={handleLocationChange}
+          accessToken={process.env.NEXT_PUBLIC_MAPBOX_API_KEY}
         />
       </div>
       <div className="w-full max-w-[150px]">
-        <label htmlFor="town" className="block text-sm font-medium">
-          Town
+        <label htmlFor="distance" className="block text-sm font-medium">
+          Distance (miles)
         </label>
         <TextField.Root
-          id="town"
+          id="distance"
           className="w-full"
           size="3"
-          placeholder="Town"
-          value={initialState.town}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('town', e.target.value)}
+          type="number"
+          placeholder="Distance"
+          value={distance.toString()}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDistanceChange(Number(e.target.value))}
+          min={0}
+          max={1000}
+          step={1}
         />
       </div>
     </div>

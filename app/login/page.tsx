@@ -54,7 +54,7 @@ export default function Login() {
   return (
     <div className="flex flex-auto items-center justify-center">
       <div className="flex flex-col items-center gap-5">
-        <img className="h-24" src="/logo.png" alt="Logo" />
+        <img className="h-24" src="/logo.svg" alt="Logo" />
 
         <form
           action={signIn}
@@ -80,11 +80,11 @@ export default function Login() {
           </div>
 
           <div className="flex items-center gap-3 mt-3">
-            <Button size="3" className="flex-auto" formAction={signUp} color={'gray'}>
+            <Button size="3" className="!flex-1" formAction={signUp} color={'gray'}>
               Sign Up
             </Button>
 
-            <Button size="3" className="flex-auto">
+            <Button size="3" className="!flex-1">
               Log In
             </Button>
           </div>

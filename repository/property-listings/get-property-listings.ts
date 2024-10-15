@@ -31,6 +31,9 @@ export interface GetPropertyListingsFilters {
   type?: PropertyType[];
   page?: number;
   limit?: number;
+  lat?: number;
+  lng?: number;
+  distanceKm?: number; // in kilometers
 }
 
 export interface PropertyListingsSummary {
@@ -69,10 +72,10 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
       .limit(limit)
       .offset(offset);
 
-    if (filters.minPrice !== undefined) {
+    if (filters.minPrice !== undefined && filters.minPrice !== '') {
       query = query.where('property_listings.price', '>=', filters.minPrice.toString());
     }
-    if (filters.maxPrice !== undefined) {
+    if (filters.maxPrice !== undefined && filters.maxPrice !== '') {
       query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
     }
     if (filters.currency) {
@@ -92,6 +95,11 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
     }
     if (filters.type && filters.type.length > 0) {
       query = query.where('property_listings.type', 'in', filters.type);
+    }
+    if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
+      query = query.where(
+        sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
+      );
     }
 
     const listings = await query.execute();
@@ -135,10 +143,10 @@ export async function getPropertyListingsSummary(
         sql`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY property_listings.price)`.as('medianPrice'),
       ]);
 
-    if (filters.minPrice !== undefined) {
+    if (filters.minPrice !== undefined && filters.minPrice !== '') {
       query = query.where('property_listings.price', '>=', filters.minPrice.toString());
     }
-    if (filters.maxPrice !== undefined) {
+    if (filters.maxPrice !== undefined && filters.maxPrice !== '') {
       query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
     }
     if (filters.currency) {
@@ -159,24 +167,22 @@ export async function getPropertyListingsSummary(
     if (filters.type && filters.type.length > 0) {
       query = query.where('property_listings.type', 'in', filters.type);
     }
+    if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
+      query = query.where(
+        sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
+      );
+    }
 
     const [summary] = await query.execute();
 
     return {
-      // @ts-ignore
-      total: parseInt(summary.total, 10),
-      // @ts-ignore
-      minPrice: parseFloat(summary.minPrice),
-      // @ts-ignore
-      maxPrice: parseFloat(summary.maxPrice),
-      // @ts-ignore
-      avgPrice: parseFloat(summary.avgPrice),
-      // @ts-ignore
-      avgBedrooms: parseFloat(summary.avgBedrooms),
-      // @ts-ignore
-      avgReceptions: parseFloat(summary.avgReceptions),
-      // @ts-ignore
-      medianPrice: parseFloat(summary.medianPrice),
+      total: parseInt(summary.total as string, 10),
+      minPrice: parseFloat(summary.minPrice as string),
+      maxPrice: parseFloat(summary.maxPrice as string),
+      avgPrice: parseFloat(summary.avgPrice as string),
+      avgBedrooms: parseFloat(summary.avgBedrooms as string),
+      avgReceptions: parseFloat(summary.avgReceptions as string),
+      medianPrice: parseFloat(summary.medianPrice as string),
     };
   } catch (error) {
     logger.error('Error retrieving property listings summary', error || {});
