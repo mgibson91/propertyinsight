@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TextField, Select } from '@radix-ui/themes';
+import { Select, TextField } from '@radix-ui/themes';
 import dynamic from 'next/dynamic';
 import { PropertyType } from '@/repository/property-listings/property-news/types';
-import { NumericInput } from '@/components/numeric-input';
 
-const SearchBox = dynamic(() => import('@mapbox/search-js-react').then(mod => mod.SearchBox), { ssr: false });
+const SearchBox = dynamic(() => import('@mapbox/search-js-react').then(mod => mod.SearchBox as any), { ssr: false });
 
 const propertyTypeLabels: Partial<Record<PropertyType, string>> = {
   [PropertyType.Detached]: 'Detached',
@@ -88,7 +87,7 @@ export function SelectionView() {
   const handleFilterChange = (filterName: string, value: string) => {
     const updatedQuery = updateSearchQuery(searchParams, filterName, value);
     const queryString = new URLSearchParams(updatedQuery).toString();
-    router.push(`?${queryString}`, undefined, { shallow: true });
+    router.push(`?${queryString}`, { shallow: true } as any);
   };
 
   function updateSearchQuery(existingParams: URLSearchParams, newParamKey: string, newParamValue: any) {
@@ -120,7 +119,7 @@ export function SelectionView() {
     if (lat) updatedParams.set('lat', lat.toString());
     if (lng) updatedParams.set('lng', lng.toString());
 
-    router.push(`?${updatedParams.toString()}`, undefined, { shallow: true });
+    router.push(`?${updatedParams.toString()}`, { shallow: true } as any);
   }
 
   const handleDistanceChange = (value: number) => {
@@ -128,6 +127,7 @@ export function SelectionView() {
     handleFilterChange('distance', value.toString());
   };
 
+  // @ts-ignore
   return (
     <div className="flex flex-row justify-center gap-3 w-full p-4 pt-[80px]">
       <div className="w-full max-w-[150px]">
@@ -176,6 +176,7 @@ export function SelectionView() {
           Location
         </label>
         <SearchBox
+          // @ts-ignore
           theme={theme}
           options={{
             proximity: {

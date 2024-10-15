@@ -72,10 +72,10 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
       .limit(limit)
       .offset(offset);
 
-    if (filters.minPrice !== undefined && filters.minPrice !== '') {
+    if (filters.minPrice) {
       query = query.where('property_listings.price', '>=', filters.minPrice.toString());
     }
-    if (filters.maxPrice !== undefined && filters.maxPrice !== '') {
+    if (filters.maxPrice) {
       query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
     }
     if (filters.currency) {
@@ -98,6 +98,7 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
     }
     if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
       query = query.where(
+        // @ts-ignore
         sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
       );
     }
@@ -143,10 +144,10 @@ export async function getPropertyListingsSummary(
         sql`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY property_listings.price)`.as('medianPrice'),
       ]);
 
-    if (filters.minPrice !== undefined && filters.minPrice !== '') {
+    if (filters.minPrice) {
       query = query.where('property_listings.price', '>=', filters.minPrice.toString());
     }
-    if (filters.maxPrice !== undefined && filters.maxPrice !== '') {
+    if (filters.maxPrice) {
       query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
     }
     if (filters.currency) {
@@ -169,6 +170,7 @@ export async function getPropertyListingsSummary(
     }
     if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
       query = query.where(
+        // @ts-ignore
         sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
       );
     }

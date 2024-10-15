@@ -1,4 +1,4 @@
-import ClientPage from '@/app/dashboard/client-page';
+import ClientPage from '@/app/(authenticated)/dashboard/client-page';
 
 export const metadata = {
   title: 'propertyinsight.ai',

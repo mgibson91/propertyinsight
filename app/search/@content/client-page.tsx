@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button, Heading, Select } from '@radix-ui/themes';
 import { PropertyListingModel, PropertyListingsSummary } from '@/repository/property-listings/get-property-listings';
 import { useRouter, useSearchParams } from 'next/navigation';
-import FeedbackForm from '@/app/feedback/FeedbackForm';
 
 export default function ClientSearchPage({
   initialProperties,
