@@ -16,6 +16,12 @@ export default async function Page({
     distance: string;
     lat: string;
     lng: string;
+    bathroomsFrom: string;
+    bathroomsTo: string;
+    receptionsFrom: string;
+    receptionsTo: string;
+    bedroomsFrom: string;
+    bedroomsTo: string;
   };
 }) {
   const filters = {
@@ -29,6 +35,12 @@ export default async function Page({
     distanceKm: parseFloat(searchParams.distance) || undefined,
     lat: parseFloat(searchParams.lat) || undefined,
     lng: parseFloat(searchParams.lng) || undefined,
+    bathroomsFrom: parseInt(searchParams.bathroomsFrom, 10) || undefined,
+    bathroomsTo: parseInt(searchParams.bathroomsTo, 10) || undefined,
+    receptionsFrom: parseInt(searchParams.receptionsFrom, 10) || undefined,
+    receptionsTo: parseInt(searchParams.receptionsTo, 10) || undefined,
+    bedroomsFrom: parseInt(searchParams.bedroomsFrom, 10) || undefined,
+    bedroomsTo: parseInt(searchParams.bedroomsTo, 10) || undefined,
   };
 
   console.log({ big: '######', searchParams, filters });

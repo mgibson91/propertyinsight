@@ -18,6 +18,7 @@ export default function ClientSearchPage({
     avgBedrooms: number;
     avgReceptions: number;
     medianPrice: number;
+    avgBathrooms: number;
   };
   initialPage: number;
   itemsPerPage: number;
@@ -63,6 +64,7 @@ export default function ClientSearchPage({
           <TableHead>Town</TableHead>
           <TableHead>Postcode</TableHead>
           <TableHead></TableHead>
+          {/*<TableHead>Bathrooms</TableHead>*/}
         </TableRow>
       </TableHeader>
       <TableBody className="flex-1 h-0">
@@ -115,6 +117,7 @@ export default function ClientSearchPage({
                 </DialogContent>
               </Dialog> */}
             </TableCell>
+            {/* <TableCell>{property.bathrooms}</TableCell> */}
           </TableRow>
         ))}
       </TableBody>
@@ -149,6 +152,8 @@ export default function ClientSearchPage({
               <TableCell>{summary.avgBedrooms.toFixed(2)}</TableCell>
               <TableCell className="font-medium">Average Receptions:</TableCell>
               <TableCell>{summary.avgReceptions.toFixed(2)}</TableCell>
+              {/*<TableCell className="font-medium">Average Bathrooms:</TableCell>*/}
+              {/*<TableCell>{summary.avgBathrooms.toFixed(2)}</TableCell>*/}
             </TableRow>
           </TableBody>
         </Table>

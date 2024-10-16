@@ -69,6 +69,7 @@ export interface _RealtimeTenants {
 }
 
 export interface Addresses {
+  coordinates: string | null;
   line1: string | null;
   line2: string | null;
   postcode: string | null;
@@ -401,7 +402,36 @@ export interface PgsodiumValidKey {
   status: PgsodiumKeyStatus | null;
 }
 
+export interface PostgisGeographyColumns {
+  coord_dimension: number | null;
+  f_geography_column: string | null;
+  f_table_catalog: string | null;
+  f_table_name: string | null;
+  f_table_schema: string | null;
+  srid: number | null;
+  type: string | null;
+}
+
+export interface PostgisGeometryColumns {
+  coord_dimension: number | null;
+  f_geometry_column: string | null;
+  f_table_catalog: string | null;
+  f_table_name: string | null;
+  f_table_schema: string | null;
+  srid: number | null;
+  type: string | null;
+}
+
+export interface PostgisSpatialRefSys {
+  auth_name: string | null;
+  auth_srid: number | null;
+  proj4text: string | null;
+  srid: number;
+  srtext: string | null;
+}
+
 export interface PropertyListings {
+  bathrooms: number | null;
   bedrooms: number;
   currency: string;
   id: Generated<string>;
@@ -410,6 +440,7 @@ export interface PropertyListings {
   receptions: number;
   source: ListingSource;
   source_id: string;
+  specific_metadata: Json | null;
   type: PropertyType;
 }
 
@@ -513,6 +544,9 @@ export interface DB {
   "pgsodium.mask_columns": PgsodiumMaskColumns;
   "pgsodium.masking_rule": PgsodiumMaskingRule;
   "pgsodium.valid_key": PgsodiumValidKey;
+  "postgis.geography_columns": PostgisGeographyColumns;
+  "postgis.geometry_columns": PostgisGeometryColumns;
+  "postgis.spatial_ref_sys": PostgisSpatialRefSys;
   property_listings: PropertyListings;
   "storage.buckets": StorageBuckets;
   "storage.migrations": StorageMigrations;

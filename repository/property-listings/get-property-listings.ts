@@ -1,7 +1,7 @@
 import { db } from '../kysely-connection';
 import { getLogger } from '../../utils/logging/logger';
 import { PropertyListings, PropertyType } from '../kysely-types';
-import { sql } from 'kysely';
+import { sql, SelectQueryBuilder } from 'kysely';
 
 const logger = getLogger('getPropertyListings');
 
@@ -17,6 +17,7 @@ export interface PropertyListingModel {
   };
   type: string;
   bedrooms: number;
+  bathrooms: number;
   receptions: number;
 }
 
@@ -34,6 +35,13 @@ export interface GetPropertyListingsFilters {
   lat?: number;
   lng?: number;
   distanceKm?: number; // in kilometers
+  bathrooms?: number;
+  bathroomsFrom?: number;
+  bathroomsTo?: number;
+  receptionsFrom?: number;
+  receptionsTo?: number;
+  bedroomsFrom?: number;
+  bedroomsTo?: number;
 }
 
 export interface PropertyListingsSummary {
@@ -43,7 +51,65 @@ export interface PropertyListingsSummary {
   avgPrice: number;
   avgBedrooms: number;
   avgReceptions: number;
+  avgBathrooms: number;
   medianPrice: number;
+}
+
+function applyFilters<T extends PropertyListings>(
+  // @ts-ignore
+  query: SelectQueryBuilder<PropertyListings, T>,
+  filters: GetPropertyListingsFilters
+  // @ts-ignore
+): SelectQueryBuilder<PropertyListings, T> {
+  if (filters.minPrice) {
+    query = query.where('property_listings.price', '>=', filters.minPrice.toString());
+  }
+  if (filters.maxPrice) {
+    query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
+  }
+  if (filters.currency) {
+    query = query.where('property_listings.currency', '=', filters.currency);
+  }
+  if (filters.town) {
+    query = query.where('addresses.town', '=', filters.town);
+  }
+  if (filters.postcode) {
+    query = query.where('addresses.postcode', '=', filters.postcode);
+  }
+  if (filters.bedrooms !== undefined) {
+    query = query.where('property_listings.bedrooms', '=', filters.bedrooms);
+  }
+  if (filters.receptions !== undefined) {
+    query = query.where('property_listings.receptions', '=', filters.receptions);
+  }
+  if (filters.type && filters.type.length > 0) {
+    query = query.where('property_listings.type', 'in', filters.type);
+  }
+  if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
+    query = query.where(
+      sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
+    );
+  }
+  // Comment out the bathroom filters
+  // if (filters.bathroomsFrom !== undefined) {
+  //   query = query.where('property_listings.bathrooms', '>=', filters.bathroomsFrom);
+  // }
+  // if (filters.bathroomsTo !== undefined) {
+  //   query = query.where('property_listings.bathrooms', '<=', filters.bathroomsTo);
+  // }
+  if (filters.receptionsFrom !== undefined) {
+    query = query.where('property_listings.receptions', '>=', filters.receptionsFrom);
+  }
+  if (filters.receptionsTo !== undefined) {
+    query = query.where('property_listings.receptions', '<=', filters.receptionsTo);
+  }
+  if (filters.bedroomsFrom !== undefined) {
+    query = query.where('property_listings.bedrooms', '>=', filters.bedroomsFrom);
+  }
+  if (filters.bedroomsTo !== undefined) {
+    query = query.where('property_listings.bedrooms', '<=', filters.bedroomsTo);
+  }
+  return query;
 }
 
 export async function getPropertyListings(filters: GetPropertyListingsFilters): Promise<PropertyListingModel[]> {
@@ -63,6 +129,7 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
         'property_listings.currency',
         'property_listings.type',
         'property_listings.bedrooms',
+        'property_listings.bathrooms',
         'property_listings.receptions',
         'addresses.line1',
         'addresses.line2',
@@ -72,39 +139,11 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
       .limit(limit)
       .offset(offset);
 
-    if (filters.minPrice) {
-      query = query.where('property_listings.price', '>=', filters.minPrice.toString());
-    }
-    if (filters.maxPrice) {
-      query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
-    }
-    if (filters.currency) {
-      query = query.where('property_listings.currency', '=', filters.currency);
-    }
-    if (filters.town) {
-      query = query.where('addresses.town', '=', filters.town);
-    }
-    if (filters.postcode) {
-      query = query.where('addresses.postcode', '=', filters.postcode);
-    }
-    if (filters.bedrooms !== undefined) {
-      query = query.where('property_listings.bedrooms', '=', filters.bedrooms);
-    }
-    if (filters.receptions !== undefined) {
-      query = query.where('property_listings.receptions', '=', filters.receptions);
-    }
-    if (filters.type && filters.type.length > 0) {
-      query = query.where('property_listings.type', 'in', filters.type);
-    }
-    if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
-      query = query.where(
-        // @ts-ignore
-        sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
-      );
-    }
+    query = applyFilters(query, filters);
 
     const listings = await query.execute();
 
+    // @ts-ignore
     return listings.map(listing => ({
       id: listing.id,
       price: parseFloat(listing.price),
@@ -116,7 +155,8 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
         postcode: listing.postcode,
       },
       type: listing.type,
-      bedrooms: listing.bedrooms,
+      bedrooms: listing.bedrooms || 0,
+      bathrooms: listing.bathrooms,
       receptions: listing.receptions,
     }));
   } catch (error) {
@@ -142,38 +182,10 @@ export async function getPropertyListingsSummary(
         sql`AVG(property_listings.bedrooms)`.as('avgBedrooms'),
         sql`AVG(property_listings.receptions)`.as('avgReceptions'),
         sql`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY property_listings.price)`.as('medianPrice'),
+        sql`AVG(property_listings.bathrooms)`.as('avgBathrooms'),
       ]);
 
-    if (filters.minPrice) {
-      query = query.where('property_listings.price', '>=', filters.minPrice.toString());
-    }
-    if (filters.maxPrice) {
-      query = query.where('property_listings.price', '<=', filters.maxPrice.toString());
-    }
-    if (filters.currency) {
-      query = query.where('property_listings.currency', '=', filters.currency);
-    }
-    if (filters.town) {
-      query = query.where('addresses.town', '=', filters.town);
-    }
-    if (filters.postcode) {
-      query = query.where('addresses.postcode', '=', filters.postcode);
-    }
-    if (filters.bedrooms !== undefined) {
-      query = query.where('property_listings.bedrooms', '=', filters.bedrooms);
-    }
-    if (filters.receptions !== undefined) {
-      query = query.where('property_listings.receptions', '=', filters.receptions);
-    }
-    if (filters.type && filters.type.length > 0) {
-      query = query.where('property_listings.type', 'in', filters.type);
-    }
-    if (filters.lat !== undefined && filters.lng !== undefined && filters.distanceKm !== undefined) {
-      query = query.where(
-        // @ts-ignore
-        sql`postgis.ST_DWithin(coordinates, postgis.ST_MakePoint(${filters.lng}, ${filters.lat})::postgis.geography, ${filters.distanceKm} * 1000)`
-      );
-    }
+    query = applyFilters(query, filters);
 
     const [summary] = await query.execute();
 
@@ -184,6 +196,7 @@ export async function getPropertyListingsSummary(
       avgPrice: parseFloat(summary.avgPrice as string),
       avgBedrooms: parseFloat(summary.avgBedrooms as string),
       avgReceptions: parseFloat(summary.avgReceptions as string),
+      avgBathrooms: parseFloat(summary.avgBathrooms as string),
       medianPrice: parseFloat(summary.medianPrice as string),
     };
   } catch (error) {

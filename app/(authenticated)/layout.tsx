@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { NavDropdown } from '@/shared/nav-dropdown';
 import { NavBar } from '@/shared/nav-bar';
-import { CSPostHogProvider } from '@/app/posthog-provider';
 import { ReactQueryProvider } from './ReactQueryProvider';
 import { PostHogIdentifier } from '@/app/(authenticated)/posthog-identifier';
 import { UserMetadata, UserMetadataProvider } from '@/app/(authenticated)/user-metadata-provider';
@@ -73,41 +72,39 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </Script>
       )}
 
-      <CSPostHogProvider>
-        <body className="min-h-screen">
-          <UserMetadataProvider defaultValues={userMetadata}>
-            <PostHogIdentifier>
-              <ReactQueryProvider>
-                {/*<DisplayModeAwareRadixThemeProvider>*/}
-                {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
-                <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
-                  <NavBar
-                    isLoggedIn={Boolean(user?.email)}
-                    rightSlot={
-                      <div className={'ml-2'}>
-                        <NavDropdown
-                          headerSlot={
-                            <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
-                          }
-                        />
-                      </div>
-                    }
-                  />
-                </div>
+      <body className="min-h-screen">
+        <UserMetadataProvider defaultValues={userMetadata}>
+          <PostHogIdentifier>
+            <ReactQueryProvider>
+              {/*<DisplayModeAwareRadixThemeProvider>*/}
+              {/*<ResponsiveDisplay mobileFallback={<div>Nope</div>}>*/}
+              <div className={'w-full sticky top-0 z-10 backdrop-blur-lg max-h-[50px]'}>
+                <NavBar
+                  isLoggedIn={Boolean(user?.email)}
+                  rightSlot={
+                    <div className={'ml-2'}>
+                      <NavDropdown
+                        headerSlot={
+                          <span className={'text truncate pr-1 text-primary-text-contrast'}>{user?.email}</span>
+                        }
+                      />
+                    </div>
+                  }
+                />
+              </div>
 
-                <main className="flex-auto flex flex-col items-center">
-                  {children}
-                  <div className="w-full bg-accent-bg border-t border-primary-line">
-                    <FeedbackForm />
-                  </div>
-                </main>
-                {/*</ResponsiveDisplay>*/}
-                {/*</DisplayModeAwareRadixThemeProvider>*/}
-              </ReactQueryProvider>
-            </PostHogIdentifier>
-          </UserMetadataProvider>
-        </body>
-      </CSPostHogProvider>
+              <main className="flex-auto flex flex-col items-center">
+                {children}
+                <div className="w-full bg-accent-bg border-t border-primary-line">
+                  <FeedbackForm />
+                </div>
+              </main>
+              {/*</ResponsiveDisplay>*/}
+              {/*</DisplayModeAwareRadixThemeProvider>*/}
+            </ReactQueryProvider>
+          </PostHogIdentifier>
+        </UserMetadataProvider>
+      </body>
     </html>
   );
 }
