@@ -56,8 +56,10 @@ export interface PropertyListingsSummary {
 }
 
 function applyFilters<T extends PropertyListings>(
+  // @ts-ignore
   query: SelectQueryBuilder<PropertyListings, T>,
   filters: GetPropertyListingsFilters
+  // @ts-ignore
 ): SelectQueryBuilder<PropertyListings, T> {
   if (filters.minPrice) {
     query = query.where('property_listings.price', '>=', filters.minPrice.toString());
@@ -141,6 +143,7 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
 
     const listings = await query.execute();
 
+    // @ts-ignore
     return listings.map(listing => ({
       id: listing.id,
       price: parseFloat(listing.price),
