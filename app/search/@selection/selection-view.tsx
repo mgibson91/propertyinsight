@@ -190,9 +190,7 @@ export function SelectionView() {
   };
 
   const handleMoreFiltersChange = () => {
-    let updatedQuery = updateSearchQuery(searchParams, 'bathroomsFrom', bathroomsFrom);
-    updatedQuery = updateSearchQuery(updatedQuery, 'bathroomsTo', bathroomsTo);
-    updatedQuery = updateSearchQuery(updatedQuery, 'receptionsFrom', receptionsFrom);
+    let updatedQuery = updateSearchQuery(searchParams, 'receptionsFrom', receptionsFrom);
     updatedQuery = updateSearchQuery(updatedQuery, 'receptionsTo', receptionsTo);
     updatedQuery = updateSearchQuery(updatedQuery, 'bedroomsFrom', bedroomsFrom);
     updatedQuery = updateSearchQuery(updatedQuery, 'bedroomsTo', bedroomsTo);
@@ -390,37 +388,6 @@ export function SelectionView() {
                     id="bedroomsTo"
                     value={bedroomsTo}
                     onChange={e => setBedroomsTo(e.target.value)}
-                    type="number"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="w-full">
-              <Heading size="3" className="">
-                Bathrooms
-              </Heading>
-              <div className="flex flex-row gap-4">
-                <div className="flex-1">
-                  <label htmlFor="bathroomsFrom" className="block text-sm font-medium mb-1">
-                    From
-                  </label>
-                  <TextField.Root
-                    id="bathroomsFrom"
-                    value={bathroomsFrom}
-                    onChange={e => setBathroomsFrom(e.target.value)}
-                    type="number"
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label htmlFor="bathroomsTo" className="block text-sm font-medium mb-1">
-                    To
-                  </label>
-                  <TextField.Root
-                    id="bathroomsTo"
-                    value={bathroomsTo}
-                    onChange={e => setBathroomsTo(e.target.value)}
                     type="number"
                     className="w-full"
                   />
