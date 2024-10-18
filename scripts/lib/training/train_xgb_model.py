@@ -2,8 +2,8 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 
-from scripts.lib.get_normalised_importance import get_normalized_importance
-from scripts.lib.training.get_regression_metrics import get_regression_metrics
+from lib.get_normalised_importance import get_normalized_importance
+from lib.training.get_regression_metrics import get_regression_metrics
 
 
 def train_xgb_model(csv_file, x_fields, x_dummy_fields, feature_metadata, general_metadata):

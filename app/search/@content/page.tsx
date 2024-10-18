@@ -30,7 +30,7 @@ export default async function Page({
     type: (searchParams.type ? searchParams.type.split(',') : []) as PropertyType[],
     town: searchParams.town,
     page: parseInt(searchParams.page, 10) || 1,
-    limit: parseInt(searchParams.limit, 10) || 10,
+    limit: parseInt(searchParams.limit, 10) || 20,
     location: searchParams.location,
     distanceKm: parseFloat(searchParams.distance) || undefined,
     lat: parseFloat(searchParams.lat) || undefined,

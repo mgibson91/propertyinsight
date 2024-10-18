@@ -19,6 +19,8 @@ export interface PropertyListingModel {
   bedrooms: number;
   bathrooms: number;
   receptions: number;
+  defaultValuation: number | null;
+  valuationDifference: number | null;
 }
 
 export interface GetPropertyListingsFilters {
@@ -53,6 +55,8 @@ export interface PropertyListingsSummary {
   avgReceptions: number;
   avgBathrooms: number;
   medianPrice: number;
+  avgValuation: number;
+  avgValuationDifference: number;
 }
 
 function applyFilters<T extends PropertyListings>(
@@ -74,7 +78,7 @@ function applyFilters<T extends PropertyListings>(
     query = query.where('addresses.town', '=', filters.town);
   }
   if (filters.postcode) {
-    query = query.where('addresses.postcode', '=', filters.postcode);
+    query = query.where('addresses.postcode', '=', filters.postcode).where('addresses.postcode', '!=', 'BT');
   }
   if (filters.bedrooms !== undefined) {
     query = query.where('property_listings.bedrooms', '=', filters.bedrooms);
@@ -109,6 +113,9 @@ function applyFilters<T extends PropertyListings>(
   if (filters.bedroomsTo !== undefined) {
     query = query.where('property_listings.bedrooms', '<=', filters.bedroomsTo);
   }
+  // Filter out postcodes that are just "BT"
+  query = query.where('addresses.postcode', '!=', 'BT');
+
   return query;
 }
 
@@ -123,6 +130,7 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
     let query = db
       .selectFrom('property_listings')
       .innerJoin('addresses', 'property_listings.id', 'addresses.property_id')
+      .leftJoin('default_valuations', 'property_listings.id', 'default_valuations.property_id')
       .select([
         'property_listings.id',
         'property_listings.price',
@@ -135,6 +143,7 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
         'addresses.line2',
         'addresses.town',
         'addresses.postcode',
+        'default_valuations.price as defaultValuation',
       ])
       .limit(limit)
       .offset(offset);
@@ -143,22 +152,29 @@ export async function getPropertyListings(filters: GetPropertyListingsFilters): 
 
     const listings = await query.execute();
 
-    // @ts-ignore
-    return listings.map(listing => ({
-      id: listing.id,
-      price: parseFloat(listing.price),
-      currency: listing.currency,
-      address: {
-        line1: listing.line1,
-        line2: listing.line2,
-        town: listing.town,
-        postcode: listing.postcode,
-      },
-      type: listing.type,
-      bedrooms: listing.bedrooms || 0,
-      bathrooms: listing.bathrooms,
-      receptions: listing.receptions,
-    }));
+    return listings.map(listing => {
+      const price = parseFloat(listing.price);
+      const defaultValuation = listing.defaultValuation ? Math.round(parseFloat(listing.defaultValuation)) : null;
+      const valuationDifference = defaultValuation ? ((defaultValuation - price) / price) * 100 : null;
+
+      return {
+        id: listing.id,
+        price: price,
+        currency: listing.currency,
+        address: {
+          line1: listing.line1,
+          line2: listing.line2,
+          town: listing.town,
+          postcode: listing.postcode,
+        },
+        type: listing.type,
+        bedrooms: listing.bedrooms || 0,
+        bathrooms: listing.bathrooms || 0,
+        receptions: listing.receptions,
+        defaultValuation: defaultValuation,
+        valuationDifference: valuationDifference,
+      };
+    });
   } catch (error) {
     logger.error('Error retrieving property listings', error || {});
     throw error;
@@ -174,6 +190,7 @@ export async function getPropertyListingsSummary(
     let query = db
       .selectFrom('property_listings')
       .innerJoin('addresses', 'property_listings.id', 'addresses.property_id')
+      .leftJoin('default_valuations', 'property_listings.id', 'default_valuations.property_id')
       .select([
         sql`COUNT(*)`.as('total'),
         sql`MIN(property_listings.price)`.as('minPrice'),
@@ -183,6 +200,10 @@ export async function getPropertyListingsSummary(
         sql`AVG(property_listings.receptions)`.as('avgReceptions'),
         sql`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY property_listings.price)`.as('medianPrice'),
         sql`AVG(property_listings.bathrooms)`.as('avgBathrooms'),
+        sql`AVG(default_valuations.price)`.as('avgValuation'),
+        sql`AVG((default_valuations.price - property_listings.price) / property_listings.price * 100)`.as(
+          'avgValuationDifference'
+        ),
       ]);
 
     query = applyFilters(query, filters);
@@ -198,6 +219,8 @@ export async function getPropertyListingsSummary(
       avgReceptions: parseFloat(summary.avgReceptions as string),
       avgBathrooms: parseFloat(summary.avgBathrooms as string),
       medianPrice: parseFloat(summary.medianPrice as string),
+      avgValuation: parseFloat(summary.avgValuation as string),
+      avgValuationDifference: parseFloat(summary.avgValuationDifference as string),
     };
   } catch (error) {
     logger.error('Error retrieving property listings summary', error || {});

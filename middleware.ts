@@ -41,9 +41,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(`${req.nextUrl.origin}/login`);
     }
 
-    // if (req.nextUrl.pathname === '/') {
-    //   return NextResponse.redirect(`${req.nextUrl.origin}/search`);
-    // }
+    if (req.nextUrl.pathname === '/') {
+      return NextResponse.redirect(`${req.nextUrl.origin}/search`);
+    }
 
     return response;
   } catch (e) {

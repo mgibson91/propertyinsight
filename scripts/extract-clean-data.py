@@ -65,7 +65,7 @@ def add_adjusted_postcode(df):
 
 def project_final_columns(df):
     """Project only the price, receptions, adjusted_postcode as postcode, and include orig-postcode."""
-    return df[['price', 'type', 'receptions', 'bedrooms', 'adjusted_postcode', 'postcode']].rename(
+    return df[['id', 'price', 'type', 'receptions', 'bedrooms', 'adjusted_postcode', 'postcode']].rename(
         columns={'adjusted_postcode': 'postcode', 'postcode': 'orig-postcode'}
     )
 

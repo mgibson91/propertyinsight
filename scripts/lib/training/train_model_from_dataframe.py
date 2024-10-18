@@ -6,7 +6,7 @@ from tabulate import tabulate
 from scripts.lib.get_normalised_importance import get_normalized_importance
 from scripts.lib.training.get_regression_metrics import get_regression_metrics
 
-# he
+
 def train_custom_xgb_model_from_dataframe(data, target_field: str, input_features):
     features = [f['feature'] for f in input_features]
     categorical_features = [f['feature'] for f in input_features if f.get('categorical', False)]
@@ -77,14 +77,14 @@ def train_custom_xgb_model_from_dataframe(data, target_field: str, input_feature
 def format_accuracy_metrics(metrics_dict):
     formatted_metrics = [
         ["Metric", "Value"],
-        ["Average Percent Error", f"{metrics_dict['avg_percent_error']:.2f}%"],
-        ["Median Error", f"{metrics_dict['median_error']:.2f}%"],
-        ["90th Percentile Error", f"{metrics_dict['p90_error']:.2f}%"],
-        ["Maximum Error", f"{metrics_dict['max_error']:.2f}%"],
         ["Predictions Within 10%", f"{metrics_dict['under_10_pct']:.2f}%"],
         ["Predictions Within 15%", f"{metrics_dict['under_15_pct']:.2f}%"],
-        ["Root Mean Square Error", f"${metrics_dict['rmse']:,.2f}"]
+        ["Average Percent Error", f"{metrics_dict['avg_percent_error']:.2f}%"],
+        # ["Median Error", f"{metrics_dict['median_error']:.2f}%"],
+        ["90th Percentile Error", f"{metrics_dict['p90_error']:.2f}%"],
+        ["Maximum Error", f"{metrics_dict['max_error']:.2f}%"],
+        ["Root Mean Square Error", f"£{metrics_dict['rmse']:,.2f}"]
     ]
-    
+
     table = tabulate(formatted_metrics, headers="firstrow", tablefmt="fancy_grid")
     return table

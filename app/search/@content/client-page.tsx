@@ -19,6 +19,8 @@ export default function ClientSearchPage({
     avgReceptions: number;
     medianPrice: number;
     avgBathrooms: number;
+    avgValuation: number;
+    avgValuationDifference: number;
   };
   initialPage: number;
   itemsPerPage: number;
@@ -53,6 +55,10 @@ export default function ClientSearchPage({
       .replace(/^./, str => str.toUpperCase()); // Capitalize the first letter
   };
 
+  const getValuationColor = (difference: number): string => {
+    return difference > 0 ? 'text-green-600' : 'text-red-600';
+  };
+
   const renderPropertyTable = (properties: PropertyListingModel[]) => (
     <Table className="relative">
       <TableHeader className="sticky top-0 bg-primary-base shadow-[0_2px_0px_0px_rgba(0,0,0,0.3)] shadow-primary-text-contrast">
@@ -63,8 +69,9 @@ export default function ClientSearchPage({
           <TableHead>Receptions</TableHead>
           <TableHead>Town</TableHead>
           <TableHead>Postcode</TableHead>
+          <TableHead>Default Valuation</TableHead>
+          <TableHead>Valuation Difference</TableHead>
           <TableHead></TableHead>
-          {/*<TableHead>Bathrooms</TableHead>*/}
         </TableRow>
       </TableHeader>
       <TableBody className="flex-1 h-0">
@@ -76,6 +83,12 @@ export default function ClientSearchPage({
             <TableCell>{property.receptions}</TableCell>
             <TableCell>{property.address.town}</TableCell>
             <TableCell>{property.address.postcode}</TableCell>
+            <TableCell>
+              {property.defaultValuation ? `£${property.defaultValuation.toLocaleString()}` : 'N/A'}
+            </TableCell>
+            <TableCell className={getValuationColor(property.valuationDifference || 0)}>
+              {property.valuationDifference !== null ? `${property.valuationDifference.toFixed(2)}%` : 'N/A'}
+            </TableCell>
             <TableCell>
               {/* <Dialog>
                 <DialogTrigger asChild>
@@ -150,10 +163,16 @@ export default function ClientSearchPage({
               <TableCell>£{summary.medianPrice.toLocaleString()}</TableCell>
               <TableCell className="font-medium">Average Bedrooms:</TableCell>
               <TableCell>{summary.avgBedrooms.toFixed(2)}</TableCell>
+            </TableRow>
+            <TableRow>
               <TableCell className="font-medium">Average Receptions:</TableCell>
               <TableCell>{summary.avgReceptions.toFixed(2)}</TableCell>
-              {/*<TableCell className="font-medium">Average Bathrooms:</TableCell>*/}
-              {/*<TableCell>{summary.avgBathrooms.toFixed(2)}</TableCell>*/}
+              <TableCell className="font-medium">Average Valuation:</TableCell>
+              <TableCell>£{summary.avgValuation.toLocaleString()}</TableCell>
+              <TableCell className="font-medium">Average Valuation Difference:</TableCell>
+              <TableCell className={getValuationColor(summary.avgValuationDifference)}>
+                {summary.avgValuationDifference.toFixed(2)}%
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>
